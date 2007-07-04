@@ -123,14 +123,15 @@ end
 class TrailsView
 
 	attr_reader :canvas, :width, :height
-	attr_accessor :segment_count, :trail_width
+	attr_accessor :trail_length, :trail_width
 
-	def initialize (width = 600, height = 400, segment_count = 5, trail_width = segment_count)
+	def initialize (width = 600, height = 400, trail_length = 5, trail_width = trail_length)
 	
-		@width, @height, @segment_count, @trail_width, @background = width, height, segment_count, trail_width
+		@width, @height, @trail_length, @trail_width, @background = width, height, trail_length, trail_width
 	
 		#Create a drawing area.
 		@canvas = Gtk::DrawingArea.new
+		#Set to correct size.
 		resize
 		
 		#Whenever the drawing area needs updating...
@@ -161,11 +162,11 @@ class TrailsView
 	
 	#Draw the objects.
 	def render(objects)
-		graphics_context = Gdk::GC.new(buffer)
-		canvas_context = @canvas.style.bg_gc(@canvas.state)
 		#Clear the background on the buffer.
+		graphics_context = Gdk::GC.new(buffer)
+		graphics_context.rgb_fg_color = Gdk::Color.new(0, 0, 0)
 		buffer.draw_rectangle(
-			canvas_context,
+			graphics_context,
 			true, #Filled.
 			0, 0, #Upper-left corner.
 			@width, @height #Lower-right corner.
@@ -175,7 +176,7 @@ class TrailsView
 			#Add the object's current location to the list.
 			@locations[object] << [object.location.x, object.location.y]
 			#If the list is larger than the number of tail segments, delete the first position.
-			@locations[object].shift if @locations[object].length > @segment_count
+			@locations[object].shift if @locations[object].length > @trail_length
 			#For each location in this object's list:
 			@locations[object].each_with_index do |location, index|
 				#Skip first location.
@@ -183,7 +184,6 @@ class TrailsView
 				#Divide the current segment number by trail segment count to get the multiplier to use for brightness and width.
 				multiplier = index.to_f / @locations[object].length.to_f
 				#Set the drawing color to use the object's colors, adjusted by the multiplier.
-				bg_color = canvas_context.foreground
 				graphics_context.rgb_fg_color = Gdk::Color.new( #Don't use Gdk::GC.foreground= here, as that requires a color to be in the color map already.
 					object.color.red * multiplier * 65535,
 					object.color.green * multiplier * 65535,
@@ -191,7 +191,7 @@ class TrailsView
 				)
 				#Multiply the actual drawing width by the current multiplier to get the current drawing width.
 				graphics_context.set_line_attributes(
-					@trail_width * multiplier,
+					(@trail_width * multiplier).ceil,
 					Gdk::GC::LINE_SOLID,
 					Gdk::GC::CAP_ROUND, #Line ends drawn as semicircles.
 					Gdk::GC::JOIN_MITER #Only used for polygons.

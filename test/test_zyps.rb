@@ -87,10 +87,13 @@ class TestTrailsView < Test::Unit::TestCase
 			(1..40).each {|i| animate.call(i)}
 			view.width += 100
 			view.height += 100
+			view.trail_width = 10
+			view.trail_length = 10
 			(1..40).each {|i| animate.call(i)}
 		end
 		
-		Gtk.main
+#TODO: Re-enable!
+# 		Gtk.main
 		
 	end
 	
