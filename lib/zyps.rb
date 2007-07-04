@@ -82,14 +82,14 @@ class Location
 end
 #An object or force's velocity.
 class Vector
-	PI2 = Math::PI * 2
+	PI2 = Math::PI * 2.0
 	attr_accessor :speed
 	def initialize (speed = 0, pitch = 0, yaw = 0)
-		@speed, @pitch, @yaw = speed, pitch, yaw
+		@speed, @pitch, @yaw = speed, to_radians(pitch), to_radians(yaw)
 	end
 	def to_degrees(radians); radians / PI2 * 360; end
 	def to_radians(degrees)
-		radians = degrees / 360 * PI2
+		radians = degrees / 360.0 * PI2
 		radians = radians % PI2
 		radians += PI2 if radians < 0
 		radians
@@ -105,7 +105,7 @@ class Vector
 	#The Y component.
 	def y; @speed * Math.sin(@pitch); end
 	#The Z component.
-	def x; @speed * Math.cos(@yaw); end
+	def z; @speed * Math.cos(@yaw); end
 end
 #A clock to use for timing actions.
 class Clock
