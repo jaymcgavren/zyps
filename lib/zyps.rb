@@ -123,23 +123,26 @@ end
 class TrailsView
 
 	attr_reader :canvas, :width, :height
-	attr_accessor :segment_count, :trail_width
+	attr_accessor :segment_count, :trail_width, :background
 
-	def initialize (width = 600, height = 400, segment_count = 5, trail_width = segment_count)
+	def initialize (window, width = 600, height = 400, segment_count = 5, trail_width = segment_count, background = Gdk::Color.new(0, 65535, 0))
 	
-		@width, @height, @segment_count, @trail_width = width, height, segment_count, trail_width
+		@width, @height, @segment_count, @trail_width, @background = width, height, segment_count, trail_width, background
 	
 		#Create a drawing area.
 		@canvas = Gtk::DrawingArea.new
+		@canvas.set_size_request(@width, @height)
+		window.add(canvas)
+		window.show_all
 		
 		#Set canvas size and create buffer to draw to.
-		resize
+		@buffer = Gdk::Pixmap.new(@canvas.window, @width, @height, -1)
 
 		#Whenever the drawing area needs updating...
 		@canvas.signal_connect("expose_event") do
 			#Copy buffer bitmap to canvas.
 			@canvas.window.draw_drawable(
-				@canvas.style.fg_gc(canvas.state), #Gdk::GC (graphics context) to use when drawing.
+				@canvas.style.fg_gc(@canvas.state), #Gdk::GC (graphics context) to use when drawing.
 				@buffer, #Gdk::Drawable source to copy onto canvas.
 				0, 0, #Pull from upper left of source.
 				0, 0, #Copy to upper left of canvas.
@@ -152,26 +155,12 @@ class TrailsView
 		
 	end
 	
-	def width= (value)
-		@width = value
-		resize
-	end
-	def height= (value)
-		@height = value
-		resize
-	end
-	
-	def resize
-		@canvas.set_size_request(@width, @height)
-		@buffer = Gdk::Pixmap.new(nil, @width, @height, 32)
-	end
-	
 	#Draw the objects.
 	def render(objects)
 		graphics_context = Gdk::GC.new(@buffer)
 		#Clear the background on the buffer.
 		@buffer.draw_rectangle(
-			@canvas.style.bg_gc(canvas.state),
+			@canvas.style.bg_gc(@canvas.state),
 			true, #Filled.
 			0, 0, #Upper-left corner.
 			@width, @height #Lower-right corner.
@@ -189,7 +178,7 @@ class TrailsView
 				#Skip first location.
 				next if index == 0
 				#Divide the current segment number by trail segment count to get the multiplier to use for brightness and width.
-				multiplier = index / @locations[object].length
+				multiplier = index.to_f / @locations[object].length.to_f
 				#Set the drawing color to use the object's colors, adjusted by the multiplier.
 				graphics_context.foreground = Gdk::Color.new(
 					object.color.red * multiplier * 65535,
@@ -199,9 +188,9 @@ class TrailsView
 				#Multiply the actual drawing width by the current multiplier to get the current drawing width.
 				graphics_context.set_line_attributes(
 					@trail_width * multiplier,
-					Gdk::GC.LINE_SOLID,
-					Gdk::GC.CAP_ROUND, #Line ends drawn as semicircles.
-					Gdk::GC.JOIN_MITER #Only used for polygons.
+					Gdk::GC::LINE_SOLID,
+					Gdk::GC::CAP_ROUND, #Line ends drawn as semicircles.
+					Gdk::GC::JOIN_MITER #Only used for polygons.
 				)
 				#Get previous location so we can draw a line from it.
 				previous_location = @locations[object][index - 1]

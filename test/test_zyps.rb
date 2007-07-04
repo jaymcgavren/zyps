@@ -39,7 +39,7 @@ class TestEnvironment < Test::Unit::TestCase
 		environment = Environment.new([creature1, creature2], [environmental_factor])
 		environment.interact
 
-		#Test results.
+		#Look for expected interactions (each should only occur once).
 		assert(interactions.find_all{|i| i == "Environment targeting 1"}.length == 1)
 		assert(interactions.find_all{|i| i == "Environment targeting 2"}.length == 1)
 		assert(interactions.find_all{|i| i == "Targeting 1"}.length == 1)
@@ -56,16 +56,13 @@ class TestTrailsView < Test::Unit::TestCase
 	
 	def test_render
 	
-		view = TrailsView.new(WIDTH, HEIGHT)
-	
 		#Create a window, and set program up to quit when it is closed.
 		window = Gtk::Window.new
 		window.signal_connect("delete_event") {false}
 		window.signal_connect("destroy") {Gtk.main_quit}
 		
 		#Add view to window.
-		window.add(view.canvas)
-		window.show_all
+		view = TrailsView.new(window, WIDTH, HEIGHT)
 		
 		#Create environment with objects.
 		environment = Environment.new(
