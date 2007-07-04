@@ -62,20 +62,32 @@ class TestTrailsView < Test::Unit::TestCase
 		window.signal_connect("destroy") {Gtk.main_quit}
 		
 		#Add view to window.
-		view = TrailsView.new(window, WIDTH, HEIGHT)
+		view = TrailsView.new(WIDTH, HEIGHT)
+		window.add(view.canvas)
+		window.show_all
 		
 		#Create environment with objects.
 		environment = Environment.new(
 			[
-				Creature.new(nil, Location.new(10, 10, 0), Color.new(1, 0, 0)),
-				Creature.new(nil, Location.new(40, 40, 0), Color.new(0, 1, 0))
+				Creature.new(nil, Location.new(40, 20, 0), Color.new(1, 0, 0)),
+				Creature.new(nil, Location.new(20, 40, 0), Color.new(0, 1, 0)),
+				Creature.new(nil, Location.new(40, 60, 0), Color.new(0, 0, 1))
 			]
 		)
 		
 		thread = Thread.new do
-			loop do
+			animate = lambda do |i|
 				view.render(environment.objects)
+				environment.objects.each do |creature|
+					creature.location.x += i * 0.2
+					creature.location.y += i * 0.1
+				end
+				sleep 0.01
 			end
+			(1..40).each {|i| animate.call(i)}
+			view.width += 100
+			view.height += 100
+			(1..40).each {|i| animate.call(i)}
 		end
 		
 		Gtk.main
