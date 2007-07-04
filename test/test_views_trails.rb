@@ -129,42 +129,30 @@ class TestTrailsView < Test::Unit::TestCase
 	end
 	
 	
-# 	class Morpher < Creature
-# 		def initialize(*arguments)
-# 			super(*arguments)
-# 			@behaviors << Behavior.new(
-# 				[
-# 					lambda do |target|
-# 						target.color.red += 0.1 if target.color.red < self.color.red
-# 						target.color.green += 0.1 if target.color.green < self.color.green
-# 						target.color.blue += 0.1 if target.color.blue < self.color.blue
-# 					end
-# 				],
-# 				[
-# 					lambda {|target| self.color < target.color},
-# 					lambda {|target| Utility.find_distance(self.location, target.location) < 25}
-# 				]
-# 			)
-# 		end
-# 	end
+	class Morpher < Creature
+		def initialize(*arguments)
+			super(*arguments)
+			@behaviors << Behavior.new(
+				[
+					lambda do |target|
+						target.color.red += 0.1 if target.color.red < self.color.red
+						target.color.green += 0.1 if target.color.green < self.color.green
+						target.color.blue += 0.1 if target.color.blue < self.color.blue
+					end
+				],
+				[
+					lambda {|target| self.color < target.color},
+					lambda {|target| Utility.find_distance(self.location, target.location) < 25}
+				]
+			)
+		end
+	end
 	
 	def test_change_color
-		morph = Behavior.new(
-			[
-				lambda do |target|
-					target.color.red += 0.1 if target.color.red < self.color.red
-					target.color.green += 0.1 if target.color.green < self.color.green
-					target.color.blue += 0.1 if target.color.blue < self.color.blue
-				end
-			],
-			[
-				lambda {|target| self.color < target.color},
-				lambda {|target| Utility.find_distance(self.location, target.location) < 25}
-			]
-		)
-		@environment.objects << Creature.new(nil, Location.new(0, 100), Color.new(1, 0, 0), Vector.new(100, 0), 0, [], [morph])
-		@environment.objects << Creature.new(nil, Location.new(0, 150), Color.new(0, 1, 0), Vector.new(200, 0), 0, [], [morph])
-		@environment.objects << Creature.new(nil, Location.new(0, 200), Color.new(0, 0, 1), Vector.new(300, 0), 0, [], [morph])
+
+		@environment.objects << Morpher.new(nil, Location.new(0, 100), Color.new(1, 0, 0), Vector.new(100, 0))
+		@environment.objects << Morpher.new(nil, Location.new(0, 150), Color.new(0, 1, 0), Vector.new(200, 0))
+		@environment.objects << Morpher.new(nil, Location.new(0, 200), Color.new(0, 0, 1), Vector.new(300, 0))
 		
 		thread = Thread.new {animate(FRAME_COUNT)}
 				
