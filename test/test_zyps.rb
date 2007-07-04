@@ -17,17 +17,20 @@ class TestCreature < Test::Unit::TestCase
 		assert_equal(nil, creature.name)
 		assert_in_delta(0, creature.age, 0.1)
 		assert_equal([], creature.tags)
+		assert_equal([], creature.behaviors)
 	end
 	
 	
 	def test_explicit_initialization
+		behavior = Behavior.new
 		creature = Creature.new(
 			"name",
 			Location.new(10, -3),
 			Color.new(0.5, 0.6, 0.7),
 			Vector.new(1.5, 225),
 			2.001, #Age.
-			["predator", "blue team"]
+			["predator", "blue team"],
+			[behavior]
 		)
 		assert_equal("name", creature.name)
 		assert_equal(10, creature.location.x)
@@ -40,6 +43,7 @@ class TestCreature < Test::Unit::TestCase
 		assert_in_delta(2.001, creature.age, 0.01)
 		assert(creature.tags.include?("predator"))
 		assert(creature.tags.include?("blue team"))
+		assert(creature.behaviors.include?(behavior))
 	end
 	
 	
@@ -230,66 +234,26 @@ class TestUtility < Test::Unit::TestCase
 	end
 	
 	
-	def test_get_angle_to_location
+	def test_find_angle
 		origin = Location.new(0, 0)
-		assert_in_delta(0, Utility.get_angle_to_location(origin, Location.new(1,0)), 0.001)
-		assert_in_delta(90, Utility.get_angle_to_location(origin, Location.new(0,1)), 0.001)
-		assert_in_delta(45, Utility.get_angle_to_location(origin, Location.new(1,1)), 0.001)
-		assert_in_delta(135, Utility.get_angle_to_location(origin, Location.new(-1,1)), 0.001)
-		assert_in_delta(225, Utility.get_angle_to_location(origin, Location.new(-1,-1)), 0.001)
-		assert_in_delta(315, Utility.get_angle_to_location(origin, Location.new(1,-1)), 0.001)
+		assert_in_delta(0, Utility.find_angle(origin, Location.new(1,0)), 0.001)
+		assert_in_delta(90, Utility.find_angle(origin, Location.new(0,1)), 0.001)
+		assert_in_delta(45, Utility.find_angle(origin, Location.new(1,1)), 0.001)
+		assert_in_delta(135, Utility.find_angle(origin, Location.new(-1,1)), 0.001)
+		assert_in_delta(225, Utility.find_angle(origin, Location.new(-1,-1)), 0.001)
+		assert_in_delta(315, Utility.find_angle(origin, Location.new(1,-1)), 0.001)
+	end
+
+	
+	def test_find_distance
+		origin = Location.new(0, 0)
+		assert_in_delta(1, Utility.find_distance(origin, Location.new(1,0)), 0.001)
+		assert_in_delta(1, Utility.find_distance(origin, Location.new(0,1)), 0.001)
+		assert_in_delta(1.4142, Utility.find_distance(origin, Location.new(1,1)), 0.001)
+		assert_in_delta(1.4142, Utility.find_distance(origin, Location.new(-1,1)), 0.001)
+		assert_in_delta(1.4142, Utility.find_distance(origin, Location.new(-1,-1)), 0.001)
+		assert_in_delta(1.4142, Utility.find_distance(origin, Location.new(1,-1)), 0.001)
 	end
 
 	
 end
-
-
-# c:\work\zyps\source\net\sourceforge\zyps\actions\accelerateaction.java
-# c:\work\zyps\source\net\sourceforge\zyps\actions\approachaction.java
-# c:\work\zyps\source\net\sourceforge\zyps\actions\changecoloraction.java
-# c:\work\zyps\source\net\sourceforge\zyps\actions\changeopacityaction.java
-# c:\work\zyps\source\net\sourceforge\zyps\actions\destroyaction.java
-# c:\work\zyps\source\net\sourceforge\zyps\actions\fleeaction.java
-# c:\work\zyps\source\net\sourceforge\zyps\actions\followinputdeviceaction.java
-# c:\work\zyps\source\net\sourceforge\zyps\actions\mateaction.java
-# c:\work\zyps\source\net\sourceforge\zyps\actions\reviveaction.java
-# c:\work\zyps\source\net\sourceforge\zyps\actions\spawnaction.java
-# c:\work\zyps\source\net\sourceforge\zyps\actions\tagaction.java
-# c:\work\zyps\source\net\sourceforge\zyps\actions\turnaction.java
-# c:\work\zyps\source\net\sourceforge\zyps\behavior.java
-# c:\work\zyps\source\net\sourceforge\zyps\clock.java
-# c:\work\zyps\source\net\sourceforge\zyps\color.java
-# c:\work\zyps\source\net\sourceforge\zyps\conditions
-# c:\work\zyps\source\net\sourceforge\zyps\conditions\agecondition.java
-# c:\work\zyps\source\net\sourceforge\zyps\conditions\condition.java
-# c:\work\zyps\source\net\sourceforge\zyps\conditions\nocondition.java
-# c:\work\zyps\source\net\sourceforge\zyps\conditions\proximitycondition.java
-# c:\work\zyps\source\net\sourceforge\zyps\conditions\tagcondition.java
-# c:\work\zyps\source\net\sourceforge\zyps\creature.java
-# c:\work\zyps\source\net\sourceforge\zyps\environment.java
-# c:\work\zyps\source\net\sourceforge\zyps\environmentalfactors
-# c:\work\zyps\source\net\sourceforge\zyps\environmentalfactors\boundary.java
-# c:\work\zyps\source\net\sourceforge\zyps\environmentalfactors\environmentalfactor.java
-# c:\work\zyps\source\net\sourceforge\zyps\environmentalfactors\populationcontroller.java
-# c:\work\zyps\source\net\sourceforge\zyps\gameobject.java
-# c:\work\zyps\source\net\sourceforge\zyps\generators
-# c:\work\zyps\source\net\sourceforge\zyps\generators\randomcreaturegenerator.java
-# c:\work\zyps\source\net\sourceforge\zyps\generators\rolegenerator.java
-# c:\work\zyps\source\net\sourceforge\zyps\inputdevicelocation.java
-# c:\work\zyps\source\net\sourceforge\zyps\location.java
-# c:\work\zyps\source\net\sourceforge\zyps\main.java
-# c:\work\zyps\source\net\sourceforge\zyps\simulation.java
-# c:\work\zyps\source\net\sourceforge\zyps\tag.java
-# c:\work\zyps\source\net\sourceforge\zyps\userinterfaces
-# c:\work\zyps\source\net\sourceforge\zyps\userinterfaces\demonstration.java
-# c:\work\zyps\source\net\sourceforge\zyps\userinterfaces\rolemanager.java
-# c:\work\zyps\source\net\sourceforge\zyps\userinterfaces\selectionpanel.java
-# c:\work\zyps\source\net\sourceforge\zyps\userinterfaces\userinterface.java
-# c:\work\zyps\source\net\sourceforge\zyps\velocity.java
-# c:\work\zyps\source\net\sourceforge\zyps\views
-# c:\work\zyps\source\net\sourceforge\zyps\views\basicgraphicview.java
-# c:\work\zyps\source\net\sourceforge\zyps\views\debuggraphicview.java
-# c:\work\zyps\source\net\sourceforge\zyps\views\graphicview.java
-# c:\work\zyps\source\net\sourceforge\zyps\views\panelview.java
-# c:\work\zyps\source\net\sourceforge\zyps\views\trailsgraphicview.java
-# c:\work\zyps\source\net\sourceforge\zyps\views\view.java
