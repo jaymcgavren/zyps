@@ -1,9 +1,10 @@
 require 'zyps'
-require 'zyps/views/trails'
 require 'test/unit'
 
 
 class TestCreature < Test::Unit::TestCase
+
+
 	def test_default_initialization
 		creature = Creature.new
 		assert_equal(0, creature.location.x)
@@ -17,6 +18,8 @@ class TestCreature < Test::Unit::TestCase
 		assert_in_delta(0, creature.age, 0.1)
 		assert_equal([], creature.tags)
 	end
+	
+	
 	def test_explicit_initialization
 		creature = Creature.new(
 			"name",
@@ -38,63 +41,107 @@ class TestCreature < Test::Unit::TestCase
 		assert(creature.tags.include?("predator"))
 		assert(creature.tags.include?("blue team"))
 	end
+	
+	
 end
+
 
 
 class TestEnvironment < Test::Unit::TestCase
 
-	def test_interact
+	def setup
 	
 		#Interactions will be logged here.
-		interactions = []
+		@interactions = []
 		
 		#Create creatures.
 		creature1 = Creature.new('1')
 		creature2 = Creature.new('2')
-		creature_behavior = Behavior.new([lambda {|target| interactions << "Targeting #{target.name}"}])
+		creature_behavior = Behavior.new
+		creature_behavior.actions << lambda {|target| @interactions << "Targeting #{target.name}"}
 		creature1.behaviors << creature_behavior
 		creature2.behaviors << creature_behavior
 		
-		#Create an environmental factor.
-		environment_behavior = Behavior.new([lambda {|target| interactions << "Environment targeting #{target.name}"}])
-		environmental_factor = EnvironmentalFactor.new([environment_behavior])
-		
-		#Create an environment and have its elements interact.
-		environment = Environment.new([creature1, creature2], [environmental_factor])
-		environment.interact
-
-		#Look for expected interactions (each should only occur once).
-		assert(interactions.find_all{|i| i == "Environment targeting 1"}.length == 1)
-		assert(interactions.find_all{|i| i == "Environment targeting 2"}.length == 1)
-		assert(interactions.find_all{|i| i == "Targeting 1"}.length == 1)
-		assert(interactions.find_all{|i| i == "Targeting 2"}.length == 1)
+		#Create an environment and add the creatures.
+		@environment = Environment.new([creature1, creature2])
 		
 	end
+	
+	
+	def test_interactions
+	
+		#Have environment elements interact.
+		@environment.interact
+
+		#Look for expected interactions (each should only occur once).
+		assert(@interactions.find_all{|i| i == "Targeting 1"}.length == 1)
+		assert(@interactions.find_all{|i| i == "Targeting 2"}.length == 1)
+		
+	end
+	
+	
+	def test_environmental_factors
+	
+		#Create an environmental factor.
+		behavior = Behavior.new
+		behavior.actions << lambda {|target| @interactions << "Environment targeting #{target.name}"}
+		@environment.environmental_factors << EnvironmentalFactor.new([behavior])
+		
+		#Have environment elements interact.
+		@environment.interact
+
+		#Look for expected interactions (each should only occur once).
+		assert(@interactions.find_all{|i| i == "Environment targeting 1"}.length == 1)
+		assert(@interactions.find_all{|i| i == "Environment targeting 2"}.length == 1)
+		
+	end
+	
+	
+	def test_conditions
+	
+		#Change behaviors to only occur if the target's name is '2'.
+		@environment.objects.each do |creature|
+			behavior = Behavior.new
+			behavior.conditions << lambda do |target|
+				return true if creature.name == '1' and target.name == '2'
+			end
+			behavior.actions << lambda do |target|
+				@interactions << "#{creature.name} is targeting #{target.name}"
+			end
+			creature.behaviors << behavior
+		end
+		
+		#Have environment elements interact.
+		@environment.interact
+
+		#Creature '1' should not have been acted on.
+		assert(@interactions.find_all{|i| i == "2 is targeting 1"}.length == 0)
+		#Creature '2' *should* have been acted on.
+		assert(@interactions.find_all{|i| i == "1 is targeting 2"}.length == 1)
+		
+	end
+	
 	
 end
 
 
+
 class TestVector < Test::Unit::TestCase
+
+
 	def test_initialize
+	
 		vector = Vector.new
 		assert_equal(0, vector.speed)
 		assert_equal(0, vector.pitch)
 		assert_equal(0, vector.x)
 		assert_equal(0, vector.y)
+		
 	end
-	def test_to_radians
-		vector = Vector.new
-		assert_in_delta(0, vector.to_radians(0), 0.01)
-		assert_in_delta(Math::PI, vector.to_radians(180), 0.01)
-		assert_in_delta(Math::PI * 2, vector.to_radians(359), 0.1)
-	end
-	def test_to_degrees
-		vector = Vector.new
-		assert_in_delta(0, vector.to_degrees(0), 0.01)
-		assert_in_delta(180, vector.to_degrees(Math::PI), 0.01)
-		assert_in_delta(359, vector.to_degrees(Math::PI * 2 - 0.0001), 1)
-	end
+
+	
 	def test_angles
+	
 		vector = Vector.new(4, 150)
 		assert_in_delta(-3.464, vector.x, 0.001)
 		assert_in_delta(2, vector.y, 0.001)
@@ -110,8 +157,12 @@ class TestVector < Test::Unit::TestCase
 		vector = Vector.new(5, 306.87)
 		assert_in_delta(3, vector.x, 0.001)
 		assert_in_delta(-4, vector.y, 0.001)
+		
 	end
+	
+	
 	def test_components
+	
 		vector = Vector.new(1.4142, 45)
 		assert_in_delta(1, vector.x, 0.001)
 		assert_in_delta(1, vector.y, 0.001)
@@ -133,85 +184,63 @@ class TestVector < Test::Unit::TestCase
 		vector.y = 1
 		assert_in_delta(1.4142, vector.speed, 0.001)
 		assert_in_delta(45, vector.pitch, 0.001)
-	end
-end
-
-
-class TestTrailsView < Test::Unit::TestCase
-
-	WIDTH = 400
-	HEIGHT = 300
-	
-	def test_render
-	
-		#Create a window, and set program up to quit when it is closed.
-		window = Gtk::Window.new
-		window.signal_connect("delete_event") {false}
-		window.signal_connect("destroy") {Gtk.main_quit}
-		
-		#Add view to window.
-		view = TrailsView.new(WIDTH, HEIGHT)
-		window.add(view.canvas)
-		window.show_all
-		
-		#Create environment with objects.
-		environment = Environment.new
-		environment.objects << Creature.new(nil, Location.new(WIDTH/2, HEIGHT/2), Color.new(1, 0, 0), Vector.new(10, 45))
-		environment.objects << Creature.new(nil, Location.new(WIDTH/2, HEIGHT/2), Color.new(0, 1, 0), Vector.new(20, 135))
-		environment.objects << Creature.new(nil, Location.new(WIDTH/2, HEIGHT/2), Color.new(0, 0, 1), Vector.new(30, 225))
-		i = 0
-		while i < 1 do
-			environment.objects << Creature.new(
-				i,
-				Location.new(WIDTH * i, HEIGHT * i),
-				Color.new(i, 1 - i, i / 2 + 0.5),
-				Vector.new(100 * i, i * 360)
-			)
-			i += 0.01
-		end
-		
-		
-		thread = Thread.new do
-		
-			animate = lambda do |i|
-				view.render(environment.objects)
-				environment.interact
-			end
-			
-			(1..40).each {|i| animate.call(i)}
-			
-			#Change view size and widen trails.
-			view.width += 100
-			view.height += 100
-			view.trail_width = 10
-			view.trail_length = 10
-			(1..40).each {|i| animate.call(i)}
-			
-			#Add gravity.
-			gravity = EnvironmentalFactor.new
-			accelerate = Behavior.new
-			accelerate.add_action {|target| target.vector.y += 9.8}
-			gravity.behaviors << accelerate
-			environment.environmental_factors << gravity
-			(1..40).each {|i| animate.call(i)}
-			
-		end
-		
-#TODO: Re-enable!
-		Gtk.main
 		
 	end
 	
+	
 end
+
 
 
 class TestClock < Test::Unit::TestCase
+
+
 	def test_elapsed_time
+	
 		#Create a clock, wait a moment, then see how much time has elapsed since its creation.
 		clock = Clock.new
 		sleep 0.1
 		assert_in_delta(0.1, clock.elapsed_time, 0.02)
+		
 	end
+	
+	
+end
+
+
+
+class TestUtility < Test::Unit::TestCase
+	
+	
+	def test_to_radians
+	
+		assert_in_delta(0, Utility.to_radians(0), 0.01)
+		assert_in_delta(Math::PI, Utility.to_radians(180), 0.01)
+		assert_in_delta(Math::PI * 2, Utility.to_radians(359), 0.1)
+		
+	end
+
+	
+	def test_to_degrees
+	
+		assert_in_delta(0, Utility.to_degrees(0), 0.01)
+		assert_in_delta(180, Utility.to_degrees(Math::PI), 0.01)
+		assert_in_delta(359, Utility.to_degrees(Math::PI * 2 - 0.0001), 1)
+		
+	end
+	
+	
+	def test_get_angle_to_location
+		origin = Location.new(0, 0)
+		assert_in_delta(0, Utility.get_angle_to_location(origin, Location.new(1,0)), 0.001)
+		assert_in_delta(90, Utility.get_angle_to_location(origin, Location.new(0,1)), 0.001)
+		assert_in_delta(45, Utility.get_angle_to_location(origin, Location.new(1,1)), 0.001)
+		assert_in_delta(135, Utility.get_angle_to_location(origin, Location.new(-1,1)), 0.001)
+		assert_in_delta(225, Utility.get_angle_to_location(origin, Location.new(-1,-1)), 0.001)
+		assert_in_delta(315, Utility.get_angle_to_location(origin, Location.new(1,-1)), 0.001)
+	end
+
+	
 end
 
 

@@ -1,6 +1,33 @@
 require 'observer'
 require 'gtk2'
 
+#Various methods for working with Vectors, etc.
+module Utility
+	PI2 = Math::PI * 2.0
+	#Get the angle (in degrees) from one Location to another.
+	def Utility.get_angle_to_location(origin, target)
+		#Get vector from origin to target.
+		x_difference = target.x - origin.x
+		y_difference = target.y - origin.y
+		#Get vector's angle.
+		radians = Math.atan2(y_difference, x_difference)
+		#Result will range from negative Pi to Pi, so correct it.
+		radians += PI2 if radians < 0
+		#Convert to degrees.
+		return to_degrees(radians)
+	end
+	#Convert radians to degrees.
+	def Utility.to_degrees(radians)
+		radians / PI2 * 360
+	end
+	#Convert degrees to radians.
+	def Utility.to_radians(degrees)
+		radians = degrees / 360.0 * PI2
+		radians = radians % PI2
+		radians += PI2 if radians < 0
+		radians
+	end
+end
 #A virtual environment.
 class Environment
 	include Observable
@@ -49,6 +76,7 @@ end
 class Creature < GameObject
 	include Responsive
 	attr_accessor :behaviors
+
 	def initialize (name = nil, location = Location.new, color = Color.new, vector = Vector.new, age = 0, tags = [], behaviors = [])
 		super(name, location, color, vector, age, tags)
 		@behaviors = behaviors
@@ -60,8 +88,6 @@ class Behavior
 	def initialize (actions = [], conditions = [])
 		@actions, @conditions = actions, conditions
 	end
-	def add_action (&action); @actions << action; end
-	def add_condition (&condition); @conditions << condition; end
 	def perform(target)
 		conditions.each {|condition| return nil unless condition.call(target)}
 		actions.each {|action| action.call(target)}
@@ -91,21 +117,13 @@ class Location
 end
 #An object or force's velocity.
 class Vector
-	PI2 = Math::PI * 2.0
 	attr_accessor :speed
 	def initialize (speed = 0, pitch = 0)
-		@speed, @pitch = speed, to_radians(pitch)
-	end
-	def to_degrees(radians); radians / PI2 * 360; end
-	def to_radians(degrees)
-		radians = degrees / 360.0 * PI2
-		radians = radians % PI2
-		radians += PI2 if radians < 0
-		radians
+		@speed, @pitch = speed, Utility.to_radians(pitch)
 	end
 	#The angle along the X/Y axes.
-	def pitch; to_degrees(@pitch); end
-	def pitch=(degrees); @pitch = to_radians(degrees); end
+	def pitch; Utility.to_degrees(@pitch); end
+	def pitch=(degrees); @pitch = Utility.to_radians(degrees); end
 	#The X component.
 	def x; @speed.to_f * Math.cos(@pitch); end
 	def x=(value)
