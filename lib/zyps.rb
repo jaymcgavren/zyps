@@ -5,7 +5,7 @@ require 'gtk2'
 module Utility
 	PI2 = Math::PI * 2.0
 	#Get the angle (in degrees) from one Location to another.
-	def Utility.get_angle_to_location(origin, target)
+	def Utility.find_angle(origin, target)
 		#Get vector from origin to target.
 		x_difference = target.x - origin.x
 		y_difference = target.y - origin.y
@@ -14,7 +14,15 @@ module Utility
 		#Result will range from negative Pi to Pi, so correct it.
 		radians += PI2 if radians < 0
 		#Convert to degrees.
-		return to_degrees(radians)
+		to_degrees(radians)
+	end
+	#Get the distance from one Location to another.
+	def Utility.find_distance(origin, target)
+		#Get vector from origin to target.
+		x_difference = origin.x - target.x
+		y_difference = origin.y - target.y
+		#Get distance.
+		Math.sqrt(x_difference ** 2 + y_difference ** 2)
 	end
 	#Convert radians to degrees.
 	def Utility.to_degrees(radians)
@@ -103,9 +111,17 @@ class EnvironmentalFactor
 end
 #An object's color.
 class Color
+	include Comparable
 	attr_accessor :red, :green, :blue
 	def initialize (red = 1, green = 1, blue = 1)
 		@red, @green, @blue = red, green, blue
+	end
+	#Constrain components to the range 0 - 1.
+	def red=(v); v = 0 if v < 0; v = 1 if v > 1; @red = v; end
+	def green=(v); v = 0 if v < 0; v = 1 if v > 1; @green = v; end
+	def blue=(v); v = 0 if v < 0; v = 1 if v > 1; @blue = v; end
+	def <=>(other)
+		@red + @green + @blue <=> other.red + other.green + other.blue
 	end
 end
 #An object's location.
