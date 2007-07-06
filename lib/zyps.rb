@@ -55,10 +55,10 @@ class Environment
 			#Have all objects interact with each other.
 			objects.each do |target|
 				next if target.equal?(object) #Ensure object does not act on itself.
-				object.act(target)
+				object.act(object, target)
 			end
 			#Have all environmental factors interact with each object.
-			environmental_factors.each {|factor| factor.act(object)}
+			environmental_factors.each {|factor| factor.act(factor, object)}
 		end
 		#Mark environment as changed.
 		changed
@@ -76,8 +76,8 @@ class GameObject
 end
 #Mixin to have an object act on other objects.
 module Responsive
-	def act(target)
-		behaviors.each {|behavior| behavior.perform(target)}
+	def act(subject, target)
+		behaviors.each {|behavior| behavior.perform(subject, target)}
 	end
 end
 #A creature.
@@ -90,15 +90,15 @@ class Creature < GameObject
 		@behaviors = behaviors
 	end
 end
-#A behavior creatures engage in.
+#A behavior creatures or environmental factors engage in.
 class Behavior
 	attr_accessor :actions, :conditions
 	def initialize (actions = [], conditions = [])
 		@actions, @conditions = actions, conditions
 	end
-	def perform(target)
-		conditions.each {|condition| return nil unless condition.call(target)}
-		actions.each {|action| action.call(target)}
+	def perform(subject, target)
+		conditions.each {|condition| return nil unless condition.call(subject, target)}
+		actions.each {|action| action.call(subject, target)}
 	end
 end
 #Something in the environment that acts on creatures.
