@@ -90,7 +90,7 @@ class TestTrailsView < Test::Unit::TestCase
 			#Add gravity.
 			gravity = EnvironmentalFactor.new
 			accelerate = Behavior.new
-			accelerate.actions << lambda {|target| target.vector.y += 9.8}
+			accelerate.actions << lambda {|gravity, target| target.vector.y += 9.8}
 			gravity.behaviors << accelerate
 			@environment.environmental_factors << gravity
 			
@@ -107,9 +107,9 @@ class TestTrailsView < Test::Unit::TestCase
 		#Add target and have all creatures chase it.
 		@environment.objects.each do |creature|
 			chase = Behavior.new
-			chase.conditions << lambda {|target| target.tags.include?('food')}
-			chase.conditions << lambda {|target| Utility.find_distance(creature.location, target.location) > 100}
-			chase.actions << lambda do |target|
+			chase.conditions << lambda {|creature, target| target.tags.include?('food')}
+			chase.conditions << lambda {|creature, target| Utility.find_distance(creature.location, target.location) > 100}
+			chase.actions << lambda do |creature, target|
 				angle_to_target = Utility.find_angle(creature.location, target.location)
 				creature.vector.pitch = angle_to_target
 			end
@@ -131,18 +131,18 @@ class TestTrailsView < Test::Unit::TestCase
 	
 	class Morpher < Creature
 		def initialize(*arguments)
-			super(*arguments)
+			super
 			@behaviors << Behavior.new(
 				[
-					lambda do |target|
-						target.color.red += 0.1 if target.color.red < self.color.red
-						target.color.green += 0.1 if target.color.green < self.color.green
-						target.color.blue += 0.1 if target.color.blue < self.color.blue
+					lambda do |creature, target|
+						target.color.red += 0.1 if target.color.red < creature.color.red
+						target.color.green += 0.1 if target.color.green < creature.color.green
+						target.color.blue += 0.1 if target.color.blue < creature.color.blue
 					end
 				],
 				[
-					lambda {|target| self.color < target.color},
-					lambda {|target| Utility.find_distance(self.location, target.location) < 25}
+					lambda {|creature, target| creature.color < target.color},
+					lambda {|creature, target| Utility.find_distance(creature.location, target.location) < 25}
 				]
 			)
 		end
@@ -164,7 +164,6 @@ end
 
 # # c:\work\zyps\source\net\sourceforge\zyps\actions\accelerateaction.java
 # # c:\work\zyps\source\net\sourceforge\zyps\actions\approachaction.java
-# # c:\work\zyps\source\net\sourceforge\zyps\actions\changecoloraction.java
 # c:\work\zyps\source\net\sourceforge\zyps\actions\destroyaction.java
 # # c:\work\zyps\source\net\sourceforge\zyps\actions\fleeaction.java
 # c:\work\zyps\source\net\sourceforge\zyps\actions\followinputdeviceaction.java

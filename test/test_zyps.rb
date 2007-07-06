@@ -62,7 +62,7 @@ class TestEnvironment < Test::Unit::TestCase
 		creature1 = Creature.new('1')
 		creature2 = Creature.new('2')
 		creature_behavior = Behavior.new
-		creature_behavior.actions << lambda {|target| @interactions << "Targeting #{target.name}"}
+		creature_behavior.actions << lambda {|creature, target| @interactions << "#{creature.name} targeting #{target.name}"}
 		creature1.behaviors << creature_behavior
 		creature2.behaviors << creature_behavior
 		
@@ -78,8 +78,9 @@ class TestEnvironment < Test::Unit::TestCase
 		@environment.interact
 
 		#Look for expected interactions (each should only occur once).
-		assert(@interactions.find_all{|i| i == "Targeting 1"}.length == 1)
-		assert(@interactions.find_all{|i| i == "Targeting 2"}.length == 1)
+		assert(@interactions.find_all{|i| i == "2 targeting 1"}.length == 1)
+		assert(@interactions.find_all{|i| i == "1 targeting 2"}.length == 1)
+		#TODO: Ensure creatures don't target selves.
 		
 	end
 	
@@ -88,7 +89,7 @@ class TestEnvironment < Test::Unit::TestCase
 	
 		#Create an environmental factor.
 		behavior = Behavior.new
-		behavior.actions << lambda {|target| @interactions << "Environment targeting #{target.name}"}
+		behavior.actions << lambda {|factor, target| @interactions << "Environment targeting #{target.name}"}
 		@environment.environmental_factors << EnvironmentalFactor.new([behavior])
 		
 		#Have environment elements interact.
@@ -106,10 +107,10 @@ class TestEnvironment < Test::Unit::TestCase
 		#Change behaviors to only occur if the target's name is '2'.
 		@environment.objects.each do |creature|
 			behavior = Behavior.new
-			behavior.conditions << lambda do |target|
+			behavior.conditions << lambda do |creature, target|
 				return true if creature.name == '1' and target.name == '2'
 			end
-			behavior.actions << lambda do |target|
+			behavior.actions << lambda do |creature, target|
 				@interactions << "#{creature.name} is targeting #{target.name}"
 			end
 			creature.behaviors << behavior
