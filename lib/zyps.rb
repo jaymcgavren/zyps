@@ -35,6 +35,17 @@ module Utility
 		radians += PI2 if radians < 0
 		radians
 	end
+	#Reduce a number to within an allowed maximum (or minimum, if the number is negative).
+	def Utility.constrain_value(value, absolute_maximum)
+		if (value.abs > absolute_maximum) then
+			if value >= 0 then
+				value = absolute_maximum
+			else
+				value = absolute_maximum * -1
+			end
+		end
+		value
+	end
 end
 #A virtual environment.
 class Environment
@@ -135,11 +146,18 @@ end
 class Vector
 	attr_accessor :speed
 	def initialize (speed = 0, pitch = 0)
-		@speed, @pitch = speed, Utility.to_radians(pitch)
+		self.speed = speed
+		self.pitch = pitch
 	end
 	#The angle along the X/Y axes.
 	def pitch; Utility.to_degrees(@pitch); end
-	def pitch=(degrees); @pitch = Utility.to_radians(degrees); end
+	def pitch=(degrees)
+		#Constrain degrees to 0 to 360.
+		value = degrees % 360
+		value += 360 if value < 0
+		#Store as radians internally.
+		@pitch = Utility.to_radians(value)
+	end
 	#The X component.
 	def x; @speed.to_f * Math.cos(@pitch); end
 	def x=(value)
@@ -149,6 +167,17 @@ class Vector
 	def y; @speed.to_f * Math.sin(@pitch); end
 	def y=(value)
 		@speed, @pitch = Math.sqrt(x ** 2 + value ** 2), Math.atan(value / x)
+	end
+	#Vector addition.
+	def +(vector2)
+		#Get the x and y components of the new vector.
+		new_x = (self.x + vector2.x)
+		new_y = (self.y + vector2.y)
+		new_length_squared = new_x ** 2 + new_y ** 2
+		new_length = (new_length_squared == 0 ? 0 : Math.sqrt(new_length_squared))
+		new_angle = (new_x == 0 ? 0 : Utility.to_degrees(Math.atan2(new_y, new_x)))
+		#Calculate speed and angle of new vector with components.
+		Vector.new(new_length, new_angle)
 	end
 end
 #A clock to use for timing actions.
