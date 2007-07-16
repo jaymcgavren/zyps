@@ -47,7 +47,7 @@ class TestTrailsView < Test::Unit::TestCase
 	end
 	
 	
-	def populate(environment, count)
+	def populate(environment, count = 50)
 		count.times do |i|
 			multiplier = i / count.to_f
 			environment.objects << Creature.new(
@@ -65,7 +65,7 @@ class TestTrailsView < Test::Unit::TestCase
 		@environment.objects << Creature.new(nil, Location.new(@view.width/2, @view.height/2), Color.new(1, 0, 0), Vector.new(10, 45))
 		@environment.objects << Creature.new(nil, Location.new(@view.width/2, @view.height/2), Color.new(0, 1, 0), Vector.new(20, 135))
 		@environment.objects << Creature.new(nil, Location.new(@view.width/2, @view.height/2), Color.new(0, 0, 1), Vector.new(30, 225))
-		populate(@environment, 100)
+		populate(@environment)
 		
 		thread = Thread.new do
 		
@@ -88,7 +88,7 @@ class TestTrailsView < Test::Unit::TestCase
 	
 	def test_environmental_factors
 	
-		populate(@environment, 100)
+		populate(@environment)
 		
 		thread = Thread.new do
 		
@@ -160,7 +160,7 @@ class TestTrailsView < Test::Unit::TestCase
 	
 	def test_change_color
 
-		populate(@environment, 100)
+		populate(@environment)
 		
 		@environment.objects << Morpher.new(nil, Location.new(0, 100), Color.new(1, 0, 0), Vector.new(100, 0))
 		@environment.objects << Morpher.new(nil, Location.new(0, 150), Color.new(0, 1, 0), Vector.new(200, 0))
@@ -173,7 +173,7 @@ class TestTrailsView < Test::Unit::TestCase
 	
 	def test_accelerate
 	
-		populate(@environment, 100)
+		populate(@environment)
 		
 		#Keep a separate clock for each object.
 		clocks = Hash.new {|h, k| h[k] = Clock.new}
@@ -193,7 +193,7 @@ class TestTrailsView < Test::Unit::TestCase
 	
 	def test_turn
 	
-		populate(@environment, 100)
+		populate(@environment, 20)
 		
 		#Keep a separate clock for each object.
 		clocks = Hash.new {|h, k| h[k] = Clock.new}
@@ -201,7 +201,7 @@ class TestTrailsView < Test::Unit::TestCase
 		turn = Behavior.new
 		turn.actions << lambda do |creature, target|
 			#Turn the appropriate amount for the elapsed time.
-			creature.vector.pitch += 30 * clocks[creature].elapsed_time
+			creature.vector.pitch += 100 * clocks[creature].elapsed_time
 		end
 		
 		#Add behavior to creatures.
@@ -263,17 +263,96 @@ class TestTrailsView < Test::Unit::TestCase
 			["prey"] #Tags.
 		)
 		
-		thread = Thread.new {animate(FRAME_COUNT * 50)}
+		thread = Thread.new {animate(FRAME_COUNT)}
 		
+	end
+	
+	
+	def test_flee
+	
+		populate(@environment, 20)
+		
+		#Keep a separate heading for each object.
+		headings = Hash.new {|h, k| h[k] = Vector.new(k.vector.speed, k.vector.pitch)}
+		
+		#Create a behavior.
+		max_turn_angle = 20
+		flee = Behavior.new
+		flee.actions << lambda do |creature, target|
+		
+			#Find the difference between the current heading and the angle AWAY from the target.
+			turn_angle = Utility.find_angle(creature.location, target.location) - headings[creature].pitch + 180
+			
+			#If the angle is the long way around from the current heading, change it to the smaller angle.
+			if turn_angle > 180 then
+				turn_angle -= 360.0
+			elsif turn_angle < -180 then
+				turn_angle += 360.0
+			end
+			
+			#If turn angle is greater than allowed turn speed, reduce it.
+			turn_angle = Utility.constrain_value(turn_angle, max_turn_angle)
+			
+			#Turn the appropriate amount for the elapsed time.
+			headings[creature].pitch += turn_angle
+			
+			#Apply the heading to the creature's movement vector.
+			creature.vector += headings[creature]
+			
+		end
+		
+		#Flee from only the creature's predator.
+		flee.conditions << lambda do |creature, target|
+			target.tags.include?('predator')
+		end
+		
+		#Add behavior to creatures.
+		@environment.objects.each {|creature| creature.behaviors << flee}
+		
+		#Add a target.
+		@environment.objects << Creature.new(
+			"lion",
+			Location.new(@view.width / 2, @view.height / 2),
+			Color.new(1, 1, 1),
+			Vector.new(3, 0),
+			0, #Age.
+			["predator"] #Tags.
+		)
+		
+		thread = Thread.new {animate(FRAME_COUNT)}
+		
+	end
+	
+	
+	class Destroy < Behavior
+		def initialize
+			super
+			#"Kill" target.
+			self.actions << lambda do |creature, target|
+				#Stop target.
+				target.vector = Vector.new(0, 0)
+				#Make target grey.
+				target.color = Color.new(0.5, 0.5, 0.5)
+				#Halt target's actions.
+				target.behaviors = []
+			end
+			#Act only if target is close.
+			self.conditions << lambda do |creature, target|
+				Utility.find_distance(creature.location, target.location) < 25
+			end
+		end
+	end
+	
+	def test_destroy
+		populate(@environment)
+		@environment.objects << Creature.new(nil, Location.new(0, 150), Color.new(0, 1, 0), Vector.new(200, 0), 0, [], [Destroy.new])
+		thread = Thread.new {animate(FRAME_COUNT)}
 	end
 	
 	
 end
 
 
-# # c:\work\zyps\source\net\sourceforge\zyps\actions\approachaction.java
-# # c:\work\zyps\source\net\sourceforge\zyps\actions\fleeaction.java
-# c:\work\zyps\source\net\sourceforge\zyps\actions\destroyaction.java
 # c:\work\zyps\source\net\sourceforge\zyps\actions\followinputdeviceaction.java
 # c:\work\zyps\source\net\sourceforge\zyps\actions\mateaction.java
 # c:\work\zyps\source\net\sourceforge\zyps\actions\reviveaction.java
