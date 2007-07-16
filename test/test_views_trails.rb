@@ -325,16 +325,14 @@ class TestTrailsView < Test::Unit::TestCase
 	
 	
 	class Destroy < Behavior
-		def initialize
-			super
+		#Environment from which targets will be removed.
+		attr_accessor :environment
+		def initialize(actions = [], conditions = [], environment = Environment.new)
+			super(actions, conditions)
+			@environment = environment
 			#"Kill" target.
 			self.actions << lambda do |creature, target|
-				#Stop target.
-				target.vector = Vector.new(0, 0)
-				#Make target grey.
-				target.color = Color.new(0.5, 0.5, 0.5)
-				#Halt target's actions.
-				target.behaviors = []
+				@environment.objects.delete(target)
 			end
 			#Act only if target is close.
 			self.conditions << lambda do |creature, target|
@@ -345,7 +343,9 @@ class TestTrailsView < Test::Unit::TestCase
 	
 	def test_destroy
 		populate(@environment)
-		@environment.objects << Creature.new(nil, Location.new(0, 150), Color.new(0, 1, 0), Vector.new(200, 0), 0, [], [Destroy.new])
+		destroy = Destroy.new
+		destroy.environment = @environment
+		@environment.objects << Creature.new(nil, Location.new(0, 150), Color.new(0, 1, 0), Vector.new(200, 0), 0, [], [destroy])
 		thread = Thread.new {animate(FRAME_COUNT)}
 	end
 	
