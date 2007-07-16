@@ -134,6 +134,14 @@ class Color
 	def <=>(other)
 		@red + @green + @blue <=> other.red + other.green + other.blue
 	end
+	#When adding colors, average each of their components.
+	def +(color2)
+		Color.new(
+			self.red + color2.red / 2.0,
+			self.green + color2.green / 2.0,
+			self.blue + color2.blue / 2.0
+		)
+	end
 end
 #An object's location.
 class Location
