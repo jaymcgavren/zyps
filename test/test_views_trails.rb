@@ -350,64 +350,6 @@ class TestTrailsView < Test::Unit::TestCase
 	end
 	
 	
-	class Mate < Behavior
-		attr_accessor :environment, :rate, :copy_odds
-		def initialize(actions = [], conditions = [], environment = Environment.new, copy_odds = 1)
-			super(actions, conditions)
-			@environment = environment
-			@copy_odds = copy_odds
-			#Track time since last action.
-			@clock = Clock.new
-			@elapsed_time = 0.0
-			#Mate with target.
-			self.actions << lambda do |father, mother|
-				#Create a new creature.
-				child = Creature.new(
-					"",
-					#Location should equal its mother's.
-					mother.location.clone,
-					#Color should be an average of its parents'.
-					father.color + mother.color,
-					#Speed should be 0.
-					Vector.new,
-					#Age is 0.
-					0,
-					#Combine tags into one set.
-					[father.tags + mother.tags].uniq
-				)
-				#For each of parents' behaviors, decide randomly if it should be copied to child.
-				[father.behaviors + mother.behaviors].uniq.each do |behavior|
-					next if rand(1) > copy_odds #Skip to next behavior if this one shouldn't be copied.
-					child.behaviors << behavior.clone
-				end
-				@environment.objects << child
-			end
-			#Act only if target is close.
-			self.conditions << lambda do |creature, target|
-				Utility.find_distance(creature.location, target.location) < 25
-			end
-			#Act only once every minute.
-			self.conditions << lambda do |creature, target|
-				@elapsed_time += @clock.elapsed_time
-				if @elapsed_time > 1 then
-					@elapsed_time = 0
-					return true
-				else
-					return false
-				end
-			end
-		end
-	end
-	
-	def test_mate
-		populate(@environment)
-		mate = Mate.new
-		mate.environment = @environment
-		@environment.objects << Creature.new(nil, Location.new(0, 150), Color.new(0, 1, 0), Vector.new(200, 0), 0, [], [mate])
-		thread = Thread.new {animate(FRAME_COUNT)}
-	end
-
-	
 end
 
 
