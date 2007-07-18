@@ -1,52 +1,54 @@
 require 'zyps'
 require 'zyps/views/trails'
-require 'test/unit'
 
 
-class TestTrailsView < Test::Unit::TestCase
-
+class Demo
 
 	WIDTH = 400
 	HEIGHT = 300
-	FRAME_COUNT = 40
+	FRAME_COUNT = 80
 
-	
-	def setup
-	
+	#Set up a window, a canvas, and an object environment, then run the given block.
+	def demo
+
 		#Create a window, and set GTK up to quit when it is closed.
-		@window = Gtk::Window.new
-		@window.signal_connect("delete_event") {false}
-		@window.signal_connect("destroy") {Gtk.main_quit}
+		window = Gtk::Window.new
+		window.signal_connect("delete_event") {false}
+		window.signal_connect("destroy") {Gtk.main_quit}
 		
 		#Add view to window.
 		@view = TrailsView.new(WIDTH, HEIGHT)
-		@window.add(@view.canvas)
-		@window.show_all
+		window.add(@view.canvas)
+		window.show_all
 		
-		#Create environment with objects.
+		#Create environment.
 		@environment = Environment.new
 		
-	end
-	
-	
-	def teardown
+		#Run the given block.
+		yield
+		
+		#Activate the GUI.
 		Gtk.main
+		#A divider for explanation text between demos.
+		say("-" * 30)
+		
 	end
 
-	
+	#Animate an environment for a given number of frames.
 	def animate(frame_count)
 		begin
 			(1..frame_count).each do |i|
 				@view.render(@environment.objects)
 				@environment.interact
+				#Delay 1/60th second to avoid screen flicker.
 				sleep 1.0 / 60.0
 			end
 		rescue Exception => exception
 			puts exception, exception.backtrace
 		end
 	end
-	
-	
+
+	#Populate an environment with the given number of creatures.
 	def populate(environment, count = 50)
 		count.times do |i|
 			multiplier = i / count.to_f
@@ -59,86 +61,124 @@ class TestTrailsView < Test::Unit::TestCase
 		end
 	end
 	
-	
+	#Explain what's going on to the user.
+	def say(phrase)
+		puts phrase
+	end
+
+	#Demonstrates drawing an environment and changing its size.
 	def test_render
-	
-		@environment.objects << Creature.new(nil, Location.new(@view.width/2, @view.height/2), Color.new(1, 0, 0), Vector.new(10, 45))
-		@environment.objects << Creature.new(nil, Location.new(@view.width/2, @view.height/2), Color.new(0, 1, 0), Vector.new(20, 135))
-		@environment.objects << Creature.new(nil, Location.new(@view.width/2, @view.height/2), Color.new(0, 0, 1), Vector.new(30, 225))
-		populate(@environment)
-		
+				
 		thread = Thread.new do
 		
-			#Test rendering.
+			say("The things that populate an environment are called GameObjects.  Each object has:")
+			object = GameObject.new
+			say("...a name")
+			object.name = "Clancy"
+			say("...a Location with x and y coordiates")
+			object.location = Location.new(@view.width/2, @view.height/2)
+			say("...a Color with red, green and blue components ranging from 0 to 1")
+			object.color = Color.new(1, 0, 0)
+			say("...and a Vector giving its speed and an angle from 0 to 360.")
+			object.vector = Vector.new(10, 45)
+			
+			say("Once your object is ready, add it to the environment.")
+			@environment.objects << object
+		
+			say("Call a view's render(objects) method to draw the objects.")
+			say("Call an environment's interact() method to have the objects in it move around.")
+			say("Our demo's animate() method does both these things for us.")
 			animate(FRAME_COUNT)
 			
-			#Change view size and widen trails.
+			say("Let's add a couple more objects with different colors and vectors.")
+			@environment.objects << GameObject.new(nil, Location.new(@view.width/2, @view.height/2), Color.new(0, 1, 0), Vector.new(20, 135))
+			@environment.objects << GameObject.new(nil, Location.new(@view.width/2, @view.height/2), Color.new(0, 0, 1), Vector.new(30, 225))
+			animate(FRAME_COUNT)
+			
+			say("The viewing area can be resized at any time via its width and height attributes.")
 			@view.width += 100
 			@view.height += 100
+			animate(FRAME_COUNT)
+			
+			say("TrailsView lets you set the thickness and length of the trails as well.")
 			@view.trail_width = 10
 			@view.trail_length = 10
-			
-			#Test at new size.
 			animate(FRAME_COUNT)
 			
 		end
 				
 	end
-	
-	
+
+
 	def test_environmental_factors
-	
+
 		populate(@environment)
 		
 		thread = Thread.new do
 		
-			#Test normally.
-			animate(10)
+			say("Without gravity, objects just travel on forever.")
+			animate(FRAME_COUNT)
 			
-			#Add gravity.
+			say("Let's add a new EnvironmentalFactor to simulate gravity.")
 			gravity = EnvironmentalFactor.new
+			
+			say("We create a Behavior the EnvironmentalFactor will follow.")
 			accelerate = Behavior.new
+			say("The behavior will have a single action: to accelerate objects toward the 'ground' at 9.8 meters/second.")
 			accelerate.actions << lambda {|gravity, target| target.vector.y += 9.8}
+			say("We add the behavior to the EnvironmentalFactor.")
 			gravity.behaviors << accelerate
+			say("Then we add the EnvironmentalFactor to the Environment.")
 			@environment.environmental_factors << gravity
 			
-			#Test again with gravity.
-			animate(20)
+			say("Everything immediately drops.")
+			animate(FRAME_COUNT)
 			
 		end
 				
 	end
-	
-	
+
+
 	def test_behaviors
-	
-		populate(@environment, 50)
+
+		populate(@environment)
 		
-		#Add target and have all creatures chase it.
-		@environment.objects.each do |creature|
+		thread = Thread.new do
+
+			say("Let's add a behavior to our creatures.")
 			chase = Behavior.new
-			chase.conditions << lambda {|creature, target| target.tags.include?('food')}
-			chase.conditions << lambda {|creature, target| Utility.find_distance(creature.location, target.location) > 100}
+			
+			say("We'll have them head straight toward their target.")
 			chase.actions << lambda do |creature, target|
 				angle_to_target = Utility.find_angle(creature.location, target.location)
 				creature.vector.pitch = angle_to_target
 			end
-			creature.behaviors << chase
-		end
-		@environment.objects << Creature.new(
-			"target",
-			Location.new(@view.width / 2, @view.height / 2),
-			Color.new(1, 1, 1),
-			Vector.new(3, 0),
-			0, #Age.
-			["food"] #Tags.
-		)
 			
-		thread = Thread.new {animate(FRAME_COUNT)}
+			say("So that they don't target every creature on the screen, we'll add a condition to the behavior saying the target must have the label 'food'.")
+			chase.conditions << lambda {|creature, target| target.tags.include?('food')}
+			
+			say("We'll apply this behavior to all creatures currently in the environment.")
+			@environment.objects.each {|creature| creature.behaviors << chase}
+			animate(FRAME_COUNT)
+			
+			say("Then we'll toss a piece of food (a GameObject with the label 'food') into the environment.")
+			@environment.objects << GameObject.new(
+				"target",
+				Location.new(@view.width / 2, @view.height / 2),
+				Color.new(1, 1, 1),
+				Vector.new(50, 315),
+				0, #Age.
+				["food"] #Tags.
+			)
+			
+			say("Let's see what the creatures do.")
+			animate(FRAME_COUNT)
+			
+		end
 		
 	end
-	
-	
+
+
 	class Morpher < Creature
 		def initialize(*arguments)
 			super
@@ -157,7 +197,7 @@ class TestTrailsView < Test::Unit::TestCase
 			)
 		end
 	end
-	
+
 	def test_change_color
 
 		populate(@environment)
@@ -169,58 +209,93 @@ class TestTrailsView < Test::Unit::TestCase
 		thread = Thread.new {animate(FRAME_COUNT)}
 				
 	end
-	
-	
+
+
 	def test_accelerate
-	
+
 		populate(@environment)
 		
-		#Keep a separate clock for each object.
-		clocks = Hash.new {|h, k| h[k] = Clock.new}
-		accelerate = Behavior.new
-		accelerate.actions << lambda do |creature, target|
-			#Accelerate the appropriate amount for the elapsed time.
-			creature.vector.speed += 100 * clocks[creature].elapsed_time
+		thread = Thread.new do
+
+		
+			say("Many actions need to happen smoothly over time, such as accelerating at a given rate.")
+			
+			say("Here are some Creatures, just plodding along.")
+			animate(FRAME_COUNT / 4)
+			say("We're going to have them pick up the pace.")
+			
+			say("A Clock helps track the passage of time (obviously).")
+			say("We'll create a separate Clock object for each creature.")
+			clocks = Hash.new {|h, k| h[k] = Clock.new}
+			
+			say("Our acceleration behavior is going to check to see how long it's been since it last took effect.")
+			say("It will multiply that time by a given rate, say 100 meters/second.")
+			say("Let's say it's been 0.1 seconds since this creature last accelerated.")
+			say("100 times 0.1 is 10.")
+			say("So we should add 10 meters/second to the creature's speed.")
+			accelerate = Behavior.new
+			accelerate.actions << lambda do |creature, target|
+				#Accelerate the appropriate amount for the elapsed time.
+				creature.vector.speed += 100 * clocks[creature].elapsed_time
+			end
+			
+			say("We add acceleration to all the creatures...")
+			@environment.objects.each {|creature| creature.behaviors << accelerate}
+			
+			say("And watch them rocket away.")
+			animate(FRAME_COUNT)
+			
 		end
 		
-		#Add behavior to creatures.
-		@environment.objects.each {|creature| creature.behaviors << accelerate}
-		
-		thread = Thread.new {animate(FRAME_COUNT)}
-		
 	end
-	
-	
+
+
 	def test_turn
-	
+
 		populate(@environment, 20)
 		
-		#Keep a separate clock for each object.
-		clocks = Hash.new {|h, k| h[k] = Clock.new}
-		#Create a behavior.
-		turn = Behavior.new
-		turn.actions << lambda do |creature, target|
-			#Turn the appropriate amount for the elapsed time.
-			creature.vector.pitch += 100 * clocks[creature].elapsed_time
+		thread = Thread.new do
+		
+			say("Turning smoothly requires tracking the rate of the turn as well.")
+			animate(FRAME_COUNT / 2)
+			
+			say("Again, we keep a separate Clock for each Creature.")
+			clocks = Hash.new {|h, k| h[k] = Clock.new}
+			
+			say("Our turn behavior follows the same principle as accelerating.")
+			say("We see how many seconds have elapsed, then multiply that by the turn rate.")
+			say("We add the result to the Vector angle.")
+			turn = Behavior.new
+			turn.actions << lambda do |creature, target|
+				#Turn the appropriate amount for the elapsed time.
+				creature.vector.pitch += 100 * clocks[creature].elapsed_time
+			end
+			
+			say("We add the behavior to each Creature...")
+			@environment.objects.each {|creature| creature.behaviors << turn}
+			
+			say("And watch things spiral out of control!")
+			animate(FRAME_COUNT)
+			
 		end
 		
-		#Add behavior to creatures.
-		@environment.objects.each {|creature| creature.behaviors << turn}
-		
-		thread = Thread.new {animate(FRAME_COUNT)}
-		
 	end
-	
-	
+
+
 	def test_approach
-	
+
 		populate(@environment, 20)
 		
-		#Keep a separate heading for each object.
+		say("When your car skids on ice, you might steer in a different direction, but you're going to keep following your original vector for a while.")
+		say("Adding vectors together lets us simulate this.")
+		
+		say("We'll keep a separate Vector for each Creature to track the direction it's 'steering' in.")
 		headings = Hash.new {|h, k| h[k] = Vector.new(k.vector.speed, k.vector.pitch)}
 		
-		#Create a behavior.
+		say("We'll only allow them to turn a maximum of 20 degrees in either direction.")
 		max_turn_angle = 20
+		
+		say("We create a Behavior which adds the Vector the creature WANTS to follow to the Vector it's ACTUALLY following.")
 		approach = Behavior.new
 		approach.actions << lambda do |creature, target|
 		
@@ -237,7 +312,7 @@ class TestTrailsView < Test::Unit::TestCase
 			#If turn angle is greater than allowed turn speed, reduce it.
 			turn_angle = Utility.constrain_value(turn_angle, max_turn_angle)
 			
-			#Turn the appropriate amount for the elapsed time.
+			#Turn the appropriate amount.
 			headings[creature].pitch += turn_angle
 			
 			#Apply the heading to the creature's movement vector.
@@ -245,15 +320,15 @@ class TestTrailsView < Test::Unit::TestCase
 			
 		end
 		
-		#Target only the creature's prey.
+		say("We add a condition that it should only target its prey.")
 		approach.conditions << lambda do |creature, target|
 			target.tags.include?('prey')
 		end
 		
-		#Add behavior to creatures.
+		say("We add the behavior to all creatures...")
 		@environment.objects.each {|creature| creature.behaviors << approach}
 		
-		#Add a target.
+		say("Add a target...")
 		@environment.objects << Creature.new(
 			"target",
 			Location.new(@view.width / 2, @view.height / 2),
@@ -263,14 +338,18 @@ class TestTrailsView < Test::Unit::TestCase
 			["prey"] #Tags.
 		)
 		
+		say("And watch them all TRY to catch it.")
 		thread = Thread.new {animate(FRAME_COUNT)}
 		
 	end
-	
-	
+
+
 	def test_flee
-	
+
 		populate(@environment, 20)
+		
+		say("Fleeing from something is just like approaching it, but we head in the OPPOSITE direction.")
+		say("Just get the angle toward the object, then add 180 degrees.")
 		
 		#Keep a separate heading for each object.
 		headings = Hash.new {|h, k| h[k] = Vector.new(k.vector.speed, k.vector.pitch)}
@@ -322,8 +401,8 @@ class TestTrailsView < Test::Unit::TestCase
 		thread = Thread.new {animate(FRAME_COUNT)}
 		
 	end
-	
-	
+
+
 	class Destroy < Behavior
 		#Environment from which targets will be removed.
 		attr_accessor :environment
@@ -340,30 +419,48 @@ class TestTrailsView < Test::Unit::TestCase
 			end
 		end
 	end
-	
+
 	def test_destroy
+	
 		populate(@environment)
+		
+		say("Most games are all about destruction, but there hasn't been much so far.")
+		say("Let's create a creature that causes some havoc.")
+		delinquent = Creature.new(nil, Location.new(0, 150), Color.new(0, 1, 0), Vector.new(200, 0))
+		
+		say("This demo code includes a subclass of Behavior, called Destroy.")
 		destroy = Destroy.new
+		
+		say("We'll destroy our targets by removing them from their environment.")
+		say("Creatures and their Behaviors normally know nothing about the Environment they belong to, so we added an environment attribute to Destroy.")
+		say("Destroy finds the target in Environment.objects and removes it.")
 		destroy.environment = @environment
-		@environment.objects << Creature.new(nil, Location.new(0, 150), Color.new(0, 1, 0), Vector.new(200, 0), 0, [], [destroy])
+		
+		say("Add the Destroy instance to the creature's behaviors...")
+		delinquent.behaviors << destroy
+		
+		say("Drop the creature into the actual environment...")
+		@environment.objects << delinquent
+		
+		say("Violence ensues.")
 		thread = Thread.new {animate(FRAME_COUNT)}
+		
 	end
-	
-	
+
+	def main
+		say "After each demo, close the window to proceed."
+		say("-" * 30)
+		demo {test_render}
+		demo {test_environmental_factors}
+		demo {test_behaviors}
+		demo {test_change_color}
+		demo {test_accelerate}
+		demo {test_turn}
+		demo {test_approach}
+		demo {test_flee}
+		demo {test_destroy}
+	end
+
 end
 
-
-# c:\work\zyps\source\net\sourceforge\zyps\actions\followinputdeviceaction.java
-# c:\work\zyps\source\net\sourceforge\zyps\actions\mateaction.java
-# # c:\work\zyps\source\net\sourceforge\zyps\actions\spawnaction.java
-# # c:\work\zyps\source\net\sourceforge\zyps\actions\tagaction.java
-# c:\work\zyps\source\net\sourceforge\zyps\environmentalfactors\boundary.java
-# c:\work\zyps\source\net\sourceforge\zyps\generators\randomcreaturegenerator.java
-# c:\work\zyps\source\net\sourceforge\zyps\generators\rolegenerator.java
-# c:\work\zyps\source\net\sourceforge\zyps\inputdevicelocation.java
-# # c:\work\zyps\source\net\sourceforge\zyps\simulation.java
-# c:\work\zyps\source\net\sourceforge\zyps\userinterfaces\demonstration.java
-# c:\work\zyps\source\net\sourceforge\zyps\userinterfaces\selectionpanel.java
-# c:\work\zyps\source\net\sourceforge\zyps\views\basicgraphicview.java
-# c:\work\zyps\source\net\sourceforge\zyps\views\debuggraphicview.java
-# c:\work\zyps\source\net\sourceforge\zyps\main.java
+Demo.new.main
