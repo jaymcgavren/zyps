@@ -182,19 +182,16 @@ class Demo
 	class Morpher < Creature
 		def initialize(*arguments)
 			super
-			@behaviors << Behavior.new(
-				[
-					lambda do |creature, target|
-						target.color.red += 0.1 if target.color.red < creature.color.red
-						target.color.green += 0.1 if target.color.green < creature.color.green
-						target.color.blue += 0.1 if target.color.blue < creature.color.blue
-					end
-				],
-				[
-					lambda {|creature, target| creature.color < target.color},
-					lambda {|creature, target| Utility.find_distance(creature.location, target.location) < 25}
-				]
-			)
+			morph = Behavior.new
+			#Shift the target's color to match the creature's.
+			morph.actions << lambda do |creature, target|
+				target.color.red += 0.1 if target.color.red < creature.color.red
+				target.color.green += 0.1 if target.color.green < creature.color.green
+				target.color.blue += 0.1 if target.color.blue < creature.color.blue
+			end
+			#Act only on nearby targets.
+			morph.conditions << lambda {|creature, target| Utility.find_distance(creature.location, target.location) < 50}
+			@behaviors << morph
 		end
 	end
 
@@ -202,10 +199,18 @@ class Demo
 
 		populate(@environment)
 		
+		say("Creatures can influence any attribute of their target, such as its color.")
+		say("This demo includes a Morpher class, which is a type of Creature.")
+		say("Morphers are created with a single behavior, which shifts the color of any nearby target to match the Morpher's color.")
+		
+		say("Let's place a red Morpher...")
 		@environment.objects << Morpher.new(nil, Location.new(0, 100), Color.new(1, 0, 0), Vector.new(100, 0))
+		say("a green one...")
 		@environment.objects << Morpher.new(nil, Location.new(0, 150), Color.new(0, 1, 0), Vector.new(200, 0))
+		say("and a blue one...")
 		@environment.objects << Morpher.new(nil, Location.new(0, 200), Color.new(0, 0, 1), Vector.new(300, 0))
 		
+		say("And see what they do.")
 		thread = Thread.new {animate(FRAME_COUNT)}
 				
 	end
