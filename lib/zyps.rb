@@ -63,13 +63,15 @@ class Environment
 			#Move each object according to its vector.
 			object.location.x += object.vector.x * elapsed_time
 			object.location.y += object.vector.y * elapsed_time
-			#Have all objects interact with each other.
-			objects.each do |target|
-				next if target.equal?(object) #Ensure object does not act on itself.
-				object.act(object, target)
-			end
 			#Have all environmental factors interact with each object.
 			environmental_factors.each {|factor| factor.act(factor, object)}
+			#Have all creatures interact with each other.
+			if object.respond_to?(:act)
+				objects.each do |target|
+					next if target.equal?(object) #Ensure object does not act on itself.
+					object.act(object, target)
+				end
+			end
 		end
 		#Mark environment as changed.
 		changed
