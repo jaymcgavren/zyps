@@ -40,11 +40,11 @@ Change into the project directory.  Run "rake -T" for a list of targets.  Ruby-G
 
 == See Also
 
-Project Site: http://code.google.com/p/itunes-control/
+Project Site: http://jay.mcgavren.com/zyps
 
-Ruby-GNOME2: http://ruby-gnome2.sourceforge.jp/
+Ruby-GNOME2: http://ruby-gnome2.sourceforge.jp
 
-Nullsoft Scriptable Install System: http://nsis.sourceforge.net/
+Nullsoft Scriptable Install System: http://nsis.sourceforge.net
 
 RubyScript2Exe: http://www.erikveen.dds.nl/rubyscript2exe/index.html
 
