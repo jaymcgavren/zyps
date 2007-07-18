@@ -274,7 +274,7 @@ class Demo
 			say("We add the behavior to each Creature...")
 			@environment.objects.each {|creature| creature.behaviors << turn}
 			
-			say("And watch things spiral out of control!")
+			say("And watch things spiral out of control.")
 			animate(FRAME_COUNT)
 			
 		end
@@ -442,7 +442,7 @@ class Demo
 		say("Drop the creature into the actual environment...")
 		@environment.objects << delinquent
 		
-		say("Violence ensues.")
+		say("And - chomp!")
 		thread = Thread.new {animate(FRAME_COUNT)}
 		
 	end
