@@ -32,8 +32,11 @@ end
 
 class Demo
 
+	#The view width.
 	WIDTH = 400
+	#The view height.
 	HEIGHT = 300
+	#Number of frames to draw per demo.
 	FRAME_COUNT = 80
 
 	#Set up a window, a canvas, and an object environment, then run the given block.
@@ -60,10 +63,12 @@ class Demo
 		
 		#Activate the GUI.
 		Gtk.main
+		
 		#A divider for explanation text between demos.
 		say("-" * 30)
 		
 	end
+
 
 	#Animate an environment for a given number of frames.
 	def animate(frame_count)
@@ -78,6 +83,7 @@ class Demo
 		end
 	end
 
+
 	#Populate an environment with the given number of creatures.
 	def populate(environment, count = 50)
 		count.times do |i|
@@ -90,11 +96,13 @@ class Demo
 			)
 		end
 	end
+
 	
 	#Explain what's going on to the user.
 	def say(phrase)
 		puts phrase
 	end
+
 
 	#Demonstrates drawing an environment and changing its size.
 	def test_render
@@ -140,6 +148,7 @@ class Demo
 	end
 
 
+	#Demonstrates environmental factors by adding gravity to the environment.
 	def test_environmental_factors
 
 		populate(@environment)
@@ -169,6 +178,7 @@ class Demo
 	end
 
 
+	#Demonstrates creature behaviors.
 	def test_behaviors
 
 		populate(@environment)
@@ -209,6 +219,7 @@ class Demo
 	end
 
 
+	#A Creature that changes the colors of other objects.
 	class Morpher < Creature
 		def initialize(*arguments)
 			super
@@ -225,6 +236,7 @@ class Demo
 		end
 	end
 
+	#Demonstrates changing object colors.
 	def test_change_color
 
 		populate(@environment)
@@ -246,6 +258,7 @@ class Demo
 	end
 
 
+	#Demonstrates altering object speed.
 	def test_accelerate
 
 		populate(@environment)
@@ -285,6 +298,7 @@ class Demo
 	end
 
 
+	#Demonstrates altering object vectors.
 	def test_turn
 
 		populate(@environment, 20)
@@ -317,6 +331,7 @@ class Demo
 	end
 
 
+	#Demonstrates adding vectors.
 	def test_approach
 
 		populate(@environment, 50)
@@ -379,6 +394,7 @@ class Demo
 	end
 
 
+	#Demonstrates turning away from an object, instead of toward it.
 	def test_flee
 
 		populate(@environment, 20)
@@ -438,6 +454,7 @@ class Demo
 	end
 
 
+	#A Behavior that destroys the target.
 	class Destroy < Behavior
 		#Environment from which targets will be removed.
 		attr_accessor :environment
@@ -455,6 +472,8 @@ class Demo
 		end
 	end
 
+
+	#Demonstrates keeping a reference to an Environment so a Creature can alter it.
 	def test_destroy
 	
 		populate(@environment)
@@ -483,6 +502,7 @@ class Demo
 	end
 
 
+	#Run all the demos.
 	def main
 		say "After each demo, close the window to proceed."
 		say("-" * 30)
@@ -497,6 +517,9 @@ class Demo
 		demo {test_destroy}
 	end
 
+
 end
 
+
+#Run the demos.
 Demo.new.main
