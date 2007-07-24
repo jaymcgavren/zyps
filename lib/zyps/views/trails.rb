@@ -18,9 +18,10 @@
 
 require 'gtk2'
 
+
 #A view of game objects.
 class TrailsView
-	
+
 	#A Gtk::DrawingArea to render objects on.
 	attr_reader :canvas
 	#Dimensions of the view.
@@ -64,12 +65,13 @@ class TrailsView
 		@height = pixels
 		resize
 	end
-	
+
 	#Takes an Environment, and draws it to the canvas.
 	#Tracks the position of each GameObject over time so it can draw a trail behind it.
 	#The head will match the object's Color exactly, fading to black at the tail.
 	#trail_width will be used as the line thickness at the object's head, diminishing to 1 at the tail.
 	def update(environment)
+	
 		#Clear the background on the buffer.
 		graphics_context = Gdk::GC.new(buffer)
 		graphics_context.rgb_fg_color = Gdk::Color.new(0, 0, 0)
@@ -79,24 +81,31 @@ class TrailsView
 			0, 0, #Upper-left corner.
 			@width, @height #Lower-right corner.
 		)
+		
 		#For each GameObject in the environment:
 		environment.objects.each do |object|
+		
 			#Add the object's current location to the list.
 			@locations[object] << [object.location.x, object.location.y]
 			#If the list is larger than the number of tail segments, delete the first position.
 			@locations[object].shift if @locations[object].length > @trail_length
+			
 			#For each location in this object's list:
 			@locations[object].each_with_index do |location, index|
+			
 				#Skip first location.
 				next if index == 0
+				
 				#Divide the current segment number by trail segment count to get the multiplier to use for brightness and width.
 				multiplier = index.to_f / @locations[object].length.to_f
+				
 				#Set the drawing color to use the object's colors, adjusted by the multiplier.
 				graphics_context.rgb_fg_color = Gdk::Color.new( #Don't use Gdk::GC.foreground= here, as that requires a color to be in the color map already.
 					object.color.red * multiplier * 65535,
 					object.color.green * multiplier * 65535,
 					object.color.blue * multiplier * 65535
 				)
+				
 				#Multiply the actual drawing width by the current multiplier to get the current drawing width.
 				graphics_context.set_line_attributes(
 					(@trail_width * multiplier).ceil,
@@ -104,18 +113,25 @@ class TrailsView
 					Gdk::GC::CAP_ROUND, #Line ends drawn as semicircles.
 					Gdk::GC::JOIN_MITER #Only used for polygons.
 				)
+				
 				#Get previous location so we can draw a line from it.
 				previous_location = @locations[object][index - 1]
+				
 				#Draw a line with the current width from the prior location to the current location.
 				buffer.draw_line(
 					graphics_context,
 					previous_location[0], previous_location[1],
 					location[0], location[1]
 				)
+				
 			end
+			
 		end
+		
 		@canvas.queue_draw_area(0, 0, @width, @height)
+		
 	end
+	
 	
 	private
 	
