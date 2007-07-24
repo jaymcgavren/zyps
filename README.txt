@@ -5,67 +5,68 @@ Zyps - A simulation/game with autonomous creatures.
 
 == Description
 
-Zyps are small creatures with minds of their own. You can create dozens of Zyps, then decide how each will act. (Will it run away from the others? Follow them? Eat them for lunch?) You can combine rules and actions to create very complex behaviors.
+Zyps are small creatures with minds of their own.  You can create dozens of Zyps, then decide how each will act.  (Will it run away from the others?  Follow them?  Eat them for lunch?)  You can combine rules and actions to create very complex behaviors.
+
+
+== Requirements
+
+* Ruby: http://www.ruby-lang.org
+* Ruby-GNOME2: http://ruby-gnome2.sourceforge.jp
+* Rake (to build from source): http://rake.rubyforge.org
 
 
 == Installation
 
-  * Windows (without Ruby): Visit the project site (see below), download and run the Windows installer.  All the needed libraries are included.
+Make sure you have administrative privileges, then type the following at a command line:
 
-  * With Ruby: {{{gem install zyps}}}
-  
-    * Ruby-GNOME2 is required, so visit its link below for download and installation instructions.
+	gem install zyps
 
 
 == Usage
 
-If you used the Windows installer, Zyps should appear under the Start menu.
+Ensure Ruby-GNOME2 is installed and working.
 
-If you installed the Ruby gem, simply run "zyps" at a command line.
+To see the demo, at a command line, type:
 
-
-== API
-
-Check the project site for API documentation.  Also see the "test" subfolder for sample code.
+	zyps_demo
 
 
-== Building from Source
+== Development
 
-The setup should be fairly standard for anyone familiar with Rake.  There are a few external dependencies; see below for links.
+Source code and documentation are available via the project site (http://jay.mcgavren.com/zyps).
 
-Get the source from the project site.
+Once downloaded, change into the project directory.  For a list of targets, run:
 
-Change into the project directory.  Run "rake -T" for a list of targets.  Ruby-GNOME2 is required for the GUI.  You'll need RubyScript2Exe to build a Windows executable, or NSIS to build a Windows installer.  Building a gem should work out of the box.
+	rake -T
 
+To build a gem:
 
-== See Also
+	rake
 
-Project Site: http://jay.mcgavren.com/zyps
+To see the demo:
+	
+	rake demo
 
-Ruby-GNOME2: http://ruby-gnome2.sourceforge.jp
+To create a "doc" subdirectory with API documentation:
 
-Nullsoft Scriptable Install System: http://nsis.sourceforge.net
+	rake rdoc
 
-RubyScript2Exe: http://www.erikveen.dds.nl/rubyscript2exe/index.html
+Also see "bin/zyps_demo" and the "test" subfolder in the project directory for sample code.
 
 
 == Thanks
 
-NullSoft Scriptable Install System is used to make the Windows installer; thanks to its authors.
-
-RubyScript2Exe is used to make the Windows executable; thanks to Erik Veenstra for pulling off this seemingly impossible feat!
-
-The GUI is provided via Ruby-GNOME2.  Thanks to its authors for their considerable effort in making the library (relatively) easy to use.
+The GUI is provided via Ruby-GNOME2.  Thanks to its authors for their considerable effort in making their library easy to use.
 
 
 == Author
 
-Copyright Jay McGavren, jay@mcgavren.com
+Copyright 2007 Jay McGavren, jay@mcgavren.com
 
 
 == License
 
-This program is free software; you can redistribute it and/or modify
+Zyps is free software; you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
 the Free Software Foundation; either version 3 of the License, or
 (at your option) any later version.
