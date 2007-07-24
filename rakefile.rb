@@ -17,6 +17,10 @@ WEB_SITE = "http://jay.mcgavren.com/#{PRODUCT_NAME.downcase}/"
 REQUIREMENTS = [
 	"Ruby-GNOME2"
 ]
+EXECUTABLES = [
+	PRODUCT_NAME.downcase,
+	"#{PRODUCT_NAME.downcase}_demo"
+]
 
 
 #Set up rdoc.
@@ -34,8 +38,8 @@ desc "Create documentation"
 Rake::RDocTask.new do |rdoc|
 	rdoc.rdoc_dir = "doc"
 	rdoc.rdoc_files = FileList[
-		"lib/**/*",
-		"*.txt"
+		"lib/**/*.rb",
+		"*.txt",
 	].exclude(/\bsvn\b/).to_a
 	rdoc.options = RDOC_OPTIONS
 end
@@ -45,6 +49,13 @@ desc "Test the package"
 Rake::TestTask.new do |test|
 	test.libs << "lib"
 	test.test_files = FileList["test/test_*.rb"]
+end
+
+
+desc "Run a demonstration"
+task :demo do
+	$: << "lib"
+	load "bin/zyps_demo"
 end
 
 
@@ -72,7 +83,7 @@ specification = Gem::Specification.new do |spec|
 		"test/**/*",
 		"doc/**/*"
 	].exclude(/\bsvn\b/).to_a
-	spec.executables << PRODUCT_NAME.downcase
+	spec.executables = EXECUTABLES
 end
 Rake::GemPackageTask.new(specification) do |package|
 	package.need_tar = true
