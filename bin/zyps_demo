@@ -1,5 +1,33 @@
-require 'zyps'
-require 'zyps/views/trails'
+#!/usr/local/bin/ruby
+
+# Copyright 2007 Jay McGavren, jay@mcgavren.com.
+# 
+# This file is part of Zyps.
+# 
+# Zyps is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+begin
+	require 'zyps'
+	require 'zyps/views/trails'
+rescue LoadError
+	require 'rubygems'
+	require 'zyps'
+	require 'zyps/views/trails'
+end
+
+
 
 
 class Demo
@@ -24,6 +52,9 @@ class Demo
 		#Create environment.
 		@environment = Environment.new
 		
+		#Point view at environment.
+		@environment.add_observer(@view)
+		
 		#Run the given block.
 		yield
 		
@@ -38,7 +69,6 @@ class Demo
 	def animate(frame_count)
 		begin
 			(1..frame_count).each do |i|
-				@view.render(@environment.objects)
 				@environment.interact
 				#Delay 1/60th second to avoid screen flicker.
 				sleep 1.0 / 60.0
@@ -289,7 +319,7 @@ class Demo
 
 	def test_approach
 
-		populate(@environment, 20)
+		populate(@environment, 50)
 		
 		say("When your car skids on ice, you might steer in a different direction, but you're going to keep following your original vector for a while.")
 		say("Adding vectors together lets us simulate this.")
@@ -451,6 +481,7 @@ class Demo
 		thread = Thread.new {animate(FRAME_COUNT)}
 		
 	end
+
 
 	def main
 		say "After each demo, close the window to proceed."

@@ -1,4 +1,22 @@
-#!/usr/bin/ruby
+#!/usr/local/bin/ruby
+
+# Copyright 2007 Jay McGavren, jay@mcgavren.com.
+# 
+# This file is part of Zyps.
+# 
+# Zyps is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 begin
 	require 'zyps'
@@ -12,46 +30,8 @@ end
 
 begin
 
-	WIDTH = 400
-	HEIGHT = 300
-
-	#Create a window, and set GTK up to quit when it is closed.
-	window = Gtk::Window.new
-	window.signal_connect("delete_event") {false}
-	window.signal_connect("destroy") {Gtk.main_quit}
-	
-	#Add view to window.
-	view = TrailsView.new(WIDTH, HEIGHT)
-	window.add(view.canvas)
-	window.show_all
-	
-	#Create environment with objects.
-	environment = Environment.new
-	50.times do |i|
-		multiplier = i / 50.to_f
-		environment.objects << Creature.new(
-			i,
-			Location.new(multiplier * view.width, multiplier * view.height),
-			Color.new(multiplier, 1 - multiplier, multiplier / 2 + 0.5),
-			Vector.new(100 * multiplier, multiplier * 360)
-		)
-	end
-
-	#Start animation thread.
-	thread = Thread.new do
-		begin
-			loop do
-				view.render(environment.objects)
-				environment.interact
-				sleep 1.0 / 60.0
-			end
-		rescue Exception => exception
-			puts exception, exception.backtrace
-		end
-	end
-
-	#Start GUI thread.
-	Gtk.main
+	puts "This is just a placeholder for the final application."
+	puts "To see a demonstration of the library, please run 'zyps_demo'."
 
 rescue => exception
 
