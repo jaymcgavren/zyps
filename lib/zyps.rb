@@ -1,5 +1,22 @@
+# Copyright 2007 Jay McGavren, jay@mcgavren.com.
+# 
+# This file is part of Zyps.
+# 
+# Zyps is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 require 'observer'
-require 'gtk2'
 
 #Various methods for working with Vectors, etc.
 module Utility
@@ -47,15 +64,23 @@ module Utility
 		value
 	end
 end
+
+
 #A virtual environment.
 class Environment
 	include Observable
-	attr_accessor :objects, :environmental_factors
+	#An array of GameObject objects that reside in the Environment.
+	attr_accessor :objects
+	#An array of EnvironmentalFactor objects that act on any GameObject in the Environment.
+	attr_accessor :environmental_factors
 	def initialize (objects = [], environmental_factors = [])
 		@objects, @environmental_factors = objects, environmental_factors
 		@clock = Clock.new
 	end
 	#Allow everything in the environment to interact with each other.
+	#Objects are first moved according to their preexisting vectors and the amount of time since the last call.
+	#Then each EnvironmentalFactor is allowed to act on each object.
+	#Finally, each GameObject with an act() method is allowed to act on every other object.
 	def interact
 		#Get time since last interaction.
 		elapsed_time = @clock.elapsed_time
@@ -75,46 +100,79 @@ class Environment
 		end
 		#Mark environment as changed.
 		changed
+		#Alert observers.
+		notify_observers(self)
 	end
 end
+
+
 #An object in the virtual environment.
 class GameObject
-	attr_accessor :location, :color, :vector, :name, :tags
+	#The object's Location in space.
+	attr_accessor :location
+	#A Color that will be used to draw the object.
+	attr_accessor :color
+	#A Vector with the object's current speed and direction of travel.
+	attr_accessor :vector
+	#A String with the object's name.
+	attr_accessor :name
+	#An array of Strings with tags that determine how the object will be treated by Creature and EnvironmentalFactor objects in its environment.
+	attr_accessor :tags
 	def initialize (name = nil, location = Location.new, color = Color.new, vector = Vector.new, age = 0, tags = [])
 		@name, @location, @color, @vector, @tags = name, location, color, vector, tags
 		self.age = age
 	end
+	#Time since the object was created, in seconds.
 	def age; Time.new.to_f - @birth_time; end
 	def age=(age); @birth_time = Time.new.to_f - age; end
 end
-#Mixin to have an object act on other objects.
+
+
+#Mixin to have an object (usually a Creature) act on other objects.
 module Responsive
+	#Call Behavior.perform on each of the object's assigned Behaviors, with the object and a target as arguments.
 	def act(subject, target)
 		behaviors.each {|behavior| behavior.perform(subject, target)}
 	end
 end
-#A creature.
+
+
+#A Creature is a GameObject that can sense and respond to other GameObjects (including other Creature objects).
 class Creature < GameObject
 	include Responsive
+	#A list of Behavior objects that determine the creature's response to its environment.
 	attr_accessor :behaviors
-
+	#Identical to the GameObject constructor, except that it also takes a list of Behavior objects.
 	def initialize (name = nil, location = Location.new, color = Color.new, vector = Vector.new, age = 0, tags = [], behaviors = [])
 		super(name, location, color, vector, age, tags)
 		@behaviors = behaviors
 	end
 end
-#A behavior creatures or environmental factors engage in.
+
+
+#A behavior that a Creature or EnvironmentalFactor object (or other classes that include Responsive) engage in.
+#The target can have its tags or colors changed, it can be "herded", it can be destroyed, or any other action the library user can dream up.
+#Likewise, the subject can change its own attributes, it can approach or flee from the target, it can spawn new Creatures or GameObjects (like bullets), or anything else.
 class Behavior
-	attr_accessor :actions, :conditions
+	#A list of conditions, which are Proc objects called with the object itself and its target.  A condition can consider the tags on the target, the distance from the subject, or any other criteria.  If any condition returns false, the behavior will not be carried out.
+	attr_accessor :conditions
+	#A list of actions, which are Proc objects called with the object and its target when all conditions are met.  An action can act on the subject or its target.
+	attr_accessor :actions
+	#Optionally takes an array of actions and one of conditions.
 	def initialize (actions = [], conditions = [])
 		@actions, @conditions = actions, conditions
 	end
+	#Calls each Proc object in the list of conditions with the subject and its target.  Returns nil if any condition returns false.
+	#Then calls each Proc object in the list of actions, also with the subject and its target.
 	def perform(subject, target)
 		conditions.each {|condition| return nil unless condition.call(subject, target)}
 		actions.each {|action| action.call(subject, target)}
 	end
 end
+
+
 #Something in the environment that acts on creatures.
+#Has a list of Behavior objects, each called in the same way as those of a Creature.
 class EnvironmentalFactor
 	include Responsive
 	attr_accessor :behaviors
@@ -122,21 +180,33 @@ class EnvironmentalFactor
 		@behaviors = behaviors
 	end
 end
-#An object's color.
+
+
+#An object's color.  Has red, green, and blue components, each ranging from 0 to 1.
+#* Red: <tt>Color.new(1, 0, 0)</tt>
+#* Green: <tt>Color.new(0, 1, 0)</tt>
+#* Blue: <tt>Color.new(0, 0, 1)</tt>
+#* White: <tt>Color.new(1, 1, 1)</tt>
+#* Black: <tt>Color.new(0, 0, 0)</tt>
 class Color
 	include Comparable
+	#Components which range from 0 to 1, which combine to form the Color.
 	attr_accessor :red, :green, :blue
 	def initialize (red = 1, green = 1, blue = 1)
 		@red, @green, @blue = red, green, blue
 	end
-	#Constrain components to the range 0 - 1.
+	#Automatically constrains value to the range 0 - 1.
 	def red=(v); v = 0 if v < 0; v = 1 if v > 1; @red = v; end
+	#Automatically constrains value to the range 0 - 1.
 	def green=(v); v = 0 if v < 0; v = 1 if v > 1; @green = v; end
+	#Automatically constrains value to the range 0 - 1.
 	def blue=(v); v = 0 if v < 0; v = 1 if v > 1; @blue = v; end
+	#Compares this Color with another to see which is brighter.
+	#The sum of all components (red + green + blue) for each color determines which is greater.
 	def <=>(other)
 		@red + @green + @blue <=> other.red + other.green + other.blue
 	end
-	#When adding colors, average each of their components.
+	#Averages each component of this Color with the corresponding component of color2, returning a new Color.
 	def +(color2)
 		Color.new(
 			self.red + color2.red / 2.0,
@@ -145,15 +215,22 @@ class Color
 		)
 	end
 end
-#An object's location.
+
+
+#An object's location, with x and y coordinates.
 class Location
+	#Coordinates can be negative, and don't have to be integers.
 	attr_accessor :x, :y
 	def initialize (x = 0, y = 0)
 		@x, @y = x, y
 	end
 end
+
+
 #An object or force's velocity.
+#Has speed and angle components.
 class Vector
+	#The length of the Vector.
 	attr_accessor :speed
 	def initialize (speed = 0, pitch = 0)
 		self.speed = speed
@@ -178,7 +255,8 @@ class Vector
 	def y=(value)
 		@speed, @pitch = Math.sqrt(x ** 2 + value ** 2), Math.atan(value / x)
 	end
-	#Vector addition.
+	#Add this Vector to vector2, returning a new Vector.
+	#This operation is useful when calculating the effect of wind or thrust on an object's current heading.
 	def +(vector2)
 		#Get the x and y components of the new vector.
 		new_x = (self.x + vector2.x)
@@ -190,11 +268,14 @@ class Vector
 		Vector.new(new_length, new_angle)
 	end
 end
+
+
 #A clock to use for timing actions.
 class Clock
 	def initialize
 		@last_check_time = Time.new.to_f
 	end
+	#Returns the time in (fractional) seconds since this method was last called (or on the first call, time since the Clock was created).
 	def elapsed_time
 		time = Time.new.to_f
 		elapsed_time = time - @last_check_time

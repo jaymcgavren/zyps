@@ -1,8 +1,34 @@
+# Copyright 2007 Jay McGavren, jay@mcgavren.com.
+# 
+# This file is part of Zyps.
+# 
+# Zyps is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+require 'gtk2'
+
 #A view of game objects.
 class TrailsView
-
-	attr_reader :canvas, :width, :height
-	attr_accessor :trail_length, :trail_width
+	
+	#A Gtk::DrawingArea to render objects on.
+	attr_reader :canvas
+	#Dimensions of the view.
+	attr_reader :width, :height
+	#Number of line segments to draw for each object.
+	attr_accessor :trail_length
+	#Width of the trail behind each object.
+	attr_accessor :trail_width
 
 	def initialize (width = 600, height = 400, trail_length = 5, trail_width = trail_length)
 	
@@ -30,17 +56,20 @@ class TrailsView
 		
 	end
 	
-	def width= (pixels)
+	def width= (pixels) #:nodoc:
 		@width = pixels
 		resize
 	end
-	def height= (pixels)
+	def height= (pixels) #:nodoc:
 		@height = pixels
 		resize
 	end
 	
-	#Draw the objects.
-	def render(objects)
+	#Takes an Environment, and draws it to the canvas.
+	#Tracks the position of each GameObject over time so it can draw a trail behind it.
+	#The head will match the object's Color exactly, fading to black at the tail.
+	#trail_width will be used as the line thickness at the object's head, diminishing to 1 at the tail.
+	def update(environment)
 		#Clear the background on the buffer.
 		graphics_context = Gdk::GC.new(buffer)
 		graphics_context.rgb_fg_color = Gdk::Color.new(0, 0, 0)
@@ -51,7 +80,7 @@ class TrailsView
 			@width, @height #Lower-right corner.
 		)
 		#For each GameObject in the environment:
-		objects.each do |object|
+		environment.objects.each do |object|
 			#Add the object's current location to the list.
 			@locations[object] << [object.location.x, object.location.y]
 			#If the list is larger than the number of tail segments, delete the first position.
