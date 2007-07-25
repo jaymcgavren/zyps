@@ -28,14 +28,347 @@ rescue LoadError
 end
 
 
+#Generates new creatures and places them in an environment.
+class Generator
+
+	#Environment creatures will be spawned into.
+	attr_accessor :environment
+	#Boundary that all new objects must be inside.
+	attr_accessor :min_x, :min_y, :max_x, :max_y
+	#Array of tags to choose from when generating new one.
+	attr_accessor :tag_pool
+	#Array of colors to choose from when generating new one.
+	attr_accessor :color_pool
+	#The maximum speed a new creature should be going.
+	attr_accessor :max_speed
+	#The maximum number of behaviors a creature can have.
+	attr_accessor :max_behaviors
+	#The maximum number of conditions a Behavior can have.
+	attr_accessor :max_conditions
+	#The maximum number of actions a Behavior can have.
+	attr_accessor :max_actions
+	
+	def initialize(environment, min_x, min_y, max_x, max_y)
+		@environment, @min_x, @min_y, @max_x, @max_y = environment, min_x, min_y, max_x, max_y
+		@tag_pool = %q{foo bar baz}
+		@color_pool = []
+		@max_behaviors = 2
+		@max_conditions = 2
+		@max_actions = 2
+		@max_speed = 50
+	end
+	
+	#Create a creature.
+	def create_creature()
+	
+		creature = Creature.new()
+		#Create a Color.
+		creature.color = create_color
+		#Create a Location.
+		creature.location = create_location
+		#Create a Vector.
+		creature.vector = create_vector()
+		#Create a random tag.
+		creature.tags << create_tag()
+		#Create a random number of behaviors.
+		rand(@max_behaviors).to_i.times {creature.behaviors << create_behavior()}
+		
+		creature
+		
+	end
+	
+	#Create a random tag.
+	#Chooses from tag_pool.
+	def create_tag()
+		@tag_pool[rand(@tag_pool.length).to_i]
+	end
+	#Create a random Color.
+	#Chooses from color_pool, or creates a random one from scratch if color_pool is empty.
+	def create_color()
+		if (color_pool.length != 0) then
+			return @color_pool[rand(@color_pool.length).to_i]
+		else
+			return Color.new(rand(), rand(), rand())
+		end
+	end
+	#Create a random Location.
+	def create_location()
+		Location.new(
+			rand(@max_x - @min_x) + @min_x,
+			rand(@max_y - @min_y) + @min_y
+		)
+	end
+	#Create a random Vector.
+	def create_vector()
+		Vector.new(rand(@max_speed), rand(360))
+	end
+	#Create a random Behavior.
+	def create_behavior()
+		behavior = Behavior.new
+		action_count = rand(@max_actions).to_i
+		action_count.times do
+			behavior.actions << create_action()
+		end
+		#Only add conditions if there's an action.
+		if action_count > 0 then
+			rand(@max_conditions).to_i.times do
+				behavior.conditions << create_condition()
+			end
+		end
+		behavior
+	end
+	#Create a random condition.
+	def create_condition()
+		case rand(3).to_i
+		when 0
+			return create_tag_condition()
+		when 1
+			return create_age_condition()
+		when 2
+			return create_proximity_condition()
+		else
+			raise "Invalid condition"
+		end
+	end
+	#Create a condition that looks for a random tag.
+	def create_tag_condition()
+		tag = create_tag()
+		lambda {|creature, target| target.tags.include?(tag)}
+	end
+	#Create a condition that looks for a random age.
+	def create_age_condition()
+		age = rand(60)
+		lambda {|creature, target| target.age > age}
+	end
+	#Create a condition that looks for a random proximity.
+	def create_proximity_condition()
+		proximity = rand(100)
+		lambda do |creature, target|
+			Utility.find_distance(creature.location, target.location) < proximity
+		end
+	end
+	#Create a random action.
+	def create_action()
+		case rand(9).to_i
+		when 0
+			return create_accelerate_action()
+		when 1
+			return create_approach_action()
+		when 2
+			return create_flee_action()
+		when 3
+			return create_blend_action()
+		when 4
+			return create_mate_action()
+		when 5
+			return create_spawn_action()
+		when 6
+			return create_turn_action()
+		when 7
+			return create_eat_action()
+		when 8
+			return create_tag_action()
+		else
+			raise "Invalid action"
+		end
+	end
+	#Create an action that accelerates at a random rate.
+	def create_accelerate_action()
+		clock = Clock.new()
+		rate = rand(10)
+		lambda {|creature, target| creature.vector.speed += rate * clock.elapsed_time}
+	end
+	#Create an action that turns in a circle.
+	def create_turn_action()
+		clock = Clock.new()
+		rate = rand(360)
+		lambda {|creature, target| creature.vector.pitch += rate * clock.elapsed_time}
+	end
+	#Create an action that approaches the target.
+	def create_approach_action()
+		heading = Vector.new
+		rate = rand(20)
+		lambda do |creature, target|
+			#Find the difference between the current heading and the angle to the target.
+			turn_angle = Utility.find_angle(creature.location, target.location) - heading.pitch
+			#If the angle is the long way around from the current heading, change it to the smaller angle.
+			if turn_angle > 180 then
+				turn_angle -= 360.0
+			elsif turn_angle < -180 then
+				turn_angle += 360.0
+			end
+			#If turn angle is greater than allowed turn speed, reduce it.
+			turn_angle = Utility.constrain_value(turn_angle, rate)
+			#Turn the appropriate amount.
+			heading.pitch += turn_angle
+			#Apply the heading to the creature's movement vector.
+			creature.vector += heading
+		end
+	end
+	#Create an action that flees from the target.
+	def create_flee_action()
+		heading = Vector.new
+		rate = rand(20)
+		lambda do |creature, target|
+			#Find the difference between the current heading and the angle AWAY from the target.
+			turn_angle = Utility.find_angle(creature.location, target.location) - heading.pitch + 180
+			#If the angle is the long way around from the current heading, change it to the smaller angle.
+			if turn_angle > 180 then
+				turn_angle -= 360.0
+			elsif turn_angle < -180 then
+				turn_angle += 360.0
+			end
+			#If turn angle is greater than allowed turn speed, reduce it.
+			turn_angle = Utility.constrain_value(turn_angle, rate)
+			#Turn the appropriate amount.
+			heading.pitch += turn_angle
+			#Apply the heading to the creature's movement vector.
+			creature.vector += heading
+		end
+	end
+	#Create an action that shifts the subject's color to match the target.
+	def create_blend_action()
+		lambda {|creature, target| creature.color += target.color}
+	end
+	#Create an action that mates with the target.
+	def create_mate_action()
+		#TODO
+		lambda {|creature, target| }
+	end
+	#Create an action that spawns a new creature.
+	def create_spawn_action()
+		#TODO
+		lambda {|creature, target| }
+	end
+	#Create an action that eats the target.
+	def create_eat_action()
+		lambda {|creature, target| @environment.objects.delete(target)}
+	end
+	#Create an action that applies a tag to the target.
+	def create_tag_action()
+		tag = create_tag()
+		lambda {|creature, target| target.tags << tag unless target.tags.include?(tag)}
+	end
+end
+
+
+#Keeps all objects within a set of walls.
+class Enclose < Behavior
+	attr_accessor :left, :top, :right, :bottom
+	def initialize
+		super
+		@conditions << lambda do |boundary, object|
+			#If object is beyond a boundary, set its position equal to the boundary and reflect it.
+			if (object.location.x < @left) then
+				object.location.x = @left
+				object.vector.pitch = 180 - object.vector.pitch
+			elsif (object.location.x < @right) then
+				object.location.x = @right
+				object.vector.pitch = 180 - object.vector.pitch
+			end
+			if (object.location.y < @top) then
+				object.location.y = @top
+				object.vector.pitch *= -1
+			elsif (object.location.y < @bottom) then
+				object.location.y = @bottom
+				object.vector.pitch *= -1
+			end
+		end
+	end
+end
+
+
+class Application
+
+	#Tags to randomly choose from.
+	attr_accessor :tag_pool
+	#Colors to randomly choose from.
+	attr_accessor :color_pool
+	
+	#Create app window, game environment, and view.
+	def initialize(width, height)
+		
+		@width, @height = width, height
+		
+		#Create a window, and set GTK up to quit when it is closed.
+		window = Gtk::Window.new
+		window.signal_connect("delete_event") {false}
+		window.signal_connect("destroy") {Gtk.main_quit}
+		
+		#Add view to window.
+		@view = TrailsView.new(@width, @height)
+		window.add(@view.canvas)
+		window.show_all
+		
+		#Create environment.
+		@environment = Environment.new
+		
+		#Point view at environment.
+		@environment.add_observer(@view)
+		
+	end
+	
+	
+	def main
+	
+# 		#Keep all objects within a boundary.
+# 		enclose = Enclose.new()
+# 		enclose.left = 0
+# 		enclose.right = width
+# 		enclose.top = 0
+# 		enclose.bottom = height
+# 		@environment.environmental_factors << EnvironmentalFactor.new([enclose])
+
+		#Create a creature generator.
+		generator = Generator.new(@environment, 0, 0, @width, @height)
+		generator.tag_pool = @tag_pool
+		generator.color_pool = @color_pool
+
+		#Create thread to update environment.
+		thread = Thread.new do
+			begin
+				loop do
+					@environment.interact
+					#Control population.
+					@environment.objects.shift while @environment.objects.length > 50
+					@environment.objects << generator.create_creature() while @environment.objects.length < 50
+					#Delay 1/60th second to avoid screen flicker.
+					sleep 1.0 / 60.0
+				end
+			rescue Exception => exception
+				puts exception, exception.backtrace
+			end
+		end
+		
+		#Activate the GUI.
+		Gtk.main
+		
+	end
+	
+
+end
+
+
 begin
-
-	puts "This is just a placeholder for the final application."
-	puts "To see a demonstration of the library, please run 'zyps_demo'."
-
+	TAG_POOL = %w{x y z}
+	COLOR_POOL = [
+		Color.new(1, 0, 0),
+		Color.new(1, 0.75, 0),
+		Color.new(1, 1, 0),
+		Color.new(0, 1, 0),
+		Color.new(0, 0, 1),
+		Color.new(1, 0, 1)
+	]
+	#The view width.
+	WIDTH = 500
+	#The view height.
+	HEIGHT = 400
+	#Run the application.
+	application = Application.new(WIDTH, HEIGHT)
+	application.color_pool = COLOR_POOL
+	application.tag_pool = TAG_POOL
+	application.main
 rescue => exception
-
 	#Print error to STDERR and exit with an abnormal status.
 	abort "Error: " + exception.message + exception.backtrace.join("\n")
-
 end
