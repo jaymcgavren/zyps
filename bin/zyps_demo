@@ -28,8 +28,6 @@ rescue LoadError
 end
 
 
-
-
 class Demo
 
 	#The view width.
@@ -521,5 +519,10 @@ class Demo
 end
 
 
-#Run the demos.
-Demo.new.main
+begin
+	#Run the demos.
+	Demo.new.main
+rescue => exception
+	#Print error to STDERR and exit with an abnormal status.
+	abort "Error: " + exception.message
+end
