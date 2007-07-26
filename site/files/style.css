@@ -3,7 +3,7 @@ body {
 	padding: 0;
 	text-align: center;
 	background: #000000;
-	font: 13px Arial, Lucida Sans Unicode, sans-serif;
+	font: 13px Arial, "Lucida Sans Unicode", sans-serif;
 }
 
 #container {
@@ -18,7 +18,7 @@ body {
 
 #container #heading {
 	color: #ffffff;
-	font: 75px Arial, Lucida Sans Unicode, sans-serif;
+	font: 75px Arial, "Lucida Sans Unicode", sans-serif;
 	padding-top: 20px;
 	height: 125px;
 	width:	750px;
@@ -49,8 +49,8 @@ body {
 	color: #999999;
 }
 
-#caption {
-	font: 10px Arial, Lucida Sans Unicode, sans-serif;
+td.caption {
+	font: 10px Arial, "Lucida Sans Unicode", sans-serif;
 }
 
 ul {
