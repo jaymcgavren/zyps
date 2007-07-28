@@ -257,19 +257,19 @@ class Enclose < Behavior
 	attr_accessor :left, :top, :right, :bottom
 	def initialize
 		super
-		@conditions << lambda do |boundary, object|
+		@actions << lambda do |boundary, object|
 			#If object is beyond a boundary, set its position equal to the boundary and reflect it.
 			if (object.location.x < @left) then
 				object.location.x = @left
 				object.vector.pitch = 180 - object.vector.pitch
-			elsif (object.location.x < @right) then
+			elsif (object.location.x > @right) then
 				object.location.x = @right
 				object.vector.pitch = 180 - object.vector.pitch
 			end
 			if (object.location.y < @top) then
 				object.location.y = @top
 				object.vector.pitch *= -1
-			elsif (object.location.y < @bottom) then
+			elsif (object.location.y > @bottom) then
 				object.location.y = @bottom
 				object.vector.pitch *= -1
 			end
@@ -311,13 +311,13 @@ class Application
 	
 	def main
 	
-# 		#Keep all objects within a boundary.
-# 		enclose = Enclose.new()
-# 		enclose.left = 0
-# 		enclose.right = width
-# 		enclose.top = 0
-# 		enclose.bottom = height
-# 		@environment.environmental_factors << EnvironmentalFactor.new([enclose])
+		#Keep all objects within a boundary.
+		enclose = Enclose.new()
+		enclose.left = 0
+		enclose.right = @width
+		enclose.top = 0
+		enclose.bottom = @height
+		@environment.environmental_factors << EnvironmentalFactor.new([enclose])
 
 		#Create a creature generator.
 		generator = Generator.new(@environment, 0, 0, @width, @height)
@@ -330,8 +330,8 @@ class Application
 				loop do
 					@environment.interact
 					#Control population.
-					@environment.objects.shift while @environment.objects.length > 50
-					@environment.objects << generator.create_creature() while @environment.objects.length < 50
+					@environment.objects.shift while @environment.objects.length > 25
+					@environment.objects << generator.create_creature() while @environment.objects.length < 25
 					#Delay 1/60th second to avoid screen flicker.
 					sleep 1.0 / 60.0
 				end
