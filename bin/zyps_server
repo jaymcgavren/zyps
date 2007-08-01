@@ -1,0 +1,178 @@
+#!/usr/local/bin/ruby
+
+# Copyright 2007 Jay McGavren, jay@mcgavren.com.
+# 
+# This file is part of Zyps.
+# 
+# Zyps is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+begin
+	require 'optparse'
+	require 'zyps'
+	require 'zyps/views/trails'
+	require 'drb'
+rescue LoadError
+	require 'optparse'
+	require 'rubygems'
+	require 'zyps'
+	require 'zyps/views/trails'
+	require 'drb'
+end
+
+
+#An Environment intended for serving over DRb.
+class RemoteEnvironment < Environment
+	def initialize
+		super
+		@objects.extend DRbUndumped
+		@environmental_factors.extend DRbUndumped
+	end
+	def objects=(value)
+		@objects = value
+		@objects.extend DRbUndumped
+	end
+	def environmental_factors=(value)
+		@environmental_factors = value
+		@environmental_factors.extend DRbUndumped
+	end
+end
+
+
+#A server for a Zyps Environment.
+class EnvironmentServer
+
+	#Port to open service on.
+	attr_accessor :port
+	#Maximum allowed number of objects.
+	attr_accessor :max_population
+	#View dimensions.
+	attr_accessor :view_width, :view_height
+	
+	#Set up default values.
+	def initialize(port = nil, max_population = 25, fps = 60, view_width = 800, view_height = 600)
+		@port, @max_population, @fps, @view_width, @view_height = port, max_population, fps, view_width, view_height
+	end
+
+	#Create app window, game environment, view, and network service.
+	def main
+	
+		#A clock to track frames to draw this second.
+		clock = Clock.new
+	
+		#Create a window, and set GTK up to quit when it is closed.
+		window = Gtk::Window.new
+		window.signal_connect("delete_event") {false}
+		window.signal_connect("destroy") {Gtk.main_quit}
+		
+		#Add view to window.
+		view = TrailsView.new(@view_width, @view_height)
+		window.add(view.canvas)
+		window.show_all
+		
+		#Create environment.
+		environment = RemoteEnvironment.new
+		#Point view at environment.
+		environment.add_observer(view)
+		
+		#Create thread to update environment.
+		update_thread = Thread.new do
+			begin
+				loop do
+					environment.interact
+					#Control population.
+					environment.objects.shift while environment.objects.length > @max_population
+					#Sleep for the rest of this frame.
+					delay = (1.0 / @fps) - clock.elapsed_time
+					sleep delay if delay > 0
+				end
+			rescue Exception => exception
+				puts exception, exception.backtrace
+			end
+		end
+		
+		#Start a network service.
+		DRb.start_service(
+			@port ? "druby://localhost:#{@port}" : nil,
+			environment
+		)
+		#If port was automatically chosen, display our URI.
+		puts DRb.uri unless @port
+		
+		#Activate the GUI.
+		Gtk.main
+		
+	end
+	
+	
+	#Set attributes according to command-line arguments.
+	def process_options(arguments)
+	
+		#Set up option parser.
+		options = OptionParser.new
+		
+		#Define valid options.
+		options.on("-h", "--help", TrueClass, "Display program help.") {
+			puts options.help
+			exit
+		}
+		options.on(
+			"-m",
+			"--max-population [number]",
+			Integer,
+			"The maximum number of allowed game objects.  25 by default."
+		) {|value| @max_population = value}
+		options.on(
+			"-p",
+			"--port [number]",
+			Integer,
+			"Port number to run the server on.  If not defined, next available one will be selected and the URI printed to STDOUT."
+		) {|value| @port = value}
+		options.on(
+			"-f",
+			"--fps [frames]",
+			Integer,
+			"Number of frames to draw per second."
+		) {|value| @fps = value}
+		options.on(
+			"--view-width [pixels]",
+			Integer,
+			"Window width.  800 by default."
+		) {|value| @view_width = value}
+		options.on(
+			"--view-height [pixels]",
+			Integer,
+			"Window height.  600 by default."
+		) {|value| @view_height = value}
+		
+		#Parse the options, printing usage if parsing fails.
+		options.parse(arguments) rescue puts "#{$!}\nType '#{$0} --help' for valid options."
+		
+	end
+
+
+end
+
+
+begin
+	#Create a server.
+	server = EnvironmentServer.new
+	#Parse the command line.
+	server.process_options(ARGV)
+	#Start the server.
+	server.main
+rescue => exception
+	#Print error to STDERR and exit with an abnormal status.
+	abort "Error: " + exception.message + exception.backtrace.join("\n")
+end
