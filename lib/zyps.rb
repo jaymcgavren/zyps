@@ -78,6 +78,9 @@ end
 #An object in the virtual environment.
 class GameObject
 
+	#A universal identifier for the object.
+	#Needed for DRb transmission, etc.
+	attr_reader :identifier
 	#The object's Location in space.
 	attr_accessor :location
 	#A Color that will be used to draw the object.
@@ -91,6 +94,7 @@ class GameObject
 	
 	def initialize (name = nil, location = Location.new, color = Color.new, vector = Vector.new, age = 0, tags = [])
 		@name, @location, @color, @vector, @tags = name, location, color, vector, tags
+		@identifier = rand(99999999) #TODO: This won't necessarily be unique.
 		self.age = age
 	end
 	

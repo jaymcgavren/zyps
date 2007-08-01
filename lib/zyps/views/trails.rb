@@ -84,20 +84,20 @@ class TrailsView
 		
 		#For each GameObject in the environment:
 		environment.objects.each do |object|
-		
+
 			#Add the object's current location to the list.
-			@locations[object] << [object.location.x, object.location.y]
+			@locations[object.identifier] << [object.location.x, object.location.y]
 			#If the list is larger than the number of tail segments, delete the first position.
-			@locations[object].shift if @locations[object].length > @trail_length
+			@locations[object.identifier].shift if @locations[object.identifier].length > @trail_length
 			
 			#For each location in this object's list:
-			@locations[object].each_with_index do |location, index|
+			@locations[object.identifier].each_with_index do |location, index|
 			
 				#Skip first location.
 				next if index == 0
 				
 				#Divide the current segment number by trail segment count to get the multiplier to use for brightness and width.
-				multiplier = index.to_f / @locations[object].length.to_f
+				multiplier = index.to_f / @locations[object.identifier].length.to_f
 				
 				#Set the drawing color to use the object's colors, adjusted by the multiplier.
 				graphics_context.rgb_fg_color = Gdk::Color.new( #Don't use Gdk::GC.foreground= here, as that requires a color to be in the color map already.
@@ -115,7 +115,7 @@ class TrailsView
 				)
 				
 				#Get previous location so we can draw a line from it.
-				previous_location = @locations[object][index - 1]
+				previous_location = @locations[object.identifier][index - 1]
 				
 				#Draw a line with the current width from the prior location to the current location.
 				buffer.draw_line(
