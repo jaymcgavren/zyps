@@ -26,9 +26,27 @@ Make sure you have administrative privileges, then type the following at a comma
 
 Ensure Ruby-GNOME2 is installed and working.
 
-To see the demo, at a command line, type:
+At a command line, type:
+
+	zyps
+
+To see a tutorial on the library, at a command line, type:
 
 	zyps_demo
+
+To run a DRb server others can connect to and add creatures:
+
+	zyps_server [options]
+	  -h, --help                       Display program help.
+	  -m, --max-population [number]    The maximum number of allowed game
+	                                   objects.  25 by default.
+	  -p, --port [number]              Port number to run the server on.
+	                                   If not defined, next available one
+	                                   will be selected and the URI printed
+	                                   to STDOUT.
+	  -f, --fps [frames]               Number of frames to draw per second.
+	      --view-width [pixels]        Window width.  800 by default.
+	      --view-height [pixels]       Window height.  600 by default.
 
 
 == Development
