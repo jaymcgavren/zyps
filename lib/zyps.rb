@@ -19,7 +19,6 @@
 require 'observer'
 
 
-
 #A virtual environment.
 class Environment
 
@@ -47,17 +46,16 @@ class Environment
 		objects.each do |object|
 		
 			#Move each object according to its vector.
-			object.location.x += object.vector.x * elapsed_time
-			object.location.y += object.vector.y * elapsed_time
+			object.move(elapsed_time)
 			
 			#Have all environmental factors interact with each object.
-			environmental_factors.each {|factor| factor.act(factor, object)}
+			environmental_factors.each {|factor| factor.act(object)}
 			
 			#Have all creatures interact with each other.
 			if object.respond_to?(:act)
 				objects.each do |target|
 					next if target.equal?(object) #Ensure object does not act on itself.
-					object.act(object, target)
+					object.act(target)
 				end
 			end
 			
@@ -94,8 +92,14 @@ class GameObject
 	
 	def initialize (name = nil, location = Location.new, color = Color.new, vector = Vector.new, age = 0, tags = [])
 		@name, @location, @color, @vector, @tags = name, location, color, vector, tags
-		@identifier = rand(99999999) #TODO: This won't necessarily be unique.
+		@identifier = rand(99999999) #TODO: Current setup won't necessarily be unique.
 		self.age = age
+	end
+	
+	#Move according to vector over the given number of seconds.
+	def move (elapsed_time)
+		@location.x += @vector.x * elapsed_time
+		@location.y += @vector.y * elapsed_time
 	end
 	
 	#Time since the object was created, in seconds.
@@ -110,8 +114,8 @@ end
 module Responsive
 
 	#Call Behavior.perform on each of the object's assigned Behaviors, with the object and a target as arguments.
-	def act(subject, target)
-		behaviors.each {|behavior| behavior.perform(subject, target)}
+	def act(target)
+		behaviors.each {|behavior| behavior.perform(self, target)}
 	end
 	
 end

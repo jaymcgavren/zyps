@@ -20,11 +20,31 @@ require 'zyps'
 require 'test/unit'
 
 
+class TestGameObject < Test::Unit::TestCase
+
+
+	def test_move
+		#Set up moving object.
+		object = GameObject.new
+		object.location = Location.new(0, 0)
+		object.vector = Vector.new(1.4142, 45)
+		#Move for 1 second.
+		object.move(1)
+		#Check object moved to expected coordinates.
+		assert_in_delta(1, object.location.x, 0.001)
+		assert_in_delta(1, object.location.y, 0.001)
+	end
+
+
+end
+
+
 class TestCreature < Test::Unit::TestCase
 
 
 	def test_default_initialization
 		creature = Creature.new
+		assert_not_nil(creature.identifier)
 		assert_equal(0, creature.location.x)
 		assert_equal(0, creature.location.y)
 		assert_equal(1, creature.color.red)
@@ -36,6 +56,8 @@ class TestCreature < Test::Unit::TestCase
 		assert_in_delta(0, creature.age, 0.1)
 		assert_equal([], creature.tags)
 		assert_equal([], creature.behaviors)
+		#Identifiers should be unique.
+		assert_not_equal(creature.identifier, Creature.new.identifier)
 	end
 	
 	
@@ -98,7 +120,8 @@ class TestEnvironment < Test::Unit::TestCase
 		#Look for expected interactions (each should only occur once).
 		assert(@interactions.find_all{|i| i == "2 targeting 1"}.length == 1)
 		assert(@interactions.find_all{|i| i == "1 targeting 2"}.length == 1)
-		#TODO: Ensure creatures don't target selves.
+		assert(@interactions.find_all{|i| i == "1 targeting 1"}.length == 0)
+		assert(@interactions.find_all{|i| i == "2 targeting 2"}.length == 0)
 		
 	end
 	
