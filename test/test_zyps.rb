@@ -328,6 +328,18 @@ class TestUtility < Test::Unit::TestCase
 		assert_in_delta(1.4142, Utility.find_distance(origin, Location.new(-1,-1)), 0.001)
 		assert_in_delta(1.4142, Utility.find_distance(origin, Location.new(1,-1)), 0.001)
 	end
+	
+	
+	def test_find_reflection_angle(normal, incidence_angle)
+		assert_equals(135, Utility.find_reflection_angle(180, 45)) #right barrier, up-right, up-left
+		assert_equals(225, Utility.find_reflection_angle(180, 315)) #right barrier, down-right, down-left
+		assert_equals(225, Utility.find_reflection_angle(270, 135)) #top barrier, up-left, down-left
+		assert_equals(315, Utility.find_reflection_angle(270, 45)) #top barrier, up-right, down-right
+		assert_equals(45, Utility.find_reflection_angle(0, 135)) #left barrier, up-left, up-right
+		assert_equals(315, Utility.find_reflection_angle(0, 315)) #left barrier, down-left, down-right
+		assert_equals(135, Utility.find_reflection_angle(90, 225)) #bottom barrier, down-left, up-left
+		assert_equals(45, Utility.find_reflection_angle(90, 315)) #bottom barrier, down-right, up-right
+	end
 
 	
 end
