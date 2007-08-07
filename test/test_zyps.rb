@@ -330,15 +330,29 @@ class TestUtility < Test::Unit::TestCase
 	end
 	
 	
-	def test_find_reflection_angle(normal, incidence_angle)
-		assert_equals(135, Utility.find_reflection_angle(180, 45)) #right barrier, up-right, up-left
-		assert_equals(225, Utility.find_reflection_angle(180, 315)) #right barrier, down-right, down-left
-		assert_equals(225, Utility.find_reflection_angle(270, 135)) #top barrier, up-left, down-left
-		assert_equals(315, Utility.find_reflection_angle(270, 45)) #top barrier, up-right, down-right
-		assert_equals(45, Utility.find_reflection_angle(0, 135)) #left barrier, up-left, up-right
-		assert_equals(315, Utility.find_reflection_angle(0, 315)) #left barrier, down-left, down-right
-		assert_equals(135, Utility.find_reflection_angle(90, 225)) #bottom barrier, down-left, up-left
-		assert_equals(45, Utility.find_reflection_angle(90, 315)) #bottom barrier, down-right, up-right
+	def test_find_reflection_angle
+		assert_equal(210, Utility.find_reflection_angle(0, 150))
+		assert_equal(330, Utility.find_reflection_angle(0, 30))
+		assert_equal(150, Utility.find_reflection_angle(90, 30))
+		assert_equal(210, Utility.find_reflection_angle(90, 330))
+		assert_equal(30, Utility.find_reflection_angle(180, 330))
+		assert_equal(150, Utility.find_reflection_angle(180, 210))
+		assert_equal(330, Utility.find_reflection_angle(270, 210))
+		assert_equal(30, Utility.find_reflection_angle(270, 150))
+	end
+
+	
+	def test_inside_box?
+		#Too far left.
+		assert(! Utility.inside_box?(Location.new(1, 3), Location.new(2, 2), Location.new(4, 4)))
+		#Too far right.
+		assert(! Utility.inside_box?(Location.new(5, 3), Location.new(2, 2), Location.new(4, 4)))
+		#Too far up.
+		assert(! Utility.inside_box?(Location.new(3, 1), Location.new(2, 2), Location.new(4, 4)))
+		#Too far down.
+		assert(! Utility.inside_box?(Location.new(3, 5), Location.new(2, 2), Location.new(4, 4)))
+		#Inside.
+		assert(Utility.inside_box?(Location.new(3, 3), Location.new(2, 2), Location.new(4, 4)))
 	end
 
 	

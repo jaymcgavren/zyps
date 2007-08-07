@@ -256,7 +256,6 @@ class Vector
 	def pitch=(degrees)
 		#Constrain degrees to 0 to 360.
 		value = degrees % 360
-		value += 360 if value < 0
 		#Store as radians internally.
 		@pitch = Utility.to_radians(value)
 	end
@@ -360,7 +359,21 @@ module Utility
 		value
 	end
 	
+	#Given a normal and an angle, find the reflection angle.
+	def Utility.find_reflection_angle(normal, angle)
+		incidence_angle = normal - angle
+		reflection_angle = normal + incidence_angle
+		reflection_angle %= 360
+		reflection_angle
+	end
+
+	#Given a location and the upper left and lower right corners of a box, determine if the point is within the box.
+	def Utility.inside_box?(point, upper_left, lower_right)
+		return false if point.x < upper_left.x
+		return false if point.y < upper_left.y
+		return false if point.x > lower_right.x
+		return false if point.y > lower_right.y
+		true
+	end
+	
 end
-
-
-
