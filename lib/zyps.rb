@@ -196,7 +196,7 @@ class Color
 	attr_accessor :red, :green, :blue
 	
 	def initialize (red = 1, green = 1, blue = 1)
-		@red, @green, @blue = red, green, blue
+		self.red, self.green, self.blue = red, green, blue
 	end
 	
 	#Automatically constrains value to the range 0 - 1.
