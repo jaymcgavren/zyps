@@ -34,7 +34,7 @@ To see a tutorial on the library, at a command line, type:
 
 	zyps_demo
 
-To run a DRb server others can connect to and add creatures:
+To run a DRb server others can connect to and add creatures (NOTE: not thoroughly tested and probably insecure!):
 
 	zyps_server [options]
 	  -h, --help                       Display program help.
