@@ -55,7 +55,7 @@ class Generator
 		@max_behaviors = 2
 		@max_conditions = 2
 		@max_actions = 2
-		@max_speed = 50
+		@max_speed = 100
 	end
 	
 	#Create a creature.
@@ -71,7 +71,7 @@ class Generator
 		#Create a random tag.
 		creature.tags << create_tag()
 		#Create a random number of behaviors.
-		rand(@max_behaviors).to_i.times {creature.behaviors << create_behavior()}
+		generate_number(0, @max_behaviors).to_i.times {creature.behaviors << create_behavior()}
 		
 		creature
 		
@@ -80,38 +80,41 @@ class Generator
 	#Create a random tag.
 	#Chooses from tag_pool.
 	def create_tag()
-		@tag_pool[rand(@tag_pool.length).to_i]
+		@tag_pool[generate_number(0, @tag_pool.length).to_i]
 	end
 	#Create a random Color.
 	#Chooses from color_pool, or creates a random one from scratch if color_pool is empty.
 	def create_color()
 		if (color_pool.length != 0) then
-			return @color_pool[rand(@color_pool.length).to_i]
+			return @color_pool[generate_number(0, @color_pool.length).to_i]
 		else
-			return Color.new(rand(), rand(), rand())
+			return Color.new(generate_random_number(0, 1), generate_random_number(0, 1), generate_random_number(0, 1))
 		end
 	end
 	#Create a random Location.
 	def create_location()
 		Location.new(
-			rand(@max_x - @min_x) + @min_x,
-			rand(@max_y - @min_y) + @min_y
+			generate_random_number(0, @max_x - @min_x) + @min_x,
+			generate_random_number(0, @max_y - @min_y) + @min_y
 		)
 	end
 	#Create a random Vector.
 	def create_vector()
-		Vector.new(rand(@max_speed), rand(360))
+		Vector.new(generate_number(0, @max_speed), generate_number(0, 360))
 	end
 	#Create a random Behavior.
 	def create_behavior()
 		behavior = Behavior.new
-		action_count = rand(@max_actions).to_i
+		action_count = generate_number(0, @max_actions).to_i
 		action_count.times do
 			behavior.actions << create_action()
 		end
 		#Only add conditions if there's an action.
 		if action_count > 0 then
-			rand(@max_conditions).to_i.times do
+			#There should always be a proximity condition.
+			behavior.conditions << create_proximity_condition()
+			#Add some additional conditions.
+			generate_random_number(0, @max_conditions).to_i.times do
 				behavior.conditions << create_condition()
 			end
 		end
@@ -119,13 +122,11 @@ class Generator
 	end
 	#Create a random condition.
 	def create_condition()
-		case rand(3).to_i
+		case generate_number(0, 2).to_i
 		when 0
 			return create_tag_condition()
 		when 1
 			return create_age_condition()
-		when 2
-			return create_proximity_condition()
 		else
 			raise "Invalid condition"
 		end
@@ -137,19 +138,19 @@ class Generator
 	end
 	#Create a condition that looks for a random age.
 	def create_age_condition()
-		age = rand(60)
+		age = generate_number(0, 60)
 		lambda {|creature, target| target.age > age}
 	end
 	#Create a condition that looks for a random proximity.
 	def create_proximity_condition()
-		proximity = rand(100)
+		proximity = generate_number(0, 100)
 		lambda do |creature, target|
 			Utility.find_distance(creature.location, target.location) < proximity
 		end
 	end
 	#Create a random action.
 	def create_action()
-		case rand(9).to_i
+		case generate_random_number(0, 9).to_i
 		when 0
 			return create_accelerate_action()
 		when 1
@@ -175,19 +176,19 @@ class Generator
 	#Create an action that accelerates at a random rate.
 	def create_accelerate_action()
 		clock = Clock.new()
-		rate = rand(10)
+		rate = generate_number(0, 10)
 		lambda {|creature, target| creature.vector.speed += rate * clock.elapsed_time}
 	end
 	#Create an action that turns in a circle.
 	def create_turn_action()
 		clock = Clock.new()
-		rate = rand(360)
+		rate = generate_number(0, 360)
 		lambda {|creature, target| creature.vector.pitch += rate * clock.elapsed_time}
 	end
 	#Create an action that approaches the target.
 	def create_approach_action()
 		heading = Vector.new
-		rate = rand(20)
+		rate = generate_number(0, 20)
 		lambda do |creature, target|
 			#Find the difference between the current heading and the angle to the target.
 			turn_angle = Utility.find_angle(creature.location, target.location) - heading.pitch
@@ -208,7 +209,7 @@ class Generator
 	#Create an action that flees from the target.
 	def create_flee_action()
 		heading = Vector.new
-		rate = rand(20)
+		rate = generate_number(0, 20)
 		lambda do |creature, target|
 			#Find the difference between the current heading and the angle AWAY from the target.
 			turn_angle = Utility.find_angle(creature.location, target.location) - heading.pitch + 180
@@ -249,6 +250,14 @@ class Generator
 		tag = create_tag()
 		lambda {|creature, target| target.tags << tag unless target.tags.include?(tag)}
 	end
+	#Generate a number between the given minimum and maximum, based on the current system time.
+	def generate_number(minimum, maximum)
+		(Time.new.to_f % (maximum - minimum)) + minimum
+	end
+	#Generate a random number between the given minimum and maximum.
+	def generate_random_number(minimum, maximum)
+		value = rand * (maximum - minimum) + minimum
+	end
 end
 
 
@@ -261,17 +270,17 @@ class Enclose < Behavior
 			#If object is beyond a boundary, set its position equal to the boundary and reflect it.
 			if (object.location.x < @left) then
 				object.location.x = @left
-				object.vector.pitch = 180 - object.vector.pitch
+				object.vector.pitch = Utility.find_reflection_angle(90, object.vector.pitch)
 			elsif (object.location.x > @right) then
 				object.location.x = @right
-				object.vector.pitch = 180 - object.vector.pitch
+				object.vector.pitch = Utility.find_reflection_angle(270, object.vector.pitch)
 			end
 			if (object.location.y < @top) then
 				object.location.y = @top
-				object.vector.pitch *= -1
+				object.vector.pitch = Utility.find_reflection_angle(0, object.vector.pitch)
 			elsif (object.location.y > @bottom) then
 				object.location.y = @bottom
-				object.vector.pitch *= -1
+				object.vector.pitch = Utility.find_reflection_angle(180, object.vector.pitch)
 			end
 		end
 	end
@@ -284,12 +293,16 @@ class Application
 	attr_accessor :tag_pool
 	#Colors to randomly choose from.
 	attr_accessor :color_pool
+	#Seconds between creature creation.
+	attr_accessor :birth_rate
 	
 	#Create app window, game environment, and view.
 	def initialize(width, height)
 		
 		@width, @height = width, height
-		
+		@tag_pool, @color_pool = [], []
+		@birth_rate = 1
+
 		#Create a window, and set GTK up to quit when it is closed.
 		window = Gtk::Window.new
 		window.signal_connect("delete_event") {false}
@@ -327,11 +340,17 @@ class Application
 		#Create thread to update environment.
 		thread = Thread.new do
 			begin
+				birth_clock = Clock.new
+				time_since_birth = 0
 				loop do
 					@environment.interact
 					#Control population.
 					@environment.objects.shift while @environment.objects.length > 25
-					@environment.objects << generator.create_creature() while @environment.objects.length < 25
+					#Create new creature every few seconds.
+					if (time_since_birth += birth_clock.elapsed_time) > birth_rate
+						@environment.objects << generator.create_creature()
+						time_since_birth = 0
+					end
 					#Delay 1/60th second to avoid screen flicker.
 					sleep 1.0 / 60.0
 				end
