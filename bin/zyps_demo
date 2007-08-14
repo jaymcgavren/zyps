@@ -36,6 +36,8 @@ class Demo
 	HEIGHT = 300
 	#Number of frames to draw per demo.
 	FRAME_COUNT = 80
+	#Number of frames per second.
+	FRAMES_PER_SECOND = 30
 
 	#Set up a window, a canvas, and an object environment, then run the given block.
 	def demo
@@ -70,15 +72,28 @@ class Demo
 
 	#Animate an environment for a given number of frames.
 	def animate(frame_count)
+	
+		#A clock to track frames to draw this second.
+		clock = Clock.new
+		time_per_frame = 1.0 / FRAMES_PER_SECOND
+		
 		begin
 			(1..frame_count).each do |i|
 				@environment.interact
-				#Delay 1/60th second to avoid screen flicker.
-				sleep 1.0 / 60.0
+				#Determine how much time is left in this frame.
+				time_left_in_frame = (time_per_frame) - clock.elapsed_time
+				#Sleep for the remaining time.
+				if time_left_in_frame > 0
+					sleep time_left_in_frame
+				#Skip a frame if things are going too slow.
+				else
+					sleep time_per_frame
+				end
 			end
 		rescue Exception => exception
 			puts exception, exception.backtrace
 		end
+		
 	end
 
 
@@ -176,6 +191,7 @@ class Demo
 	end
 
 
+	
 	#Demonstrates creature behaviors.
 	def test_behaviors
 

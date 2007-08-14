@@ -70,6 +70,7 @@ class EnvironmentServer
 	
 		#A clock to track frames to draw this second.
 		clock = Clock.new
+		time_per_frame = 1.0 / @fps
 	
 		#Create a window, and set GTK up to quit when it is closed.
 		window = Gtk::Window.new
@@ -88,18 +89,32 @@ class EnvironmentServer
 		
 		#Create thread to update environment.
 		update_thread = Thread.new do
+		
 			begin
+			
 				loop do
+				
 					environment.interact
+					
 					#Control population.
 					environment.objects.shift while environment.objects.length > @max_population
-					#Sleep for the rest of this frame.
-					delay = (1.0 / @fps) - clock.elapsed_time
-					sleep delay if delay > 0
+					
+					#Determine how much time is left in this frame.
+					time_left_in_frame = time_per_frame - clock.elapsed_time
+					#Sleep for the remaining time.
+					if time_left_in_frame > 0
+						sleep time_left_in_frame
+					#Skip a frame if things are going too slow.
+					else
+						sleep time_per_frame
+					end
+					
 				end
+				
 			rescue Exception => exception
 				puts exception, exception.backtrace
 			end
+			
 		end
 		
 		#Start a network service.

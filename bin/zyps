@@ -302,6 +302,7 @@ class Application
 		@width, @height = width, height
 		@tag_pool, @color_pool = [], []
 		@birth_rate = 1
+		@fps = 30.0
 
 		#Create a window, and set GTK up to quit when it is closed.
 		window = Gtk::Window.new
@@ -339,11 +340,18 @@ class Application
 
 		#Create thread to update environment.
 		thread = Thread.new do
+		
 			begin
+			
+				drawing_clock = Clock.new
 				birth_clock = Clock.new
+				time_per_frame = 1.0 / @fps
 				time_since_birth = 0
+				
 				loop do
+				
 					@environment.interact
+					
 					#Control population.
 					@environment.objects.shift while @environment.objects.length > 25
 					#Create new creature every few seconds.
@@ -351,12 +359,23 @@ class Application
 						@environment.objects << generator.create_creature()
 						time_since_birth = 0
 					end
-					#Delay 1/60th second to avoid screen flicker.
-					sleep 1.0 / 60.0
+					
+					#Determine how much time is left in this frame.
+					time_left_in_frame = (time_per_frame) - drawing_clock.elapsed_time
+					#Sleep for the remaining time.
+					if time_left_in_frame > 0
+						sleep time_left_in_frame
+					#Skip a frame if things are going too slow.
+					else
+						sleep time_per_frame
+					end
+					
 				end
+				
 			rescue Exception => exception
 				puts exception, exception.backtrace
 			end
+			
 		end
 		
 		#Activate the GUI.
