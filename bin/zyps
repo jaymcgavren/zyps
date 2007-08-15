@@ -261,11 +261,16 @@ class Generator
 end
 
 
+
 #Keeps all objects within a set of walls.
-class Enclose < Behavior
+class EncloseBehavior < Behavior
+
+	#Positions of walls.
 	attr_accessor :left, :top, :right, :bottom
+	
 	def initialize
 		super
+		@left, @top, @right, @bottom = 0, 0, 0, 0
 		@actions << lambda do |boundary, object|
 			#If object is beyond a boundary, set its position equal to the boundary and reflect it.
 			if (object.location.x < @left) then
@@ -284,7 +289,9 @@ class Enclose < Behavior
 			end
 		end
 	end
+	
 end
+
 
 
 class Application
@@ -326,7 +333,7 @@ class Application
 	def main
 	
 		#Keep all objects within a boundary.
-		enclose = Enclose.new()
+		enclose = EncloseBehavior.new()
 		enclose.left = 0
 		enclose.right = @width
 		enclose.top = 0
