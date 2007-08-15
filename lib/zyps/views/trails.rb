@@ -33,7 +33,7 @@ class TrailsView
 
 	def initialize (width = 600, height = 400, trail_length = 5, trail_width = trail_length)
 	
-		@width, @height, @trail_length, @trail_width, @background = width, height, trail_length, trail_width
+		@width, @height, @trail_length, @trail_width = width, height, trail_length, trail_width
 	
 		#Create a drawing area.
 		@canvas = Gtk::DrawingArea.new
@@ -78,8 +78,8 @@ class TrailsView
 		buffer.draw_rectangle(
 			graphics_context,
 			true, #Filled.
-			0, 0, #Upper-left corner.
-			@width, @height #Lower-right corner.
+			0, 0, #Lower-left corner.
+			@width, @height #Upper-right corner.
 		)
 		
 		#For each GameObject in the environment:
@@ -120,8 +120,8 @@ class TrailsView
 				#Draw a line with the current width from the prior location to the current location.
 				buffer.draw_line(
 					graphics_context,
-					previous_location[0], previous_location[1],
-					location[0], location[1]
+					previous_location[0], @height - previous_location[1],
+					location[0], @height - location[1]
 				)
 				
 			end
