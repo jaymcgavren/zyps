@@ -307,18 +307,18 @@ class Application
 	def initialize(width, height)
 		
 		@width, @height = width, height
-		@tag_pool, @color_pool = [], []
 		@birth_rate = 1
 		@fps = 30.0
-
+		
 		#Create a window, and set GTK up to quit when it is closed.
 		window = Gtk::Window.new
 		window.signal_connect("delete_event") {false}
 		window.signal_connect("destroy") {Gtk.main_quit}
 		
-		#Add view to window.
-		@view = TrailsView.new(@width, @height)
-		window.add(@view.canvas)
+		#Set up controls.
+		window.add(create_controls)
+	
+		#Show all widgets.
 		window.show_all
 		
 		#Create environment.
@@ -332,6 +332,7 @@ class Application
 	
 	def main
 	
+	
 		#Keep all objects within a boundary.
 		enclose = EncloseBehavior.new()
 		enclose.left = 0
@@ -342,8 +343,6 @@ class Application
 
 		#Create a creature generator.
 		generator = Generator.new(@environment, 0, 0, @width, @height)
-		generator.tag_pool = @tag_pool
-		generator.color_pool = @color_pool
 
 		#Create thread to update environment.
 		thread = Thread.new do
@@ -363,7 +362,99 @@ class Application
 					@environment.objects.shift while @environment.objects.length > 25
 					#Create new creature every few seconds.
 					if (time_since_birth += birth_clock.elapsed_time) > birth_rate
-						@environment.objects << generator.create_creature()
+						creature = Creature.new(
+							'',
+							generator.create_location,
+							Color.new(@red_slider.value, @green_slider.value, @blue_slider.value),
+							generator.create_vector,
+							0,
+							@tags_box.text.split(/,\s*/)
+						)
+						behavior = Behavior.new
+						condition_tags = @tag_condition_box.text
+						condition_tags.split(/,\s*/).each do |tag|
+							behavior.conditions << lambda do |creature, target|
+								target.tags.include?(tag)
+							end
+						end
+						proximity = @proximity_condition_slider.value
+						if proximity > 0
+							behavior.conditions << lambda do |creature, target|
+								Utility.find_distance(creature.location, target.location) < proximity
+							end
+						end
+						age = @age_condition_slider.value
+						if age > 0
+							behavior.conditions << lambda do |creature, target|
+								target.age > age
+							end
+						end
+						acceleration = @acceleration_slider.value
+						if acceleration != 0
+							behavior.actions << lambda do |creature, target|
+								creature.vector.speed += acceleration
+								creature.vector.speed = 0 if creature.vector.speed < 0
+							end
+						end
+						turn = @turn_slider.value
+						if turn != 0
+							behavior.actions << lambda do |creature, target|
+								creature.vector.pitch += turn
+							end
+						end
+						approach_angle = @approach_slider.value
+						if approach_angle > 0
+							heading = creature.vector.clone
+							behavior.actions << lambda do |creature, target|
+								#Find the difference between the current heading and the angle to the target.
+								turn_angle = Utility.find_angle(creature.location, target.location) - heading.pitch
+								#If the angle is the long way around from the current heading, change it to the smaller angle.
+								if turn_angle > 180 then
+									turn_angle -= 360.0
+								elsif turn_angle < -180 then
+									turn_angle += 360.0
+								end
+								#If turn angle is greater than allowed turn speed, reduce it.
+								turn_angle = Utility.constrain_value(turn_angle, approach_angle)
+								#Turn the appropriate amount.
+								heading.pitch += turn_angle
+								#Apply the heading to the creature's movement vector.
+								creature.vector += heading
+							end
+						end
+						flee_angle = @flee_slider.value
+						if flee_angle > 0
+							heading = creature.vector.clone
+							behavior.actions << lambda do |creature, target|
+								#Find the difference between the current heading and the angle to the target.
+								turn_angle = Utility.find_angle(creature.location, target.location) - heading.pitch + 180
+								#If the angle is the long way around from the current heading, change it to the smaller angle.
+								if turn_angle > 180 then
+									turn_angle -= 360.0
+								elsif turn_angle < -180 then
+									turn_angle += 360.0
+								end
+								#If turn angle is greater than allowed turn speed, reduce it.
+								turn_angle = Utility.constrain_value(turn_angle, flee_angle)
+								#Turn the appropriate amount.
+								heading.pitch += turn_angle
+								#Apply the heading to the creature's movement vector.
+								creature.vector += heading
+							end
+						end
+						if @eat_flag.active?
+							behavior.actions << lambda do |creature, target|
+								@environment.objects.delete(target)
+							end
+						end
+						apply_tags = @tag_action_box.text
+						apply_tags.split(/,\s*/).each do |tag|
+							behavior.conditions << lambda do |creature, target|
+								target.tags << tag unless target.tags.include?(tag)
+							end
+						end
+						creature.behaviors << behavior
+						@environment.objects << creature
 						time_since_birth = 0
 					end
 					
@@ -390,28 +481,115 @@ class Application
 		
 	end
 	
+	
+	#Create a view and controls.
+	def create_controls(width = @width, height = @height, homogeneous = false, spacing = 0, expand = false, fill = false, padding = 0)
+	
+		#Create a container for the view and controls.
+		interface = Gtk::HBox.new(homogeneous, spacing)
+		
+		#Add view to interface.
+		@view = TrailsView.new(width, height)
+		interface.pack_start(@view.canvas, expand, fill, padding)
+		
+		#Create a VBox for all controls.
+		control_panel = Gtk::VBox.new(homogeneous, spacing)
+	
+		#Create a group for the new object's attributes.
+		attribute_controls = Gtk::VBox.new(homogeneous, spacing)
+		
+		#Add sliders for the color components.
+		attribute_controls.pack_start(Gtk::Label.new("Color"), expand, fill, padding)
+		attribute_controls.pack_start(Gtk::Label.new("R"), expand, fill, padding)
+		@red_slider = Gtk::HScale.new(0, 1, 0.1)
+		attribute_controls.pack_start(@red_slider, expand, fill, padding)
+		attribute_controls.pack_start(Gtk::Label.new("G"), expand, fill, padding)
+		@green_slider = Gtk::HScale.new(0, 1, 0.1)
+		attribute_controls.pack_start(@green_slider, expand, fill, padding)
+		attribute_controls.pack_start(Gtk::Label.new("B"), expand, fill, padding)
+		@blue_slider = Gtk::HScale.new(0, 1, 0.1)
+		attribute_controls.pack_start(@blue_slider, expand, fill, padding)
+		@red_slider.value, @green_slider.value, @blue_slider.value = 1, 1, 1
+				
+		#Add a text box for the tags.
+		attribute_controls.pack_start(Gtk::Label.new("Tags"), expand, fill, padding)
+		@tags_box = Gtk::Entry.new
+		attribute_controls.pack_start(@tags_box, expand, fill, padding)
+		
+		#Add the attribute controls to the panel.
+		control_panel.pack_start(attribute_controls, expand, fill, padding)
+		
+		#Create a group for the conditions.
+		condition_controls = Gtk::VBox.new(homogeneous, spacing)
+		condition_controls.pack_start(Gtk::Label.new("Target"), expand, fill, padding)
+		#Add a text box for the tag condition.
+		condition_controls.pack_start(Gtk::Label.new("Tags"), expand, fill, padding)
+		@tag_condition_box = Gtk::Entry.new
+		condition_controls.pack_start(@tag_condition_box, expand, fill, padding)
+		#Add a slider for the age condition.
+		@age_condition_slider = Gtk::HScale.new(0, 300, 30)
+		condition_controls.pack_start(Gtk::Label.new("Age"), expand, fill, padding)
+		condition_controls.pack_start(@age_condition_slider, expand, fill, padding)
+		#Add a slider for the proximity condition.
+		@proximity_condition_slider = Gtk::HScale.new(1, 100, 10)
+		condition_controls.pack_start(Gtk::Label.new("Proximity"), expand, fill, padding)
+		condition_controls.pack_start(@proximity_condition_slider, expand, fill, padding)
+		#Add the condition controls to the panel.
+		control_panel.pack_start(condition_controls, expand, fill, padding)
+
+		#Create a group for the actions.
+		action_controls = Gtk::VBox.new(homogeneous, spacing)
+		action_controls.pack_start(Gtk::Label.new("Actions"), expand, fill, padding)
+		#Add a slider for the accelerate action.
+		@acceleration_slider = Gtk::HScale.new(-10, 10, 2)
+		action_controls.pack_start(Gtk::Label.new("Accelerate"), expand, fill, padding)
+		action_controls.pack_start(@acceleration_slider, expand, fill, padding)
+		@acceleration_slider.value = 0
+		#Add a slider for the turn action.
+		@turn_slider = Gtk::HScale.new(-180, 180, 20)
+		action_controls.pack_start(Gtk::Label.new("Turn"), expand, fill, padding)
+		action_controls.pack_start(@turn_slider, expand, fill, padding)
+		@turn_slider.value = 0
+		#Add a slider for the approach angle.
+		@approach_slider = Gtk::HScale.new(-180, 180, 20)
+		action_controls.pack_start(Gtk::Label.new("Approach"), expand, fill, padding)
+		action_controls.pack_start(@approach_slider, expand, fill, padding)
+		@approach_slider.value = 0
+		#Add a slider for the flee action.
+		@flee_slider = Gtk::HScale.new(-180, 180, 20)
+		action_controls.pack_start(Gtk::Label.new("Flee"), expand, fill, padding)
+		action_controls.pack_start(@flee_slider, expand, fill, padding)
+		@flee_slider.value = 0
+		#Add a checkbox for the eat action.
+		@eat_flag = Gtk::CheckButton.new("Eat")
+		action_controls.pack_start(@eat_flag, expand, fill, padding)
+		#Add a checkbox for the spawn action.
+		#TODO
+		#Add a text box for the tag action.
+		action_controls.pack_start(Gtk::Label.new("Apply Tag"), expand, fill, padding)
+		@tag_action_box = Gtk::Entry.new
+		action_controls.pack_start(@tag_action_box, expand, fill, padding)
+		#Add the action controls to the panel.
+		control_panel.pack_start(action_controls, expand, fill, padding)
+		
+		#Add the control panel to the interface.
+		interface.pack_start(control_panel, expand, fill, padding)
+		
+		interface
+		
+	end
+	
 
 end
 
 
 begin
-	TAG_POOL = %w{x y z}
-	COLOR_POOL = [
-		Color.new(1, 0, 0),
-		Color.new(1, 0.75, 0),
-		Color.new(1, 1, 0),
-		Color.new(0, 1, 0),
-		Color.new(0, 0, 1),
-		Color.new(1, 0, 1)
-	]
 	#The view width.
 	WIDTH = 500
 	#The view height.
-	HEIGHT = 400
+	HEIGHT = 600
 	#Run the application.
 	application = Application.new(WIDTH, HEIGHT)
-	application.color_pool = COLOR_POOL
-	application.tag_pool = TAG_POOL
 	application.main
 rescue => exception
 	#Print error to STDERR and exit with an abnormal status.
