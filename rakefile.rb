@@ -19,8 +19,7 @@ REQUIREMENTS = [
 ]
 EXECUTABLES = [
 	PRODUCT_NAME.downcase,
-	"#{PRODUCT_NAME.downcase}_demo",
-	"#{PRODUCT_NAME.downcase}_server"
+	"#{PRODUCT_NAME.downcase}_demo"
 ]
 
 
