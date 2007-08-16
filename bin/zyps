@@ -342,7 +342,7 @@ class Application
 		@environment.environmental_factors << EnvironmentalFactor.new([enclose])
 
 		#Create a creature generator.
-		generator = Generator.new(@environment, 0, 0, @width, @height)
+		@generator = Generator.new(@environment, 0, 0, @width, @height)
 
 		#Create thread to update environment.
 		thread = Thread.new do
@@ -360,103 +360,6 @@ class Application
 					
 					#Control population.
 					@environment.objects.shift while @environment.objects.length > 25
-					#Create new creature every few seconds.
-					if (time_since_birth += birth_clock.elapsed_time) > birth_rate
-						creature = Creature.new(
-							'',
-							generator.create_location,
-							Color.new(@red_slider.value, @green_slider.value, @blue_slider.value),
-							generator.create_vector,
-							0,
-							@tags_box.text.split(/,\s*/)
-						)
-						behavior = Behavior.new
-						condition_tags = @tag_condition_box.text
-						condition_tags.split(/,\s*/).each do |tag|
-							behavior.conditions << lambda do |creature, target|
-								target.tags.include?(tag)
-							end
-						end
-						proximity = @proximity_condition_slider.value
-						if proximity > 0
-							behavior.conditions << lambda do |creature, target|
-								Utility.find_distance(creature.location, target.location) < proximity
-							end
-						end
-						age = @age_condition_slider.value
-						if age > 0
-							behavior.conditions << lambda do |creature, target|
-								target.age > age
-							end
-						end
-						acceleration = @acceleration_slider.value
-						if acceleration != 0
-							behavior.actions << lambda do |creature, target|
-								creature.vector.speed += acceleration
-								creature.vector.speed = 0 if creature.vector.speed < 0
-							end
-						end
-						turn = @turn_slider.value
-						if turn != 0
-							behavior.actions << lambda do |creature, target|
-								creature.vector.pitch += turn
-							end
-						end
-						approach_angle = @approach_slider.value
-						if approach_angle > 0
-							heading = creature.vector.clone
-							behavior.actions << lambda do |creature, target|
-								#Find the difference between the current heading and the angle to the target.
-								turn_angle = Utility.find_angle(creature.location, target.location) - heading.pitch
-								#If the angle is the long way around from the current heading, change it to the smaller angle.
-								if turn_angle > 180 then
-									turn_angle -= 360.0
-								elsif turn_angle < -180 then
-									turn_angle += 360.0
-								end
-								#If turn angle is greater than allowed turn speed, reduce it.
-								turn_angle = Utility.constrain_value(turn_angle, approach_angle)
-								#Turn the appropriate amount.
-								heading.pitch += turn_angle
-								#Apply the heading to the creature's movement vector.
-								creature.vector += heading
-							end
-						end
-						flee_angle = @flee_slider.value
-						if flee_angle > 0
-							heading = creature.vector.clone
-							behavior.actions << lambda do |creature, target|
-								#Find the difference between the current heading and the angle to the target.
-								turn_angle = Utility.find_angle(creature.location, target.location) - heading.pitch + 180
-								#If the angle is the long way around from the current heading, change it to the smaller angle.
-								if turn_angle > 180 then
-									turn_angle -= 360.0
-								elsif turn_angle < -180 then
-									turn_angle += 360.0
-								end
-								#If turn angle is greater than allowed turn speed, reduce it.
-								turn_angle = Utility.constrain_value(turn_angle, flee_angle)
-								#Turn the appropriate amount.
-								heading.pitch += turn_angle
-								#Apply the heading to the creature's movement vector.
-								creature.vector += heading
-							end
-						end
-						if @eat_flag.active?
-							behavior.actions << lambda do |creature, target|
-								@environment.objects.delete(target)
-							end
-						end
-						apply_tags = @tag_action_box.text
-						apply_tags.split(/,\s*/).each do |tag|
-							behavior.conditions << lambda do |creature, target|
-								target.tags << tag unless target.tags.include?(tag)
-							end
-						end
-						creature.behaviors << behavior
-						@environment.objects << creature
-						time_since_birth = 0
-					end
 					
 					#Determine how much time is left in this frame.
 					time_left_in_frame = (time_per_frame) - drawing_clock.elapsed_time
@@ -491,6 +394,111 @@ class Application
 		#Add view to interface.
 		@view = TrailsView.new(width, height)
 		interface.pack_start(@view.canvas, expand, fill, padding)
+		#Get mouse events on view.
+		@view.canvas.add_events(Gdk::Event::BUTTON_PRESS_MASK)
+		@view.canvas.signal_connect("button-press-event") do |canvas, event|
+			@press_location = Location.new(event.x, event.y)
+		end
+		@view.canvas.add_events(Gdk::Event::BUTTON_RELEASE_MASK)
+		@view.canvas.signal_connect("button-release-event") do |canvas, event|
+			@release_location = Location.new(event.x, event.y)
+			creature = Creature.new(
+				'',
+				@release_location,
+				Color.new(@red_slider.value, @green_slider.value, @blue_slider.value),
+				Vector.new(
+					Utility.find_distance(@press_location, @release_location) * 2, #Use distance dragged as speed.
+					Utility.find_angle(@press_location, @release_location) #Move in direction of drag.
+				),
+				0,
+				@tags_box.text.split(/,\s*/)
+			)
+			behavior = Behavior.new
+			condition_tags = @tag_condition_box.text
+			condition_tags.split(/,\s*/).each do |tag|
+				behavior.conditions << lambda do |creature, target|
+					target.tags.include?(tag)
+				end
+			end
+			proximity = @proximity_condition_slider.value
+			if proximity > 0
+				behavior.conditions << lambda do |creature, target|
+					Utility.find_distance(creature.location, target.location) < proximity
+				end
+			end
+			age = @age_condition_slider.value
+			if age > 0
+				behavior.conditions << lambda do |creature, target|
+					target.age > age
+				end
+			end
+			acceleration = @acceleration_slider.value
+			if acceleration != 0
+				behavior.actions << lambda do |creature, target|
+					creature.vector.speed += acceleration
+					creature.vector.speed = 0 if creature.vector.speed < 0
+				end
+			end
+			turn = @turn_slider.value
+			if turn != 0
+				behavior.actions << lambda do |creature, target|
+					creature.vector.pitch += turn
+				end
+			end
+			approach_angle = @approach_slider.value
+			if approach_angle > 0
+				heading = creature.vector.clone
+				behavior.actions << lambda do |creature, target|
+					#Find the difference between the current heading and the angle to the target.
+					turn_angle = Utility.find_angle(creature.location, target.location) - heading.pitch
+					#If the angle is the long way around from the current heading, change it to the smaller angle.
+					if turn_angle > 180 then
+						turn_angle -= 360.0
+					elsif turn_angle < -180 then
+						turn_angle += 360.0
+					end
+					#If turn angle is greater than allowed turn speed, reduce it.
+					turn_angle = Utility.constrain_value(turn_angle, approach_angle)
+					#Turn the appropriate amount.
+					heading.pitch += turn_angle
+					#Apply the heading to the creature's movement vector.
+					creature.vector += heading
+				end
+			end
+			flee_angle = @flee_slider.value
+			if flee_angle > 0
+				heading = creature.vector.clone
+				behavior.actions << lambda do |creature, target|
+					#Find the difference between the current heading and the angle to the target.
+					turn_angle = Utility.find_angle(creature.location, target.location) - heading.pitch + 180
+					#If the angle is the long way around from the current heading, change it to the smaller angle.
+					if turn_angle > 180 then
+						turn_angle -= 360.0
+					elsif turn_angle < -180 then
+						turn_angle += 360.0
+					end
+					#If turn angle is greater than allowed turn speed, reduce it.
+					turn_angle = Utility.constrain_value(turn_angle, flee_angle)
+					#Turn the appropriate amount.
+					heading.pitch += turn_angle
+					#Apply the heading to the creature's movement vector.
+					creature.vector += heading
+				end
+			end
+			if @eat_flag.active?
+				behavior.actions << lambda do |creature, target|
+					@environment.objects.delete(target)
+				end
+			end
+			apply_tags = @tag_action_box.text
+			apply_tags.split(/,\s*/).each do |tag|
+				behavior.conditions << lambda do |creature, target|
+					target.tags << tag unless target.tags.include?(tag)
+				end
+			end
+			creature.behaviors << behavior
+			@environment.objects << creature
+		end
 		
 		#Create a VBox for all controls.
 		control_panel = Gtk::VBox.new(homogeneous, spacing)
