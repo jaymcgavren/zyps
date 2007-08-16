@@ -177,7 +177,7 @@ class Demo
 			say("We create a Behavior the EnvironmentalFactor will follow.")
 			accelerate = Behavior.new
 			say("The behavior will have a single action: to accelerate objects toward the 'ground' at 9.8 meters/second.")
-			accelerate.actions << lambda {|gravity, target| target.vector.y -= 9.8}
+			accelerate.actions << lambda {|gravity, target| target.vector.y += 9.8}
 			say("We add the behavior to the EnvironmentalFactor.")
 			gravity.behaviors << accelerate
 			say("Then we add the EnvironmentalFactor to the Environment.")
