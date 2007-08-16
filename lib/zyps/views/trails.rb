@@ -120,8 +120,8 @@ class TrailsView
 				#Draw a line with the current width from the prior location to the current location.
 				buffer.draw_line(
 					graphics_context,
-					previous_location[0], @height - previous_location[1],
-					location[0], @height - location[1]
+					previous_location[0], previous_location[1],
+					location[0], location[1]
 				)
 				
 			end
