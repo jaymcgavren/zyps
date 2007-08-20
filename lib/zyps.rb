@@ -30,7 +30,7 @@ class Environment
 	attr_accessor :environmental_factors
 	
 	def initialize (objects = [], environmental_factors = [])
-		@objects, @environmental_factors = objects, environmental_factors
+		self.objects, self.environmental_factors = objects, environmental_factors
 		@clock = Clock.new
 	end
 	
@@ -93,10 +93,12 @@ class GameObject
 	attr_accessor :tags
 	
 	def initialize (name = nil, location = Location.new, color = Color.new, vector = Vector.new, age = 0, size = 1, tags = [])
-		@name, @location, @color, @vector, @size, @tags = name, location, color, vector, size, tags
+		self.name, self.location, self.color, self.vector, self.age, self.size, self.tags = name, location, color, vector, age, size, tags
 		@identifier = rand(99999999) #TODO: Current setup won't necessarily be unique.
-		self.age = age
 	end
+	
+	#Size must be positive.
+	def size=(v); v = 0 if v < 0; @size = v; end
 	
 	#Move according to vector over the given number of seconds.
 	def move (elapsed_time)
@@ -135,7 +137,7 @@ class Creature < GameObject
 	#Identical to the GameObject constructor, except that it also takes a list of Behavior objects.
 	def initialize (name = nil, location = Location.new, color = Color.new, vector = Vector.new, age = 0, size = 1, tags = [], behaviors = [])
 		super(name, location, color, vector, age, size, tags)
-		@behaviors = behaviors
+		self.behaviors = behaviors
 	end
 	
 end
@@ -151,7 +153,7 @@ class EnvironmentalFactor
 	attr_accessor :behaviors
 	
 	def initialize (behaviors = [])
-		@behaviors = behaviors
+		self.behaviors = behaviors
 	end
 	
 end
@@ -170,7 +172,7 @@ class Behavior
 	
 	#Optionally takes an array of actions and one of conditions.
 	def initialize (actions = [], conditions = [])
-		@actions, @conditions = actions, conditions
+		self.actions, self.conditions = actions, conditions
 	end
 	
 	#Calls each Proc object in the list of conditions with the subject and its target.  Returns nil if any condition returns false.
@@ -234,7 +236,7 @@ class Location
 	attr_accessor :x, :y
 	
 	def initialize (x = 0, y = 0)
-		@x, @y = x, y
+		self.x, self.y = x, y
 	end
 	
 end

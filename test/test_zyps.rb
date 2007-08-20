@@ -23,6 +23,24 @@ require 'test/unit'
 class TestGameObject < Test::Unit::TestCase
 
 
+	def test_constraints
+		#Test at initialization.
+		object = GameObject.new(
+			"", #Name.
+			Location.new,
+			Color.new,
+			Vector.new,
+			0,
+			-1 #Size.
+		)
+		assert_equal(0, object.size)
+		#Test accessors.
+		object = GameObject.new
+		object.size = -1
+		assert_equal(0, object.size)
+	end
+
+
 	def test_move
 		#Set up moving object.
 		object = GameObject.new
@@ -190,6 +208,33 @@ class TestColor < Test::Unit::TestCase
 		assert_equal(0.5, color.green)
 		assert_equal(0.75, color.blue)
 	end
+	
+	def test_constraints
+		#Test at initialization.
+		color = Color.new(-1, -1, -1)
+		assert_equal(0, color.red)
+		assert_equal(0, color.green)
+		assert_equal(0, color.blue)
+		color = Color.new(2, 2, 2)
+		assert_equal(1, color.red)
+		assert_equal(1, color.green)
+		assert_equal(1, color.blue)
+		#Test accessors.
+		color = Color.new
+		color.red = -1
+		assert_equal(0, color.red)
+		color.red = 2
+		assert_equal(1, color.red)
+		color.green = -1
+		assert_equal(0, color.green)
+		color.green = 2
+		assert_equal(1, color.green)
+		color.blue = -1
+		assert_equal(0, color.blue)
+		color.blue = 2
+		assert_equal(1, color.blue)
+	end
+	
 	
 end
 
