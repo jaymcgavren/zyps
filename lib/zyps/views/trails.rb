@@ -28,12 +28,10 @@ class TrailsView
 	attr_reader :width, :height
 	#Number of line segments to draw for each object.
 	attr_accessor :trail_length
-	#Width of the trail behind each object.
-	attr_accessor :trail_width
 
-	def initialize (width = 600, height = 400, trail_length = 5, trail_width = trail_length)
+	def initialize (width = 600, height = 400, trail_length = 5)
 	
-		@width, @height, @trail_length, @trail_width = width, height, trail_length, trail_width
+		@width, @height, @trail_length, = width, height, trail_length
 	
 		#Create a drawing area.
 		@canvas = Gtk::DrawingArea.new
@@ -69,7 +67,7 @@ class TrailsView
 	#Takes an Environment, and draws it to the canvas.
 	#Tracks the position of each GameObject over time so it can draw a trail behind it.
 	#The head will match the object's Color exactly, fading to black at the tail.
-	#trail_width will be used as the line thickness at the object's head, diminishing to 1 at the tail.
+	#GameObject.size will be used as the line thickness at the object's head, diminishing to 1 at the tail.
 	def update(environment)
 	
 		#Clear the background on the buffer.
@@ -84,6 +82,8 @@ class TrailsView
 		
 		#For each GameObject in the environment:
 		environment.objects.each do |object|
+
+			object_radius = Math.sqrt(object.size / Math::PI)
 
 			#Add the object's current location to the list.
 			@locations[object.identifier] << [object.location.x, object.location.y]
@@ -108,7 +108,7 @@ class TrailsView
 				
 				#Multiply the actual drawing width by the current multiplier to get the current drawing width.
 				graphics_context.set_line_attributes(
-					(@trail_width * multiplier).ceil,
+					(object_radius * multiplier).ceil,
 					Gdk::GC::LINE_SOLID,
 					Gdk::GC::CAP_ROUND, #Line ends drawn as semicircles.
 					Gdk::GC::JOIN_MITER #Only used for polygons.

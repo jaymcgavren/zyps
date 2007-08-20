@@ -54,6 +54,7 @@ class TestCreature < Test::Unit::TestCase
 		assert_equal(0, creature.vector.pitch)
 		assert_equal(nil, creature.name)
 		assert_in_delta(0, creature.age, 0.1)
+		assert_equal(1, creature.size)
 		assert_equal([], creature.tags)
 		assert_equal([], creature.behaviors)
 		#Identifiers should be unique.
@@ -69,6 +70,7 @@ class TestCreature < Test::Unit::TestCase
 			Color.new(0.5, 0.6, 0.7),
 			Vector.new(1.5, 225),
 			2.001, #Age.
+			5.0, #Size.
 			["predator", "blue team"],
 			[behavior]
 		)
@@ -81,6 +83,7 @@ class TestCreature < Test::Unit::TestCase
 		assert_equal(1.5, creature.vector.speed)
 		assert_equal(225, creature.vector.pitch)
 		assert_in_delta(2.001, creature.age, 0.01)
+		assert_equal(5.0, creature.size)
 		assert(creature.tags.include?("predator"))
 		assert(creature.tags.include?("blue team"))
 		assert(creature.behaviors.include?(behavior))
@@ -167,6 +170,26 @@ class TestEnvironment < Test::Unit::TestCase
 		
 	end
 	
+	
+end
+
+
+
+class TestColor < Test::Unit::TestCase
+	
+	def test_default_initialization
+		color = Color.new
+		assert_equal(1, color.red)
+		assert_equal(1, color.green)
+		assert_equal(1, color.blue)
+	end
+	
+	def test_explicit_initialization
+		color = Color.new(0.25, 0.5, 0.75)
+		assert_equal(0.25, color.red)
+		assert_equal(0.5, color.green)
+		assert_equal(0.75, color.blue)
+	end
 	
 end
 
@@ -355,5 +378,28 @@ class TestUtility < Test::Unit::TestCase
 		assert(Utility.inside_box?(Location.new(3, 3), Location.new(2, 2), Location.new(4, 4)))
 	end
 
+
+	def test_collided?
+		#Objects apart.
+		assert(! Utility.collided?(
+			GameObject.new("", Location.new(0, 0), Color.new, Vector.new, 0, 0.196), #Radius = 0.25
+			GameObject.new("", Location.new(1, 0), Color.new, Vector.new, 0, 0.196)
+		))
+		#Objects touching (not a collision).
+		assert(! Utility.collided?(
+			GameObject.new("", Location.new(0, 0), Color.new, Vector.new, 0, 0.785), #Radius = 0.5
+			GameObject.new("", Location.new(1, 0), Color.new, Vector.new, 0, 0.785)
+		))
+		#Objects collided.
+		assert(Utility.collided?(
+			GameObject.new("", Location.new(0, 0), Color.new, Vector.new, 0, 1.766), #Radius = 0.75
+			GameObject.new("", Location.new(1, 0), Color.new, Vector.new, 0, 1.766)
+		))
+		#Objects in same place.
+		assert(Utility.collided?(
+			GameObject.new("", Location.new(0, 0)),
+			GameObject.new("", Location.new(0, 0))
+		))
+	end
 	
 end

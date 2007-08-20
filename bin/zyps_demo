@@ -38,6 +38,8 @@ class Demo
 	FRAME_COUNT = 80
 	#Number of frames per second.
 	FRAMES_PER_SECOND = 30
+	#Default size of game objects.
+	DEFAULT_OBJECT_SIZE = 78.5 #5 units in radius.
 
 	#Set up a window, a canvas, and an object environment, then run the given block.
 	def demo
@@ -102,10 +104,12 @@ class Demo
 		count.times do |i|
 			multiplier = i / count.to_f
 			environment.objects << Creature.new(
-				i,
+				i, #Name.
 				Location.new(multiplier * @view.width, multiplier * @view.height),
 				Color.new(multiplier, 1 - multiplier, multiplier / 2 + 0.5),
-				Vector.new(100 * multiplier, multiplier * 360)
+				Vector.new(100 * multiplier, multiplier * 360),
+				0, #Age.
+				DEFAULT_OBJECT_SIZE #Size.
 			)
 		end
 	end
@@ -125,7 +129,9 @@ class Demo
 			say("The things that populate an environment are called GameObjects.  Each object has:")
 			object = GameObject.new
 			say("...a name")
-			object.name = "Clancy"
+			object.name = "Huey"
+			say("...a size")
+			object.size = DEFAULT_OBJECT_SIZE
 			say("...a Location with x and y coordiates")
 			object.location = Location.new(@view.width/2, @view.height/2)
 			say("...a Color with red, green and blue components ranging from 0 to 1")
@@ -142,8 +148,22 @@ class Demo
 			animate(FRAME_COUNT)
 			
 			say("Let's add a couple more objects with different colors and vectors.")
-			@environment.objects << GameObject.new(nil, Location.new(@view.width/2, @view.height/2), Color.new(0, 1, 0), Vector.new(20, 135))
-			@environment.objects << GameObject.new(nil, Location.new(@view.width/2, @view.height/2), Color.new(0, 0, 1), Vector.new(30, 225))
+			@environment.objects << GameObject.new(
+				"Duey", #Name.
+				Location.new(@view.width/2, @view.height/2),
+				Color.new(0, 1, 0),
+				Vector.new(20, 135),
+				0, #Age.
+				DEFAULT_OBJECT_SIZE * 2 #Size.
+			)
+			@environment.objects << GameObject.new(
+				"Louie", #Name.
+				Location.new(@view.width/2, @view.height/2),
+				Color.new(0, 0, 1),
+				Vector.new(30, 225),
+				0, #Age.
+				DEFAULT_OBJECT_SIZE * 3 #Size.
+			)
 			animate(FRAME_COUNT)
 			
 			say("The viewing area can be resized at any time via its width and height attributes.")
@@ -151,13 +171,12 @@ class Demo
 			@view.height += 100
 			animate(FRAME_COUNT)
 			
-			say("TrailsView lets you set the thickness and length of the trails as well.")
-			@view.trail_width = 10
-			@view.trail_length = 10
+			say("TrailsView lets you set the length of the trails as well.")
+			@view.trail_length = 50
 			animate(FRAME_COUNT)
 			
 		end
-				
+		
 	end
 
 
@@ -217,11 +236,12 @@ class Demo
 			
 			say("Then we'll toss a piece of food (a GameObject with the label 'food') into the environment.")
 			@environment.objects << GameObject.new(
-				"target",
+				"target", #Name.
 				Location.new(@view.width / 2, @view.height / 2),
 				Color.new(1, 1, 1),
 				Vector.new(50, 315),
 				0, #Age.
+				DEFAULT_OBJECT_SIZE * 2, #Size.
 				["food"] #Tags.
 			)
 			
@@ -260,11 +280,11 @@ class Demo
 		say("Morphers are created with a single behavior, which shifts the color of any nearby target to match the Morpher's color.")
 		
 		say("Let's place a red Morpher...")
-		@environment.objects << Morpher.new(nil, Location.new(0, 100), Color.new(1, 0, 0), Vector.new(100, 0))
+		@environment.objects << Morpher.new(nil, Location.new(0, 100), Color.new(1, 0, 0), Vector.new(100, 0), 0, DEFAULT_OBJECT_SIZE)
 		say("a green one...")
-		@environment.objects << Morpher.new(nil, Location.new(0, 150), Color.new(0, 1, 0), Vector.new(200, 0))
+		@environment.objects << Morpher.new(nil, Location.new(0, 150), Color.new(0, 1, 0), Vector.new(200, 0), 0, DEFAULT_OBJECT_SIZE)
 		say("and a blue one...")
-		@environment.objects << Morpher.new(nil, Location.new(0, 200), Color.new(0, 0, 1), Vector.new(300, 0))
+		@environment.objects << Morpher.new(nil, Location.new(0, 200), Color.new(0, 0, 1), Vector.new(300, 0), 0, DEFAULT_OBJECT_SIZE)
 		
 		say("And see what they do.")
 		thread = Thread.new {animate(FRAME_COUNT)}
@@ -399,6 +419,7 @@ class Demo
 			Color.new(1, 1, 1),
 			Vector.new(3, 0),
 			0, #Age.
+			DEFAULT_OBJECT_SIZE, #Size.
 			["prey"] #Tags.
 		)
 		
@@ -460,6 +481,7 @@ class Demo
 			Color.new(1, 1, 1),
 			Vector.new(3, 0),
 			0, #Age.
+			DEFAULT_OBJECT_SIZE * 2, #Size.
 			["predator"] #Tags.
 		)
 		
@@ -468,47 +490,50 @@ class Demo
 	end
 
 
-	#A Behavior that destroys the target.
-	class Destroy < Behavior
+	#A Behavior that eats the target.
+	class Eat < Behavior
 		#Environment from which targets will be removed.
 		attr_accessor :environment
 		def initialize(actions = [], conditions = [], environment = Environment.new)
 			super(actions, conditions)
 			@environment = environment
-			#"Kill" target.
+			#"Eat" target.
 			self.actions << lambda do |creature, target|
+				#Remove the target from the environment.
 				@environment.objects.delete(target)
+				#Grow in size.
+				creature.size += target.size
 			end
-			#Act only if target is close.
+			#Act only if collided with target.
 			self.conditions << lambda do |creature, target|
-				Utility.find_distance(creature.location, target.location) < 25
+				Utility.collided?(creature, target)
 			end
 		end
 	end
 
 
 	#Demonstrates keeping a reference to an Environment so a Creature can alter it.
-	def test_destroy
+	def test_eat
 	
 		populate(@environment)
 		
 		say("Most games are all about destruction, but there hasn't been much so far.")
 		say("Let's create a creature that causes some havoc.")
-		delinquent = Creature.new(nil, Location.new(0, 150), Color.new(0, 1, 0), Vector.new(200, 0))
+		predator = Creature.new(nil, Location.new(0, 150), Color.new(0, 1, 0), Vector.new(200, 0), 0, DEFAULT_OBJECT_SIZE * 2)
 		
-		say("This demo code includes a subclass of Behavior, called Destroy.")
-		destroy = Destroy.new
+		say("This demo code includes a subclass of Behavior, called Eat.")
+		eat = Eat.new
 		
-		say("We'll destroy our targets by removing them from their environment.")
-		say("Creatures and their Behaviors normally know nothing about the Environment they belong to, so we added an environment attribute to Destroy.")
-		say("Destroy finds the target in Environment.objects and removes it.")
-		destroy.environment = @environment
+		say("We'll eat our targets by removing them from their environment.")
+		say("Creatures and their Behaviors normally know nothing about the Environment they belong to, so we added an environment attribute to Eat.")
+		say("Eat finds the target in Environment.objects and removes it.")
+		eat.environment = @environment
 		
-		say("Add the Destroy instance to the creature's behaviors...")
-		delinquent.behaviors << destroy
+		say("Add the Eat instance to the creature's behaviors...")
+		predator.behaviors << eat
 		
 		say("Drop the creature into the actual environment...")
-		@environment.objects << delinquent
+		@environment.objects << predator
 		
 		say("And - chomp!")
 		thread = Thread.new {animate(FRAME_COUNT)}
@@ -528,7 +553,7 @@ class Demo
 		demo {test_turn}
 		demo {test_approach}
 		demo {test_flee}
-		demo {test_destroy}
+		demo {test_eat}
 	end
 
 

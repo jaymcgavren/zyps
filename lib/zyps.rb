@@ -83,6 +83,8 @@ class GameObject
 	attr_accessor :location
 	#A Color that will be used to draw the object.
 	attr_accessor :color
+	#Radius of the object.
+	attr_accessor :size
 	#A Vector with the object's current speed and direction of travel.
 	attr_accessor :vector
 	#A String with the object's name.
@@ -90,8 +92,8 @@ class GameObject
 	#An array of Strings with tags that determine how the object will be treated by Creature and EnvironmentalFactor objects in its environment.
 	attr_accessor :tags
 	
-	def initialize (name = nil, location = Location.new, color = Color.new, vector = Vector.new, age = 0, tags = [])
-		@name, @location, @color, @vector, @tags = name, location, color, vector, tags
+	def initialize (name = nil, location = Location.new, color = Color.new, vector = Vector.new, age = 0, size = 1, tags = [])
+		@name, @location, @color, @vector, @size, @tags = name, location, color, vector, size, tags
 		@identifier = rand(99999999) #TODO: Current setup won't necessarily be unique.
 		self.age = age
 	end
@@ -131,8 +133,8 @@ class Creature < GameObject
 	attr_accessor :behaviors
 	
 	#Identical to the GameObject constructor, except that it also takes a list of Behavior objects.
-	def initialize (name = nil, location = Location.new, color = Color.new, vector = Vector.new, age = 0, tags = [], behaviors = [])
-		super(name, location, color, vector, age, tags)
+	def initialize (name = nil, location = Location.new, color = Color.new, vector = Vector.new, age = 0, size = 1, tags = [], behaviors = [])
+		super(name, location, color, vector, age, size, tags)
 		@behaviors = behaviors
 	end
 	
@@ -374,6 +376,14 @@ module Utility
 		return false if point.x > lower_right.x
 		return false if point.y > lower_right.y
 		true
+	end
+	
+	#Given two GameObjects, determine if the boundary of one crosses the boundary of the other.
+	def Utility.collided?(object1, object2)
+		object1_radius = Math.sqrt(object1.size / Math::PI)
+		object2_radius = Math.sqrt(object2.size / Math::PI)
+		return true if find_distance(object1.location, object2.location) < object1_radius + object2_radius
+		false
 	end
 	
 end
