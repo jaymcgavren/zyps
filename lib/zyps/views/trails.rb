@@ -108,7 +108,7 @@ class TrailsView
 				
 				#Multiply the actual drawing width by the current multiplier to get the current drawing width.
 				graphics_context.set_line_attributes(
-					(object_radius * multiplier).ceil,
+					(object_radius * 2 * multiplier).ceil,
 					Gdk::GC::LINE_SOLID,
 					Gdk::GC::CAP_ROUND, #Line ends drawn as semicircles.
 					Gdk::GC::JOIN_MITER #Only used for polygons.
