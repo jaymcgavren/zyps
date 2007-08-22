@@ -114,23 +114,9 @@ end
 
 
 
-#Mixin to have an object (usually a Creature) act on other objects.
-module Responsive
-
-	#Call Behavior.perform on each of the object's assigned Behaviors, with the object and a target as arguments.
-	def act(target)
-		behaviors.each {|behavior| behavior.perform(self, target)}
-	end
-	
-end
-
-
-
 #A Creature is a GameObject that can sense and respond to other GameObjects (including other Creature objects).
 class Creature < GameObject
 
-	include Responsive
-	
 	#A list of Behavior objects that determine the creature's response to its environment.
 	attr_accessor :behaviors
 	
@@ -140,34 +126,44 @@ class Creature < GameObject
 		self.behaviors = behaviors
 	end
 	
-end
-
-
-
-#Something in the environment that acts on creatures.
-class EnvironmentalFactor
-
-	include Responsive
-	
-	#A list of Behavior objects, each called in the same way as those of a Creature.
-	attr_accessor :behaviors
-	
-	def initialize (behaviors = [])
-		self.behaviors = behaviors
+	#Call Behavior.perform on each of the object's assigned Behaviors, with the object and a target as arguments.
+	def act(target)
+		behaviors.each {|behavior| behavior.perform(self, target)}
 	end
 	
 end
 
 
 
-#A behavior that a Creature or EnvironmentalFactor object (or other classes that include Responsive) engage in.
+#Something in the environment that acts on creatures.
+#EnvironmentalFactors must implement an act(target) instance method.
+class EnvironmentalFactor
+end
+
+
+
+#An action that one Creature takes on another.
+#Actions must implement a do(actor, target) instance method.
+class Action
+end
+
+
+
+#A condition for one Creature to act on another.
+#Conditions must implement a test(actor, target) instance method.
+class Condition
+end
+
+
+
+#A behavior that a Creature engages in.
 #The target can have its tags or colors changed, it can be "herded", it can be destroyed, or any other action the library user can dream up.
 #Likewise, the subject can change its own attributes, it can approach or flee from the target, it can spawn new Creatures or GameObjects (like bullets), or anything else.
 class Behavior
 
-	#A list of conditions, which are Proc objects called with the object itself and its target.  A condition can consider the tags on the target, the distance from the subject, or any other criteria.  If any condition returns false, the behavior will not be carried out.
+	#A list of Condition objects, which are called with the object itself and its target.  A condition can consider the tags on the target, the distance from the subject, or any other criteria.  If any condition returns false, the behavior will not be carried out.
 	attr_accessor :conditions
-	#A list of actions, which are Proc objects called with the object and its target when all conditions are met.  An action can act on the subject or its target.
+	#A list of Action objects, which are called with the object and its target when all conditions are met.  An action can act on the subject or its target.
 	attr_accessor :actions
 	
 	#Optionally takes an array of actions and one of conditions.
@@ -178,8 +174,8 @@ class Behavior
 	#Calls each Proc object in the list of conditions with the subject and its target.  Returns nil if any condition returns false.
 	#Then calls each Proc object in the list of actions, also with the subject and its target.
 	def perform(subject, target)
-		conditions.each {|condition| return nil unless condition.call(subject, target)}
-		actions.each {|action| action.call(subject, target)}
+		conditions.each {|condition| return unless condition.test(subject, target)}
+		actions.each {|action| action.do(subject, target)}
 	end
 	
 end

@@ -180,6 +180,13 @@ class Demo
 	end
 
 
+	class Gravity < EnvironmentalFactor
+		#Accelerate object toward the 'ground'.
+		def act(target)
+			target.vector.y += 9.8
+		end
+	end
+	
 	#Demonstrates environmental factors by adding gravity to the environment.
 	def test_environmental_factors
 
@@ -191,25 +198,32 @@ class Demo
 			animate(FRAME_COUNT)
 			
 			say("Let's add a new EnvironmentalFactor to simulate gravity.")
-			gravity = EnvironmentalFactor.new
+			gravity = Gravity.new
 			
-			say("We create a Behavior the EnvironmentalFactor will follow.")
-			accelerate = Behavior.new
-			say("The behavior will have a single action: to accelerate objects toward the 'ground' at 9.8 meters/second.")
-			accelerate.actions << lambda {|gravity, target| target.vector.y += 9.8}
-			say("We add the behavior to the EnvironmentalFactor.")
-			gravity.behaviors << accelerate
-			say("Then we add the EnvironmentalFactor to the Environment.")
+			say("We add gravity to the Environment.")
 			@environment.environmental_factors << gravity
 			
 			say("Everything immediately drops.")
 			animate(FRAME_COUNT)
 			
 		end
-				
+		
 	end
 
 
+	#Head toward a target.
+	class ChaseAction < Action
+		def do(creature, target)
+			angle_to_target = Utility.find_angle(creature.location, target.location)
+			creature.vector.pitch = angle_to_target
+		end
+	end
+	#Act only on food.
+	class FoodCondition < Condition
+		def test(creature, target)
+			target.tags.include?('food')
+		end
+	end
 	
 	#Demonstrates creature behaviors.
 	def test_behaviors
@@ -222,13 +236,10 @@ class Demo
 			chase = Behavior.new
 			
 			say("We'll have them head straight toward their target.")
-			chase.actions << lambda do |creature, target|
-				angle_to_target = Utility.find_angle(creature.location, target.location)
-				creature.vector.pitch = angle_to_target
-			end
+			chase.actions << ChaseAction.new
 			
 			say("So that they don't target every creature on the screen, we'll add a condition to the behavior saying the target must have the label 'food'.")
-			chase.conditions << lambda {|creature, target| target.tags.include?('food')}
+			chase.conditions << FoodCondition.new
 			
 			say("We'll apply this behavior to all creatures currently in the environment.")
 			@environment.objects.each {|creature| creature.behaviors << chase}
@@ -255,17 +266,27 @@ class Demo
 
 	#A Creature that changes the colors of other objects.
 	class Morpher < Creature
-		def initialize(*arguments)
-			super
-			morph = Behavior.new
-			#Shift the target's color to match the creature's.
-			morph.actions << lambda do |creature, target|
+		#Changes an object's color.
+		class MorphAction
+			def do(creature, target)
 				target.color.red += 0.1 if target.color.red < creature.color.red
 				target.color.green += 0.1 if target.color.green < creature.color.green
 				target.color.blue += 0.1 if target.color.blue < creature.color.blue
 			end
+		end
+		#True only for nearby targets.
+		class DistanceCondition < Condition
+			def test(creature, target)
+				Utility.find_distance(creature.location, target.location) < 50
+			end
+		end
+		def initialize(*arguments)
+			super
+			morph = Behavior.new
+			#Shift the target's color to match the creature's.
+			morph.actions << MorphAction.new
 			#Act only on nearby targets.
-			morph.conditions << lambda {|creature, target| Utility.find_distance(creature.location, target.location) < 50}
+			morph.conditions << DistanceCondition.new
 			@behaviors << morph
 		end
 	end
@@ -288,9 +309,18 @@ class Demo
 		
 		say("And see what they do.")
 		thread = Thread.new {animate(FRAME_COUNT)}
-				
+		
 	end
 
+
+	class AccelerateAction < Action
+		def initialize
+			@clock = Clock.new
+		end
+		def do(creature, target)
+			creature.vector.speed += 100 * @clock.elapsed_time
+		end
+	end
 
 	#Demonstrates altering object speed.
 	def test_accelerate
@@ -307,22 +337,19 @@ class Demo
 			say("We're going to have them pick up the pace.")
 			
 			say("A Clock helps track the passage of time (obviously).")
-			say("We'll create a separate Clock object for each creature.")
-			clocks = Hash.new {|h, k| h[k] = Clock.new}
-			
-			say("Our acceleration behavior is going to check to see how long it's been since it last took effect.")
+			say("AccelerateAction is a class defined in this demo's source.")
+			say("Each instance of AccelerateAction has a separate Clock object.")
+			say("It uses that Clock to check to see how long it's been since it last took effect.")
 			say("It will multiply that time by a given rate, say 100 meters/second.")
 			say("Let's say it's been 0.1 seconds since this creature last accelerated.")
 			say("100 times 0.1 is 10.")
 			say("So we should add 10 meters/second to the creature's speed.")
-			accelerate = Behavior.new
-			accelerate.actions << lambda do |creature, target|
-				#Accelerate the appropriate amount for the elapsed time.
-				creature.vector.speed += 100 * clocks[creature].elapsed_time
-			end
-			
 			say("We add acceleration to all the creatures...")
-			@environment.objects.each {|creature| creature.behaviors << accelerate}
+			@environment.objects.each do |creature|
+				accelerate = Behavior.new
+				accelerate.actions << AccelerateAction.new
+				creature.behaviors << accelerate
+			end
 			
 			say("And watch them rocket away.")
 			animate(FRAME_COUNT)
@@ -331,6 +358,15 @@ class Demo
 		
 	end
 
+
+	class TurnAction < Action
+		def initialize
+			@clock = Clock.new
+		end
+		def do(creature, target)
+			creature.vector.pitch += 90 * @clock.elapsed_time
+		end
+	end
 
 	#Demonstrates altering object vectors.
 	def test_turn
@@ -342,20 +378,17 @@ class Demo
 			say("Turning smoothly requires tracking the rate of the turn as well.")
 			animate(FRAME_COUNT / 2)
 			
-			say("Again, we keep a separate Clock for each Creature.")
-			clocks = Hash.new {|h, k| h[k] = Clock.new}
-			
-			say("Our turn behavior follows the same principle as accelerating.")
-			say("We see how many seconds have elapsed, then multiply that by the turn rate.")
+			say("This time we'll use the TurnAction class, also defined within this demo.")
+			say("Again, we keep a separate Clock for each TurnAction.")
+			say("It follows the same principle as accelerating.")
+			say("We see how many seconds have elapsed, then multiply that by the turn rate (90 degrees/sec).")
 			say("We add the result to the Vector angle.")
-			turn = Behavior.new
-			turn.actions << lambda do |creature, target|
-				#Turn the appropriate amount for the elapsed time.
-				creature.vector.pitch += 100 * clocks[creature].elapsed_time
-			end
-			
 			say("We add the behavior to each Creature...")
-			@environment.objects.each {|creature| creature.behaviors << turn}
+			@environment.objects.each do |creature|
+				turn = Behavior.new
+				turn.actions << TurnAction.new
+				creature.behaviors << turn
+			end
 			
 			say("And watch things spiral out of control.")
 			animate(FRAME_COUNT)
@@ -365,6 +398,29 @@ class Demo
 	end
 
 
+	class ApproachAction < Action
+		def initialize(heading = Vector.new)
+			@heading = heading
+			@clock = Clock.new
+		end
+		def do(creature, target)
+			#Find the difference between the current heading and the angle to the target.
+			turn_angle = Utility.find_angle(creature.location, target.location) - @heading.pitch
+			#If the angle is the long way around from the current heading, change it to the smaller angle.
+			if turn_angle > 180 then
+				turn_angle -= 360.0
+			elsif turn_angle < -180 then
+				turn_angle += 360.0
+			end
+			#The creature can only turn as fast as the elapsed time, of course.
+			turn_angle = turn_angle * @clock.elapsed_time
+			#Turn the appropriate amount.
+			@heading.pitch += turn_angle
+			#Apply the heading to the creature's movement vector.
+			creature.vector += @heading
+		end
+	end
+
 	#Demonstrates adding vectors.
 	def test_approach
 
@@ -373,54 +429,25 @@ class Demo
 		say("When your car skids on ice, you might steer in a different direction, but you're going to keep following your original vector for a while.")
 		say("Adding vectors together lets us simulate this.")
 		
-		say("We'll keep a separate Vector for each Creature to track the direction it's 'steering' in.")
-		headings = Hash.new {|h, k| h[k] = Vector.new(k.vector.speed, k.vector.pitch)}
-		
-		say("We'll only allow them to turn a maximum of 20 degrees in either direction.")
-		max_turn_angle = 20
-		
-		say("We create a Behavior which adds the Vector the creature WANTS to follow to the Vector it's ACTUALLY following.")
-		approach = Behavior.new
-		approach.actions << lambda do |creature, target|
-		
-			#Find the difference between the current heading and the angle to the target.
-			turn_angle = Utility.find_angle(creature.location, target.location) - headings[creature].pitch
-			
-			#If the angle is the long way around from the current heading, change it to the smaller angle.
-			if turn_angle > 180 then
-				turn_angle -= 360.0
-			elsif turn_angle < -180 then
-				turn_angle += 360.0
-			end
-			
-			#If turn angle is greater than allowed turn speed, reduce it.
-			turn_angle = Utility.constrain_value(turn_angle, max_turn_angle)
-			
-			#Turn the appropriate amount.
-			headings[creature].pitch += turn_angle
-			
-			#Apply the heading to the creature's movement vector.
-			creature.vector += headings[creature]
-			
+		say("Our ApproachAction adds the Vector the creature WANTS to follow to the Vector it's ACTUALLY following.")
+		say("We also add a condition that it should only target food.")
+		say("We add a behavior to all creatures...")
+		@environment.objects.each do |creature|
+			approach = Behavior.new
+			approach.actions << ApproachAction.new(creature.vector)
+			approach.conditions << FoodCondition.new
+			creature.behaviors << approach
 		end
-		
-		say("We add a condition that it should only target its prey.")
-		approach.conditions << lambda do |creature, target|
-			target.tags.include?('prey')
-		end
-		
-		say("We add the behavior to all creatures...")
-		@environment.objects.each {|creature| creature.behaviors << approach}
 		
 		say("Add a target...")
 		@environment.objects << Creature.new(
 			"target",
-			Location.new(@view.width / 2, @view.height / 2),
+			Location.new(@view.width / 2, @view.height / 3),
 			Color.new(1, 1, 1),
 			Vector.new(3, 0),
 			0, #Age.
 			DEFAULT_OBJECT_SIZE, #Size.
-			["prey"] #Tags.
+			["food"] #Tags.
 		)
 		
 		say("And watch them all TRY to catch it.")

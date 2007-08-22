@@ -114,77 +114,103 @@ end
 
 class TestEnvironment < Test::Unit::TestCase
 
+	
 	def setup
 	
-		#Interactions will be logged here.
-		@interactions = []
-		
-		#Create creatures.
-		creature1 = Creature.new('1')
-		creature2 = Creature.new('2')
-		creature_behavior = Behavior.new
-		creature_behavior.actions << lambda {|creature, target| @interactions << "#{creature.name} targeting #{target.name}"}
-		creature1.behaviors << creature_behavior
-		creature2.behaviors << creature_behavior
-		
-		#Create an environment and add the creatures.
-		@environment = Environment.new([creature1, creature2])
+		#Create an environment and add creatures.
+		@environment = Environment.new
+		@environment.objects << Creature.new('1')
+		@environment.objects << Creature.new('2')
 		
 	end
 	
 	
+	#An action that keeps a log of the actor and target.
+	class LogAction < Action
+		attr_reader :interactions
+		def initialize
+			#Interactions will be logged here.
+			@interactions = []
+		end
+		def do(actor, target)
+			#Log the interaction.
+			@interactions << "#{actor.name} targeting #{target.name}"
+		end
+	end
+	
 	def test_interactions
 	
+		#Set up behavior that will log interactions.
+		behavior = Behavior.new
+		log = LogAction.new
+		behavior.actions << log
+		@environment.objects.each {|creature| creature.behaviors << behavior}
+		
 		#Have environment elements interact.
 		@environment.interact
 
 		#Look for expected interactions (each should only occur once).
-		assert(@interactions.find_all{|i| i == "2 targeting 1"}.length == 1)
-		assert(@interactions.find_all{|i| i == "1 targeting 2"}.length == 1)
-		assert(@interactions.find_all{|i| i == "1 targeting 1"}.length == 0)
-		assert(@interactions.find_all{|i| i == "2 targeting 2"}.length == 0)
+		assert(log.interactions.find_all{|i| i == "2 targeting 1"}.length == 1)
+		assert(log.interactions.find_all{|i| i == "1 targeting 2"}.length == 1)
+		assert(log.interactions.find_all{|i| i == "1 targeting 1"}.length == 0)
+		assert(log.interactions.find_all{|i| i == "2 targeting 2"}.length == 0)
 		
 	end
 	
+	
+	#An environmental factor that logs its target.
+	class LogFactor < EnvironmentalFactor
+		attr_reader :interactions
+		def initialize
+			#Interactions will be logged here.
+			@interactions = []
+		end
+		def act(target)
+			#Log the interaction.
+			@interactions << "Environment targeting #{target.name}"
+		end
+	end
 	
 	def test_environmental_factors
 	
 		#Create an environmental factor.
-		behavior = Behavior.new
-		behavior.actions << lambda {|factor, target| @interactions << "Environment targeting #{target.name}"}
-		@environment.environmental_factors << EnvironmentalFactor.new([behavior])
+		logger = LogFactor.new
+		@environment.environmental_factors << logger
 		
 		#Have environment elements interact.
 		@environment.interact
 
 		#Look for expected interactions (each should only occur once).
-		assert(@interactions.find_all{|i| i == "Environment targeting 1"}.length == 1)
-		assert(@interactions.find_all{|i| i == "Environment targeting 2"}.length == 1)
+		assert(logger.interactions.find_all{|i| i == "Environment targeting 1"}.length == 1)
+		assert(logger.interactions.find_all{|i| i == "Environment targeting 2"}.length == 1)
 		
 	end
 	
 	
+	#A condition that is false unless actor and target have specific names.
+	class NameCondition < Condition
+		def test(actor, target)
+			return true if actor.name == '1' and target.name == '2'
+		end
+	end
+	
 	def test_conditions
 	
-		#Change behaviors to only occur if the target's name is '2'.
-		@environment.objects.each do |creature|
-			behavior = Behavior.new
-			behavior.conditions << lambda do |creature, target|
-				return true if creature.name == '1' and target.name == '2'
-			end
-			behavior.actions << lambda do |creature, target|
-				@interactions << "#{creature.name} is targeting #{target.name}"
-			end
-			creature.behaviors << behavior
-		end
-		
+		#Set up behavior that will log interactions.
+		behavior = Behavior.new
+		log = LogAction.new
+		behavior.actions << log
+		name_checker = NameCondition.new
+		behavior.conditions << name_checker
+		@environment.objects.each {|creature| creature.behaviors << behavior}
+				
 		#Have environment elements interact.
 		@environment.interact
 
-		#Creature '1' should not have been acted on.
-		assert(@interactions.find_all{|i| i == "2 is targeting 1"}.length == 0)
-		#Creature '2' *should* have been acted on.
-		assert(@interactions.find_all{|i| i == "1 is targeting 2"}.length == 1)
+		#Creature '1' should NOT have been acted on.
+		assert(log.interactions.find_all{|i| i == "2 targeting 1"}.length == 0)
+		#Creature '2' SHOULD have been acted on.
+		assert(log.interactions.find_all{|i| i == "1 targeting 2"}.length == 1)
 		
 	end
 	
