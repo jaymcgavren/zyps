@@ -191,7 +191,7 @@ class Application
 			approach_angle = @approach_slider.value
 			behavior.actions << ApproachAction.new(creature.vector) if approach_angle > 0
 			flee_angle = @flee_slider.value
-			behavior.actions << FleeAction.new(flee_angle) if flee_angle > 0
+			behavior.actions << FleeAction.new(creature.vector) if flee_angle > 0
 			behavior.actions << EatAction.new(@environment) if @eat_flag.active?
 			apply_tags = @tag_action_box.text
 			apply_tags.split(/,\s*/).each do |tag|
