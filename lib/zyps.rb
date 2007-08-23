@@ -215,9 +215,9 @@ class Color
 	#Averages each component of this Color with the corresponding component of color2, returning a new Color.
 	def +(color2)
 		Color.new(
-			self.red + color2.red / 2.0,
-			self.green + color2.green / 2.0,
-			self.blue + color2.blue / 2.0
+			(self.red + color2.red) / 2.0,
+			(self.green + color2.green) / 2.0,
+			(self.blue + color2.blue) / 2.0
 		)
 	end
 	
