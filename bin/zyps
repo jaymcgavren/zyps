@@ -20,42 +20,42 @@
 
 begin
 	require 'zyps'
+	require 'zyps/actions'
+	require 'zyps/conditions'
 	require 'zyps/views/trails'
 rescue LoadError
 	require 'rubygems'
 	require 'zyps'
+	require 'zyps/actions'
+	require 'zyps/conditions'
 	require 'zyps/views/trails'
 end
 
 
-#Keeps all objects within a set of walls.
-class EncloseBehavior < Behavior
 
-	#Positions of walls.
+#Keeps all objects within a set of walls.
+class Enclosure < EnvironmentalFactor
 	attr_accessor :left, :top, :right, :bottom
-	
-	def initialize
-		super
-		@left, @top, @right, @bottom = 0, 0, 0, 0
-		@actions << lambda do |boundary, object|
-			#If object is beyond a boundary, set its position equal to the boundary and reflect it.
-			if (object.location.x < @left) then
-				object.location.x = @left
-				object.vector.pitch = Utility.find_reflection_angle(90, object.vector.pitch)
-			elsif (object.location.x > @right) then
-				object.location.x = @right
-				object.vector.pitch = Utility.find_reflection_angle(270, object.vector.pitch)
-			end
-			if (object.location.y < @top) then
-				object.location.y = @top
-				object.vector.pitch = Utility.find_reflection_angle(0, object.vector.pitch)
-			elsif (object.location.y > @bottom) then
-				object.location.y = @bottom
-				object.vector.pitch = Utility.find_reflection_angle(180, object.vector.pitch)
-			end
+	def initialize(left = 0, right = 0, top = 0, bottom = 0)
+		@left, @top, @right, @bottom = left, top, right, bottom
+	end
+	def act(object)
+		#If object is beyond a boundary, set its position equal to the boundary and reflect it.
+		if (object.location.x < @left) then
+			object.location.x = @left
+			object.vector.pitch = Utility.find_reflection_angle(90, object.vector.pitch)
+		elsif (object.location.x > @right) then
+			object.location.x = @right
+			object.vector.pitch = Utility.find_reflection_angle(270, object.vector.pitch)
+		end
+		if (object.location.y < @top) then
+			object.location.y = @top
+			object.vector.pitch = Utility.find_reflection_angle(0, object.vector.pitch)
+		elsif (object.location.y > @bottom) then
+			object.location.y = @bottom
+			object.vector.pitch = Utility.find_reflection_angle(180, object.vector.pitch)
 		end
 	end
-	
 end
 
 
@@ -100,12 +100,7 @@ class Application
 	
 	
 		#Keep all objects within a boundary.
-		enclose = EncloseBehavior.new()
-		enclose.left = 0
-		enclose.right = @width
-		enclose.top = 0
-		enclose.bottom = @height
-		@environment.environmental_factors << EnvironmentalFactor.new([enclose])
+		@environment.environmental_factors << Enclosure.new(0, 0, @width, @height)
 
 		#Create thread to update environment.
 		thread = Thread.new do
@@ -113,9 +108,7 @@ class Application
 			begin
 			
 				drawing_clock = Clock.new
-				birth_clock = Clock.new
 				time_per_frame = 1.0 / @fps
-				time_since_birth = 0
 				
 				loop do
 				
@@ -174,90 +167,30 @@ class Application
 					Utility.find_angle(@press_location, @release_location) #Move in direction of drag.
 				),
 				0,
+				1,
 				@tags_box.text.split(/,\s*/)
 			)
 			behavior = Behavior.new
 			condition_tags = @tag_condition_box.text
 			condition_tags.split(/,\s*/).each do |tag|
-				behavior.conditions << lambda do |creature, target|
-					target.tags.include?(tag)
-				end
+				behavior.conditions << TagCondition.new(tag)
 			end
 			proximity = @proximity_condition_slider.value
-			if proximity > 0
-				behavior.conditions << lambda do |creature, target|
-					Utility.find_distance(creature.location, target.location) < proximity
-				end
-			end
+			behavior.conditions << ProximityCondition.new(proximity) if proximity > 0
 			age = @age_condition_slider.value
-			if age > 0
-				behavior.conditions << lambda do |creature, target|
-					target.age > age
-				end
-			end
+			behavior.conditions << AgeCondition.new(age) if age > 0
 			acceleration = @acceleration_slider.value
-			if acceleration != 0
-				behavior.actions << lambda do |creature, target|
-					creature.vector.speed += acceleration
-					creature.vector.speed = 0 if creature.vector.speed < 0
-				end
-			end
+			behavior.actions << AccelerateAction.new(acceleration) if acceleration != 0
 			turn = @turn_slider.value
-			if turn != 0
-				behavior.actions << lambda do |creature, target|
-					creature.vector.pitch += turn
-				end
-			end
+			behavior.actions << TurnAction.new(turn) if turn != 0
 			approach_angle = @approach_slider.value
-			if approach_angle > 0
-				heading = creature.vector.clone
-				behavior.actions << lambda do |creature, target|
-					#Find the difference between the current heading and the angle to the target.
-					turn_angle = Utility.find_angle(creature.location, target.location) - heading.pitch
-					#If the angle is the long way around from the current heading, change it to the smaller angle.
-					if turn_angle > 180 then
-						turn_angle -= 360.0
-					elsif turn_angle < -180 then
-						turn_angle += 360.0
-					end
-					#If turn angle is greater than allowed turn speed, reduce it.
-					turn_angle = Utility.constrain_value(turn_angle, approach_angle)
-					#Turn the appropriate amount.
-					heading.pitch += turn_angle
-					#Apply the heading to the creature's movement vector.
-					creature.vector += heading
-				end
-			end
+			behavior.actions << ApproachAction.new(approach_angle) if approach_angle > 0
 			flee_angle = @flee_slider.value
-			if flee_angle > 0
-				heading = creature.vector.clone
-				behavior.actions << lambda do |creature, target|
-					#Find the difference between the current heading and the angle to the target.
-					turn_angle = Utility.find_angle(creature.location, target.location) - heading.pitch + 180
-					#If the angle is the long way around from the current heading, change it to the smaller angle.
-					if turn_angle > 180 then
-						turn_angle -= 360.0
-					elsif turn_angle < -180 then
-						turn_angle += 360.0
-					end
-					#If turn angle is greater than allowed turn speed, reduce it.
-					turn_angle = Utility.constrain_value(turn_angle, flee_angle)
-					#Turn the appropriate amount.
-					heading.pitch += turn_angle
-					#Apply the heading to the creature's movement vector.
-					creature.vector += heading
-				end
-			end
-			if @eat_flag.active?
-				behavior.actions << lambda do |creature, target|
-					@environment.objects.delete(target)
-				end
-			end
+			behavior.actions << FleeAction.new(flee_angle) if flee_angle > 0
+			behavior.actions << EatAction.new(@environment) if @eat_flag.active?
 			apply_tags = @tag_action_box.text
 			apply_tags.split(/,\s*/).each do |tag|
-				behavior.conditions << lambda do |creature, target|
-					target.tags << tag unless target.tags.include?(tag)
-				end
+				behavior.actions << TagAction.new(tag)
 			end
 			creature.behaviors << behavior
 			@environment.objects << creature
