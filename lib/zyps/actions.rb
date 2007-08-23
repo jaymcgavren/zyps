@@ -64,7 +64,7 @@ class ApproachAction < Action
 			turn_angle += 360.0
 		end
 		#The creature can only turn as fast as the elapsed time, of course.
-		turn_angle = turn_angle * (@clock.elapsed_time * 10)
+		turn_angle = turn_angle * (@clock.elapsed_time * 5)
 		#Turn the appropriate amount.
 		@heading.pitch += turn_angle
 		#Apply the heading to the creature's movement vector.
@@ -89,7 +89,7 @@ class FleeAction < Action
 			turn_angle += 360.0
 		end
 		#The creature can only turn as fast as the elapsed time, of course.
-		turn_angle = turn_angle * (@clock.elapsed_time * 10)
+		turn_angle = turn_angle * (@clock.elapsed_time * 5)
 		#Turn the appropriate amount.
 		@heading.pitch += turn_angle
 		#Apply the heading to the creature's movement vector.
