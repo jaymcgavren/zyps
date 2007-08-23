@@ -18,6 +18,13 @@
 require 'zyps'
 
 
+#Head toward a target.
+class FaceAction < Action
+	def do(actor, target)
+		actor.vector.pitch = Utility.find_angle(actor.location, target.location)
+	end
+end
+
 #Increase/decrease speed over time.
 class AccelerateAction < Action
 	#Units per second to accelerate.
@@ -98,16 +105,25 @@ class FleeAction < Action
 end
 
 
-#Destroy the target and grow in size.
-class EatAction < Action
+#Destroy the target.
+class DestroyAction < Action
 	def initialize(environment)
 		@environment = environment
 	end
-	def do(creature, target)
+	def do(actor, target)
 		#Remove the target from the environment.
 		@environment.objects.delete(target)
+	end
+end
+
+
+#Destroy the target and grow in size.
+class EatAction < DestroyAction
+	def do(actor, target)
+		#Remove the target from the environment.
+		super
 		#Grow in size.
-		creature.size += target.size
+		actor.size += target.size
 	end
 end
 
@@ -121,5 +137,18 @@ class TagAction < Action
 	end
 	def do(actor, target)
 		target.tags << tag unless target.tags.include?(tag)
+	end
+end
+
+
+#Blend the target's color with another color.
+class BlendAction < Action
+	#Color to apply to target.
+	attr_accessor :color
+	def initialize(color)
+		self.color = color
+	end
+	def do(actor, target)
+		target.color += @color
 	end
 end
