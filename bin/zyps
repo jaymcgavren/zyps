@@ -22,40 +22,15 @@ begin
 	require 'zyps'
 	require 'zyps/actions'
 	require 'zyps/conditions'
+	require 'zyps/environmental_factors'
 	require 'zyps/views/trails'
 rescue LoadError
 	require 'rubygems'
 	require 'zyps'
 	require 'zyps/actions'
 	require 'zyps/conditions'
+	require 'zyps/environmental_factors'
 	require 'zyps/views/trails'
-end
-
-
-
-#Keeps all objects within a set of walls.
-class Enclosure < EnvironmentalFactor
-	attr_accessor :left, :top, :right, :bottom
-	def initialize(left = 0, top = 0, right = 0, bottom = 0)
-		@left, @top, @right, @bottom = left, top, right, bottom
-	end
-	def act(object)
-		#If object is beyond a boundary, set its position equal to the boundary and reflect it.
-		if (object.location.x < @left) then
-			object.location.x = @left
-			object.vector.pitch = Utility.find_reflection_angle(90, object.vector.pitch)
-		elsif (object.location.x > @right) then
-			object.location.x = @right
-			object.vector.pitch = Utility.find_reflection_angle(270, object.vector.pitch)
-		end
-		if (object.location.y < @top) then
-			object.location.y = @top
-			object.vector.pitch = Utility.find_reflection_angle(0, object.vector.pitch)
-		elsif (object.location.y > @bottom) then
-			object.location.y = @bottom
-			object.vector.pitch = Utility.find_reflection_angle(180, object.vector.pitch)
-		end
-	end
 end
 
 
@@ -102,9 +77,9 @@ class Application
 		#Keep all objects within a boundary.
 		enclosure = Enclosure.new
 		enclosure.left = 0
+		enclosure.bottom = 0
+		enclosure.top = @height
 		enclosure.right = @width
-		enclosure.bottom = @height
-		enclosure.top = 0
 		@environment.environmental_factors << enclosure
 
 		#Create thread to update environment.

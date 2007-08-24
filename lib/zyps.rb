@@ -367,15 +367,6 @@ module Utility
 		reflection_angle
 	end
 
-	#Given a location and the upper left and lower right corners of a box, determine if the point is within the box.
-	def Utility.inside_box?(point, upper_left, lower_right)
-		return false if point.x < upper_left.x
-		return false if point.y < upper_left.y
-		return false if point.x > lower_right.x
-		return false if point.y > lower_right.y
-		true
-	end
-	
 	#Given two GameObjects, determine if the boundary of one crosses the boundary of the other.
 	def Utility.collided?(object1, object2)
 		object1_radius = Math.sqrt(object1.size / Math::PI)

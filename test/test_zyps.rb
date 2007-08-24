@@ -20,6 +20,12 @@ require 'zyps'
 require 'test/unit'
 
 
+#Redefine Clock to return a predictable time.
+class Clock
+	def elapsed_time; 0.1; end
+end
+
+
 class TestGameObject < Test::Unit::TestCase
 
 
@@ -71,7 +77,6 @@ class TestCreature < Test::Unit::TestCase
 		assert_equal(0, creature.vector.speed)
 		assert_equal(0, creature.vector.pitch)
 		assert_equal(nil, creature.name)
-		assert_in_delta(0, creature.age, 0.1)
 		assert_equal(1, creature.size)
 		assert_equal([], creature.tags)
 		assert_equal([], creature.behaviors)
@@ -100,7 +105,6 @@ class TestCreature < Test::Unit::TestCase
 		assert_equal(0.7, creature.color.blue)
 		assert_equal(1.5, creature.vector.speed)
 		assert_equal(225, creature.vector.pitch)
-		assert_in_delta(2.001, creature.age, 0.01)
 		assert_equal(5.0, creature.size)
 		assert(creature.tags.include?("predator"))
 		assert(creature.tags.include?("blue team"))
@@ -364,23 +368,6 @@ end
 
 
 
-class TestClock < Test::Unit::TestCase
-
-
-	def test_elapsed_time
-	
-		#Create a clock, wait a moment, then see how much time has elapsed since its creation.
-		clock = Clock.new
-		sleep 0.1
-		assert_in_delta(0.1, clock.elapsed_time, 0.02)
-		
-	end
-	
-	
-end
-
-
-
 class TestUtility < Test::Unit::TestCase
 	
 	
@@ -436,20 +423,6 @@ class TestUtility < Test::Unit::TestCase
 	end
 
 	
-	def test_inside_box?
-		#Too far left.
-		assert(! Utility.inside_box?(Location.new(1, 3), Location.new(2, 2), Location.new(4, 4)))
-		#Too far right.
-		assert(! Utility.inside_box?(Location.new(5, 3), Location.new(2, 2), Location.new(4, 4)))
-		#Too far up.
-		assert(! Utility.inside_box?(Location.new(3, 1), Location.new(2, 2), Location.new(4, 4)))
-		#Too far down.
-		assert(! Utility.inside_box?(Location.new(3, 5), Location.new(2, 2), Location.new(4, 4)))
-		#Inside.
-		assert(Utility.inside_box?(Location.new(3, 3), Location.new(2, 2), Location.new(4, 4)))
-	end
-
-
 	def test_collided?
 		#Objects apart.
 		assert(! Utility.collided?(
