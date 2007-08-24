@@ -215,24 +215,6 @@ class Demo
 	end
 
 
-	#Head toward a target.
-	class ChaseAction < Action
-		def do(creature, target)
-			angle_to_target = Utility.find_angle(creature.location, target.location)
-			creature.vector.pitch = angle_to_target
-		end
-	end
-	#Act only on objects with the correct tag.
-	class TagCondition < Condition
-		attr_accessor :tag
-		def initialize(tag)
-			@tag = tag
-		end
-		def test(creature, target)
-			target.tags.include?(@tag)
-		end
-	end
-	
 	#Demonstrates creature behaviors.
 	def test_behaviors
 
@@ -240,12 +222,15 @@ class Demo
 		
 		thread = Thread.new do
 
-			say("Let's add a behavior to our creatures.")
+			say("Let's add a Behavior to our creatures.")
 			chase = Behavior.new
 			
-			say("We'll have them head straight toward their target.")
-			chase.actions << ChaseAction.new
+			say("A Behavior has one or more Action objects that define an action to take on the current target.")
+			say("We'll add an Action that makes the creatures head straight toward their target.")
+			chase.actions << FaceAction.new
 			
+			say("A Behavior also has one or more Condition objects.")
+			say("Unless every Condition is true, the action(s) won't be carried out.")
 			say("So that they don't target every creature on the screen, we'll add a condition to the behavior saying the target must have the label 'food'.")
 			chase.conditions << TagCondition.new("food")
 			
@@ -275,26 +260,13 @@ class Demo
 	#A Creature that changes the colors of other objects.
 	class Morpher < Creature
 		#Changes an object's color.
-		class MorphAction
-			def do(creature, target)
-				target.color.red += 0.1 if target.color.red < creature.color.red
-				target.color.green += 0.1 if target.color.green < creature.color.green
-				target.color.blue += 0.1 if target.color.blue < creature.color.blue
-			end
-		end
-		#True only for nearby targets.
-		class DistanceCondition < Condition
-			def test(creature, target)
-				Utility.find_distance(creature.location, target.location) < 50
-			end
-		end
 		def initialize(*arguments)
 			super
 			morph = Behavior.new
 			#Shift the target's color to match the creature's.
-			morph.actions << MorphAction.new
+			morph.actions << BlendAction.new(self.color)
 			#Act only on nearby targets.
-			morph.conditions << DistanceCondition.new
+			morph.conditions << ProximityCondition.new(50)
 			@behaviors << morph
 		end
 	end
@@ -368,9 +340,9 @@ class Demo
 			say("Turning smoothly requires tracking the rate of the turn as well.")
 			animate(FRAME_COUNT / 2)
 			
-			say("This time we'll use the TurnAction class, also defined within this demo.")
-			say("Again, we keep a separate Clock for each TurnAction.")
+			say("This time we'll use the TurnAction class.")
 			say("It follows the same principle as accelerating.")
+			say("Again, it keeps a separate Clock for each TurnAction.")
 			say("We see how many seconds have elapsed, then multiply that by the turn rate (90 degrees/sec).")
 			say("We add the result to the Vector angle.")
 			say("We add the behavior to each Creature...")
@@ -463,7 +435,7 @@ class Demo
 		say("Let's create a creature that causes some havoc.")
 		predator = Creature.new(nil, Location.new(0, 150), Color.new(0, 1, 0), Vector.new(200, 0), 0, DEFAULT_OBJECT_SIZE * 2)
 		
-		say("This demo code includes a subclass of Action, called EatAction.")
+		say("We use a subclass of Action, called EatAction.")
 		say("We'll eat our targets by removing them from their environment.")
 		say("Creatures and their Actions normally know nothing about the Environment they belong to, so EatAction takes an Environment in its constructor.")
 		say("EatAction finds the target in Environment.objects and removes it.")
