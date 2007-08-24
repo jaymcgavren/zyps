@@ -48,7 +48,7 @@ end
 desc "Test the package"
 Rake::TestTask.new do |test|
 	test.libs << "lib"
-	test.test_files = FileList["test/test_*.rb"]
+	test.test_files = FileList["test/**/test_*.rb"]
 end
 
 
