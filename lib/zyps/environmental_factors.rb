@@ -20,12 +20,20 @@ require 'zyps'
 
 #Keeps all objects within a set of walls.
 class Enclosure < EnvironmentalFactor
-	attr_accessor :left, :top, :right, :bottom
+	
+	#X coordinate of left boundary.
+	attr_accessor :left
+	#Y coordinate of top boundary.
+	attr_accessor :top
+	#X coordinate of right boundary.
+	attr_accessor :right
+	#Y coordinate of bottom boundary.
+	attr_accessor :bottom
 	def initialize(left = 0, top = 0, right = 0, bottom = 0)
-		@left, @top, @right, @bottom = left, top, right, bottom
+		self.left, self.top, self.right, self.bottom = left, top, right, bottom
 	end
+	#If object is beyond a boundary, set its position equal to the boundary and reflect it.
 	def act(object)
-		#If object is beyond a boundary, set its position equal to the boundary and reflect it.
 		if (object.location.x < @left) then
 			object.location.x = @left
 			object.vector.pitch = Utility.find_reflection_angle(90, object.vector.pitch)

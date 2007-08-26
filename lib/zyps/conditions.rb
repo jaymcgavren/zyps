@@ -20,11 +20,13 @@ require 'zyps'
 
 #Act only on objects with the correct tag.
 class TagCondition < Condition
+	#The tag to look for on the target.
 	attr_accessor :tag
 	def initialize(tag)
 		self.tag = tag
 	end
-	def test(creature, target)
+	#True if the target has the assigned tag.
+	def test(actor, target)
 		target.tags.include?(@tag)
 	end
 end
@@ -32,11 +34,13 @@ end
 
 #Act only on objects older than the given age.
 class AgeCondition < Condition
+	#The minimum age in seconds.
 	attr_accessor :age
 	def initialize(age)
 		self.age = age
 	end
-	def test(creature, target)
+	#True if the target is older than the assigned age.
+	def test(actor, target)
 		target.age > @age
 	end
 end
@@ -44,19 +48,22 @@ end
 
 #Act only on objects closer than the given distance.
 class ProximityCondition < Condition
+	#The maximum number of units away the target can be.
 	attr_accessor :distance
 	def initialize(distance)
 		self.distance = distance
 	end
-	def test(creature, target)
-		Utility.find_distance(creature.location, target.location) < @distance
+	#True if the actor and target are equal to or closer than the given distance.
+	def test(actor, target)
+		Utility.find_distance(actor.location, target.location) <= @distance
 	end
 end
 
 
 #True only if collided with target.
 class CollisionCondition < Condition
-	def test(creature, target)
-		Utility.collided?(creature, target)
+	#True if the objects have collided.
+	def test(actor, target)
+		Utility.collided?(actor, target)
 	end
 end

@@ -20,6 +20,7 @@ require 'zyps'
 
 #Head toward a target.
 class FaceAction < Action
+	#Set the actor's heading to point directly at target.
 	def do(actor, target)
 		actor.vector.pitch = Utility.find_angle(actor.location, target.location)
 	end
@@ -34,6 +35,7 @@ class AccelerateAction < Action
 		self.rate = rate
 		@clock = Clock.new
 	end
+	#Increase or decrease speed according to elapsed time.
 	def do(actor, target)
 		actor.vector.speed += @clock.elapsed_time * rate
 	end
@@ -49,6 +51,7 @@ class TurnAction < Action
 		self.rate = rate
 		@clock = Clock.new
 	end
+	#Turn according to elapsed time.
 	def do(actor, target)
 		actor.vector.pitch += @clock.elapsed_time * rate
 	end
@@ -57,11 +60,15 @@ end
 
 #Approaches the target, but obeys law of inertia.
 class ApproachAction < Action
-	attr_accessor :heading, :turn_rate
-	def initialize(heading = Vector.new, turn_rate = 1)
+	#Direction/speed actor is accelerating in.
+	attr_accessor :heading
+	#Degrees per second the direction of acceleration can change.
+	attr_accessor :turn_rate
+	def initialize(heading = Vector.new, turn_rate = 360)
 		self.heading, self.turn_rate = heading, turn_rate
 		@clock = Clock.new
 	end
+	#Accelerate toward the target, but limited by turn rate.
 	def do(actor, target)
 		#Find the difference between the current heading and the angle to the target.
 		turn_angle = Utility.find_angle(actor.location, target.location) - @heading.pitch
@@ -90,11 +97,15 @@ end
 
 #Flees from the target, but obeys law of inertia.
 class FleeAction < Action
-	attr_accessor :heading, :turn_rate
-	def initialize(heading = Vector.new, turn_rate = 1)
+	#Direction/speed actor is accelerating in.
+	attr_accessor :heading
+	#Degrees per second the direction of acceleration can change.
+	attr_accessor :turn_rate
+	def initialize(heading = Vector.new, turn_rate = 360)
 		self.heading, self.turn_rate = heading, turn_rate
 		@clock = Clock.new
 	end
+	#Accelerate away from the target, but limited by turn rate.
 	def do(actor, target)
 		#Find the difference between the current heading and the angle to the target.
 		turn_angle = Utility.find_angle(actor.location, target.location) - @heading.pitch + 180
@@ -123,11 +134,13 @@ end
 
 #Destroy the target.
 class DestroyAction < Action
+	#The environment to remove objects from.
+	attr_accessor :environment
 	def initialize(environment)
-		@environment = environment
+		self.environment = environment
 	end
+	#Remove the target from the environment.
 	def do(actor, target)
-		#Remove the target from the environment.
 		@environment.objects.delete(target)
 	end
 end
@@ -135,6 +148,7 @@ end
 
 #Destroy the target and grow in size.
 class EatAction < DestroyAction
+	#Remove the target from the environment, and increase actor's size by size of target.
 	def do(actor, target)
 		#Remove the target from the environment.
 		super
@@ -151,6 +165,7 @@ class TagAction < Action
 	def initialize(tag)
 		self.tag = tag
 	end
+	#Apply the given tag to the target.
 	def do(actor, target)
 		target.tags << tag unless target.tags.include?(tag)
 	end
@@ -164,6 +179,7 @@ class BlendAction < Action
 	def initialize(color)
 		self.color = color
 	end
+	#Blend the target's color with the assigned color.
 	def do(actor, target)
 		target.color += @color
 	end
