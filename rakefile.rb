@@ -10,7 +10,7 @@ require 'rake/testtask'
 #Configuration variables.
 PRODUCT_NAME = "Zyps"
 PRODUCT_VERSION = "0.4.1"
-SUMMARY = "A simulation/game with autonomous creatures"
+SUMMARY = "A game library for Ruby"
 AUTHOR = "Jay McGavren"
 AUTHOR_EMAIL = "jay@mcgavren.com"
 WEB_SITE = "http://jay.mcgavren.com/#{PRODUCT_NAME.downcase}/"
