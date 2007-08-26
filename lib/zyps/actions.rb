@@ -57,8 +57,9 @@ end
 
 #Approaches the target, but obeys law of inertia.
 class ApproachAction < Action
-	def initialize(heading = Vector.new)
-		@heading = heading
+	attr_accessor :heading, :turn_rate
+	def initialize(heading = Vector.new, turn_rate = 1)
+		self.heading, self.turn_rate = heading, turn_rate
 		@clock = Clock.new
 	end
 	def do(actor, target)
@@ -71,7 +72,14 @@ class ApproachAction < Action
 			turn_angle += 360.0
 		end
 		#The creature can only turn as fast as the elapsed time, of course.
-		turn_angle = turn_angle * (@clock.elapsed_time * 5)
+		maximum_turn = turn_rate * @clock.elapsed_time
+		if turn_angle.abs > maximum_turn
+			if turn_angle > 0
+				turn_angle = maximum_turn
+			else
+				turn_angle = maximum_turn * -1
+			end
+		end
 		#Turn the appropriate amount.
 		@heading.pitch += turn_angle
 		#Apply the heading to the creature's movement vector.
@@ -82,8 +90,9 @@ end
 
 #Flees from the target, but obeys law of inertia.
 class FleeAction < Action
-	def initialize(heading = Vector.new)
-		@heading = heading
+	attr_accessor :heading, :turn_rate
+	def initialize(heading = Vector.new, turn_rate = 1)
+		self.heading, self.turn_rate = heading, turn_rate
 		@clock = Clock.new
 	end
 	def do(actor, target)
@@ -96,7 +105,14 @@ class FleeAction < Action
 			turn_angle += 360.0
 		end
 		#The creature can only turn as fast as the elapsed time, of course.
-		turn_angle = turn_angle * (@clock.elapsed_time * 5)
+		maximum_turn = turn_rate * @clock.elapsed_time
+		if turn_angle.abs > maximum_turn
+			if turn_angle > 0
+				turn_angle = maximum_turn
+			else
+				turn_angle = maximum_turn * -1
+			end
+		end
 		#Turn the appropriate amount.
 		@heading.pitch += turn_angle
 		#Apply the heading to the creature's movement vector.

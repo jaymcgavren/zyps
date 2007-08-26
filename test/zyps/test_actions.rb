@@ -59,12 +59,62 @@ class TestActions < Test::Unit::TestCase
 	
 	
 	def test_approach_action
-		#TODO
+	
+		#Create an ApproachAction with a 0-degree vector, turn rate of 40 degrees/sec.
+		@actor.vector = Vector.new(1, 0)
+		action = ApproachAction.new(Vector.new(1, 0), 40)
+		#Act.
+		action.do(@actor, @target)
+		#Ensure action's thrust vector is correct for 0.1 seconds.
+		assert_equal(1.0, action.heading.speed)
+		assert_equal(4.0, action.heading.pitch)
+		#Ensure actor's resulting vector is correct.
+		assert_in_delta(1.997, @actor.vector.x, 0.001)
+		assert_in_delta(0.069, @actor.vector.y, 0.001)
+		
+		#Create an ApproachAction with a 0-degree vector, turn rate high enough to turn more than 45 degrees in 0.1 seconds.
+		#Action should only turn as far as target.
+		@actor.vector = Vector.new(1, 0)
+		action = ApproachAction.new(Vector.new(1, 0), 500)
+		#Act.
+		action.do(@actor, @target)
+		#Ensure actor is approaching target directly.
+		assert_equal(1.0, action.heading.speed)
+		assert_equal(45, action.heading.pitch)
+		#Ensure actor's resulting vector is correct.
+		assert_in_delta(1.707, @actor.vector.x, 0.001)
+		assert_in_delta(0.707, @actor.vector.y, 0.001)
+		
 	end
 	
 	
 	def test_flee_action
-		#TODO
+
+		#Create a FleeAction with a 0-degree vector, turn rate of 40 degrees/sec.
+		@actor.vector = Vector.new(1, 0)
+		action = FleeAction.new(Vector.new(1, 0), 40)
+		#Act.
+		action.do(@actor, @target)
+		#Ensure action's thrust vector is correct for 0.1 seconds.
+		assert_equal(1.0, action.heading.speed)
+		assert_equal(356.0, action.heading.pitch) #Should be heading away.
+		#Ensure actor's resulting vector is correct.
+		assert_in_delta(1.997, @actor.vector.x, 0.001)
+		assert_in_delta(-0.069, @actor.vector.y, 0.001)
+		
+		#Create a FleeAction with a 0-degree vector, turn rate high enough to turn more than 135 degrees in 0.1 seconds.
+		#Action should turn directly away from target, but no farther.
+		@actor.vector = Vector.new(1, 0)
+		action = FleeAction.new(Vector.new(1, 0), 1400)
+		#Act.
+		action.do(@actor, @target)
+		#Ensure actor is fleeing directly away from target.
+		assert_equal(1.0, action.heading.speed)
+		assert_equal(225, action.heading.pitch)
+		#Ensure actor's resulting vector is correct.
+		assert_in_delta(0.293, @actor.vector.x, 0.001)
+		assert_in_delta(-0.707, @actor.vector.y, 0.001)
+		
 	end
 	
 	
