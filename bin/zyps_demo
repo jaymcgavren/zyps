@@ -301,21 +301,11 @@ class Demo
 		thread = Thread.new do
 
 		
-			say("Many actions need to happen smoothly over time, such as accelerating at a given rate.")
-			
 			say("Here are some Creatures, just plodding along.")
 			animate(FRAME_COUNT / 4)
 			say("We're going to have them pick up the pace.")
 			
-			say("A Clock helps track the passage of time (obviously).")
-			say("AccelerateAction is a class defined in this demo's source.")
-			say("Each instance of AccelerateAction has a separate Clock object.")
-			say("It uses that Clock to check to see how long it's been since it last took effect.")
-			say("It will multiply that time by a given rate, say 100 meters/second.")
-			say("Let's say it's been 0.1 seconds since this creature last accelerated.")
-			say("100 times 0.1 is 10.")
-			say("So we should add 10 meters/second to the creature's speed.")
-			say("We add acceleration to all the creatures...")
+			say("We add a Behavior with an AccelerateAction to all the creatures, and specify they should increase their speed by 100 units/second...")
 			@environment.objects.each do |creature|
 				accelerate = Behavior.new
 				accelerate.actions << AccelerateAction.new(100)
@@ -337,15 +327,10 @@ class Demo
 		
 		thread = Thread.new do
 		
-			say("Turning smoothly requires tracking the rate of the turn as well.")
+			say("This time we'll use the TurnAction class.")
 			animate(FRAME_COUNT / 2)
 			
-			say("This time we'll use the TurnAction class.")
-			say("It follows the same principle as accelerating.")
-			say("Again, it keeps a separate Clock for each TurnAction.")
-			say("We see how many seconds have elapsed, then multiply that by the turn rate (90 degrees/sec).")
-			say("We add the result to the Vector angle.")
-			say("We add the behavior to each Creature...")
+			say("We tell each creature it should turn by 90 degrees/second...")
 			@environment.objects.each do |creature|
 				turn = Behavior.new
 				turn.actions << TurnAction.new(90)
@@ -366,11 +351,9 @@ class Demo
 		populate(@environment, 50)
 		
 		say("When your car skids on ice, you might steer in a different direction, but you're going to keep following your original vector for a while.")
-		say("Adding vectors together lets us simulate this.")
-		
-		say("Our ApproachAction adds the Vector the creature WANTS to follow to the Vector it's ACTUALLY following.")
+		say("Our ApproachAction adds the vector the creature WANTS to follow to the vector it's ACTUALLY following.")
+		say("We add a behavior with an ApproachAction to all creatures...")
 		say("We also add a condition that it should only target food.")
-		say("We add a behavior to all creatures...")
 		@environment.objects.each do |creature|
 			approach = Behavior.new
 			approach.actions << ApproachAction.new(creature.vector)
@@ -401,8 +384,7 @@ class Demo
 
 		populate(@environment, 50)
 		
-		say("Fleeing from something is just like approaching it, but we head in the OPPOSITE direction.")
-		say("Just get the angle toward the object, then add 180 degrees.")
+		say("A FleeAction is just like an ApproachAction, but we head in the OPPOSITE direction.")
 		@environment.objects.each do |creature|
 			flee = Behavior.new
 			flee.actions << FleeAction.new(creature.vector)
@@ -435,8 +417,7 @@ class Demo
 		say("Let's create a creature that causes some havoc.")
 		predator = Creature.new(nil, Location.new(0, 150), Color.new(0, 1, 0), Vector.new(200, 0), 0, DEFAULT_OBJECT_SIZE * 2)
 		
-		say("We use a subclass of Action, called EatAction.")
-		say("We'll eat our targets by removing them from their environment.")
+		say("The EatAction eats targets by removing them from their environment.")
 		say("Creatures and their Actions normally know nothing about the Environment they belong to, so EatAction takes an Environment in its constructor.")
 		say("EatAction finds the target in Environment.objects and removes it.")
 		action = EatAction.new(@environment)
@@ -461,6 +442,7 @@ class Demo
 
 	#Run all the demos.
 	def main
+		say "This is a demonstration of the Zyps library."
 		say "After each demo, close the window to proceed."
 		say("-" * 30)
 		demo {test_render}
@@ -472,6 +454,9 @@ class Demo
 		demo {test_approach}
 		demo {test_flee}
 		demo {test_eat}
+		say "To learn more about how the library works, you can read the source code in the 'bin/zyps_demo' file in the Zyps distribution."
+		say "And if you want to code your own Actions, Conditions, EnvironmentalFactors, or Views, see the distribution's 'lib' folder for examples."
+		say "Thanks for watching!"
 	end
 
 
