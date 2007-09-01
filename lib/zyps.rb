@@ -197,7 +197,9 @@ class Behavior
 		@active_target = nil
 	end
 	
-	#TODO: Document!
+	#If the subject and target meet the conditions, act on it.
+	#Calls test() on each condition.  If all are true (or there are no conditions), calls start() (if not started) and do() on each action.  Then it marks the target as active, and will not operate on another one until a condition fails on a subsequent update.
+	#If not all conditions are true, call stop() on each action (if started).  Then de-select the active target.
 	def perform(subject, target)
 	
 		#If current target is not the active one, skip it.
