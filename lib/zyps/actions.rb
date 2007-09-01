@@ -35,6 +35,11 @@ class AccelerateAction < Action
 		self.rate = rate
 		@clock = Clock.new
 	end
+	#Begin tracking time between actions.
+	def start(actor, target)
+		super
+		@clock.reset_elapsed_time
+	end
 	#Increase or decrease speed according to elapsed time.
 	def do(actor, target)
 		actor.vector.speed += @clock.elapsed_time * rate
@@ -50,6 +55,11 @@ class TurnAction < Action
 	def initialize(rate = 0)
 		self.rate = rate
 		@clock = Clock.new
+	end
+	#Begin tracking time between actions.
+	def start(actor, target)
+		super
+		@clock.reset_elapsed_time
 	end
 	#Turn according to elapsed time.
 	def do(actor, target)
@@ -67,6 +77,11 @@ class ApproachAction < Action
 	def initialize(heading = Vector.new, turn_rate = 360)
 		self.heading, self.turn_rate = heading, turn_rate
 		@clock = Clock.new
+	end
+	#Begin tracking time between actions.
+	def start(actor, target)
+		super
+		@clock.reset_elapsed_time
 	end
 	#Accelerate toward the target, but limited by turn rate.
 	def do(actor, target)
@@ -104,6 +119,11 @@ class FleeAction < Action
 	def initialize(heading = Vector.new, turn_rate = 360)
 		self.heading, self.turn_rate = heading, turn_rate
 		@clock = Clock.new
+	end
+	#Begin tracking time between actions.
+	def start(actor, target)
+		super
+		@clock.reset_elapsed_time
 	end
 	#Accelerate away from the target, but limited by turn rate.
 	def do(actor, target)

@@ -125,6 +125,7 @@ class TestEnvironment < Test::Unit::TestCase
 		@environment = Environment.new
 		@environment.objects << Creature.new('1')
 		@environment.objects << Creature.new('2')
+		@environment.objects << Creature.new('3')
 		
 	end
 	
@@ -144,11 +145,13 @@ class TestEnvironment < Test::Unit::TestCase
 	
 	def test_interactions
 	
-		#Set up behavior that will log interactions.
-		behavior = Behavior.new
+		#Set up behaviors that will log interactions.
 		log = LogAction.new
-		behavior.actions << log
-		@environment.objects.each {|creature| creature.behaviors << behavior}
+		@environment.objects.each do |creature|
+			behavior = Behavior.new
+			behavior.actions << log
+			creature.behaviors << behavior
+		end
 		
 		#Have environment elements interact.
 		@environment.interact
@@ -445,5 +448,157 @@ class TestUtility < Test::Unit::TestCase
 			GameObject.new("", Location.new(0, 0))
 		))
 	end
+	
+end
+
+
+class TestBehavior < Test::Unit::TestCase
+
+	#Always true.
+	class TrueCondition < Condition
+		def test(actor, target)
+			true
+		end
+	end
+	#Always false.
+	class FalseCondition < Condition
+		def test(actor, target)
+			false
+		end
+	end
+	
+	
+	def setup
+		@actor = Creature.new('actor')
+		@target = Creature.new('target')
+		@other = Creature.new('other')
+	end
+	
+	
+	def test_return_values
+	
+		#Set up a Behavior with a true condition.
+		behavior = Behavior.new
+		behavior.conditions << TrueCondition.new
+		assert(behavior.perform(@actor, @target), "perform() should return true.")
+		
+		#Set up a Behavior with a false condition.
+		behavior = Behavior.new
+		behavior.conditions << FalseCondition.new
+		assert(! behavior.perform(@actor, @target), "perform() should return true.")
+		
+		#Set up a Behavior with a true and a false condition.
+		behavior = Behavior.new
+		behavior.conditions << TrueCondition.new
+		behavior.conditions << FalseCondition.new
+		assert(! behavior.perform(@actor, @target), "perform() should return false.")
+		
+		#Set up a behavior with no conditions.
+		behavior = Behavior.new
+		assert(behavior.perform(@actor, @target), "perform() should return true.")
+		
+	end
+
+	
+	#Tracks number of times its start, stop, and do methods are called.
+	class MockAction < Action
+		attr_accessor :start_count, :stop_count, :do_count
+		def initialize
+			@start_count, @stop_count, @do_count = 0, 0, 0
+		end
+		def start(actor, target)
+			super
+			@start_count += 1
+		end
+		def do(actor, target)
+			@do_count += 1
+		end
+		def stop(actor, target)
+			super
+			@stop_count += 1
+		end
+	end
+	
+	def test_actions
+	
+		#Set up a behavior with a true condition and a mock action.
+		behavior = Behavior.new
+		behavior.conditions << TrueCondition.new
+		action = MockAction.new
+		behavior.actions << action
+		
+		#Perform the behavior.
+		behavior.perform(@actor, @target)
+		assert_equal(1, action.start_count, "start() should have been called on the mock action.")
+		assert_equal(1, action.do_count, "do() should have been called.")
+		assert_equal(0, action.stop_count, "stop() should NOT have been called.")
+		
+		#Perform the behavior again.
+		behavior.perform(@actor, @target)
+		assert_equal(1, action.start_count, "start() should NOT have been called.")
+		assert_equal(2, action.do_count, "do() should have been called.")
+		assert_equal(0, action.stop_count, "stop() should NOT have been called.")
+		
+		#Add a false condition to the behavior.
+		behavior.conditions << FalseCondition.new
+		#Perform the behavior.
+		behavior.perform(@actor, @target)
+		assert_equal(1, action.start_count, "start() should NOT have been called.")
+		assert_equal(2, action.do_count, "do() should have been called, because action is already started.")
+		assert_equal(1, action.stop_count, "stop() should NOT have been called.")
+				
+	end
+	
+	
+	#True only if actor's name is "actor" and target's name is "target".
+	class ActorTargetCondition < Condition
+		def test(actor, target)
+			return true if actor.name == 'actor' and target.name == 'target'
+			false
+		end
+	end
+	
+	def test_continuity
+	
+		#Set up a behavior with a condition that is only true for the actor and target objects.
+		behavior = Behavior.new
+		behavior.conditions << ActorTargetCondition.new
+		action = MockAction.new
+		behavior.actions << action
+		
+		#Perform the behavior on the actor and target.
+		behavior.perform(@actor, @target)
+		assert_equal(1, action.start_count, "start() should have been called on the mock action.")
+		assert_equal(1, action.do_count, "do() should have been called.")
+		assert_equal(0, action.stop_count, "stop() should NOT have been called.")
+		
+		#Perform the behavior on the actor and some other target (so the condition is false).
+		behavior.perform(@actor, @other)
+		assert_equal(1, action.start_count, "start() should NOT have been called, because the condition is false.")
+		assert_equal(1, action.do_count, "do() should NOT have been called, because the action is locked.")
+		assert_equal(0, action.stop_count, "stop() should NOT have been called, because the action is locked.")
+		
+		#Perform the behavior on the actor and original target again.
+		behavior.perform(@actor, @target)
+		assert_equal(1, action.start_count, "start() should NOT have been called, because the action is already started.")
+		assert_equal(2, action.do_count, "do() should have been called.")
+		assert_equal(0, action.stop_count, "stop() should NOT have been called.")
+		
+		#Change the target's name so the condition becomes false, then perform again.
+		@target.name = 'foobar'
+		behavior.perform(@actor, @target)
+		assert_equal(1, action.start_count, "start() should NOT have been called, because the condition is false.")
+		assert_equal(2, action.do_count, "do() should NOT have been called, because the condition is false.")
+		assert_equal(1, action.stop_count, "stop() should have been called.")
+		
+		#Change the target's name so the condition becomes true again, then perform again.
+		@target.name = 'target'
+		behavior.perform(@actor, @target)
+		assert_equal(2, action.start_count, "start() should have been called.")
+		assert_equal(3, action.do_count, "do() should have been called.")
+		assert_equal(1, action.stop_count, "stop() should NOT have been called.")
+		
+	end
+	
 	
 end

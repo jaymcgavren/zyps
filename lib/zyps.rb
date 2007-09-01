@@ -143,8 +143,32 @@ end
 
 
 #An action that one Creature takes on another.
-#Actions must implement a do(actor, target) instance method.
 class Action
+
+	#Whether the action was previously started.
+	attr_reader :started
+	
+	def initialize
+		@started = false
+	end
+	
+	#Start the action.
+	#Overriding subclasses must either call "super" or set the @started attribute to true.
+	def start(actor, target)
+		@started = true
+	end
+	
+	#Perform the action.
+	#Subclasses should override this.
+	def do(actor, target)
+	end
+	
+	#Stop the action.
+	#Overriding subclasses must either call "super" or set the @started attribute to false.
+	def stop(actor, target)
+		@started = false
+	end
+	
 end
 
 
@@ -169,13 +193,33 @@ class Behavior
 	#Optionally takes an array of actions and one of conditions.
 	def initialize (actions = [], conditions = [])
 		self.actions, self.conditions = actions, conditions
+		#Tracks current target.
+		@active_target = nil
 	end
 	
-	#Calls each Proc object in the list of conditions with the subject and its target.  Returns nil if any condition returns false.
-	#Then calls each Proc object in the list of actions, also with the subject and its target.
+	#TODO: Document!
 	def perform(subject, target)
-		conditions.each {|condition| return unless condition.test(subject, target)}
-		actions.each {|action| action.do(subject, target)}
+	
+		#If current target is not the active one, skip it.
+		return false if @active_target and @active_target != target
+		
+		#If all conditions match, do the actions.
+		if conditions.all?{|condition| condition.test(subject, target)}
+			actions.each do |action|
+				action.start(subject, target) unless action.started
+				action.do(subject, target)
+			end
+			#Make this target the active one (if it wasn't already).
+			@active_target = target
+			return true
+		#If any conditions fail, stop the action and de-select the active target.
+		else
+			actions.each do |action|
+				action.stop(subject, target) if action.started
+			end
+			@active_target = nil
+			return false
+		end
 	end
 	
 end
@@ -292,7 +336,7 @@ end
 class Clock
 
 	def initialize
-		@last_check_time = Time.new.to_f
+		reset_elapsed_time
 	end
 	
 	#Returns the time in (fractional) seconds since this method was last called (or on the first call, time since the Clock was created).
@@ -301,6 +345,10 @@ class Clock
 		elapsed_time = time - @last_check_time
 		@last_check_time = time
 		elapsed_time
+	end
+	
+	def reset_elapsed_time
+		@last_check_time = Time.new.to_f
 	end
 	
 end
