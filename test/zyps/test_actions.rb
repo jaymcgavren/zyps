@@ -30,153 +30,197 @@ end
 class TestActions < Test::Unit::TestCase
 
 
+	#Create and populate an environment.
 	def setup
 		@actor = Creature.new('name', Location.new(0, 0))
-		@target = GameObject.new('name', Location.new(1, 1))
+		@target1 = GameObject.new('name', Location.new(1, 1))
+		@target2 = GameObject.new('name', Location.new(-2, -2))
+		#Create an environment, and add the objects.
+		@environment = Environment.new
+		#Order is important - we want to act on target 1 first.
+		@environment.objects << @actor << @target1 << @target2
+	end
+	
+	#Add a new behavior to a creature with the given action.
+	def add_action(action, creature)
+		behavior = Behavior.new
+		behavior.actions << action
+		creature.behaviors << behavior
 	end
 
 
+	#A FaceAction turns directly toward the target.
 	def test_face_action
-		FaceAction.new.do(@actor, @target)
+		add_action(FaceAction.new, @actor)
+		@environment.interact
 		assert_equal(45, @actor.vector.pitch)
 	end
 	
 	
+	#An AccelerateAction speeds up the actor at a given rate.
 	def test_accelerate_action
 		#Accelerate 1 unit per second.
-		AccelerateAction.new(1).do(@actor, @target)
+		add_action(AccelerateAction.new(1), @actor)
+		@environment.interact
 		#Clock always returns 0.1 seconds, so actor should be moving 0.1 unit/second faster.
 		assert_equal(0.1, @actor.vector.speed)
 	end
 	
 	
+	#A TurnAction turns the actor at a given rate.
 	def test_turn_action
 		#Turn 1 degree per second.
-		TurnAction.new(1).do(@actor, @target)
+		add_action(TurnAction.new(1), @actor)
+		@environment.interact
 		#Clock always returns 0.1 seconds, so actor should be turned 0.1 degrees.
 		assert_equal(0.1, @actor.vector.pitch)
 	end
 	
 	
+	#An ApproachAction pushes the actor toward the target.
 	def test_approach_action
 	
 		#Create an ApproachAction with a 0-degree vector, turn rate of 40 degrees/sec.
-		@actor.vector = Vector.new(1, 0)
+		@actor.vector = Vector.new(0, 0)
 		action = ApproachAction.new(Vector.new(1, 0), 40)
+		add_action(action, @actor)
 		#Act.
-		action.do(@actor, @target)
+		@environment.interact
 		#Ensure action's thrust vector is correct for 0.1 seconds.
 		assert_equal(1.0, action.heading.speed)
 		assert_equal(4.0, action.heading.pitch)
 		#Ensure actor's resulting vector is correct.
-		assert_in_delta(1.997, @actor.vector.x, 0.001)
+		assert_in_delta(0.997, @actor.vector.x, 0.001)
 		assert_in_delta(0.069, @actor.vector.y, 0.001)
-		
+
+	end
+	
+	#Ensure ApproachAction doesn't oversteer.
+	def test_approach_action_accuracy
+	
 		#Create an ApproachAction with a 0-degree vector, turn rate high enough to turn more than 45 degrees in 0.1 seconds.
 		#Action should only turn as far as target.
-		@actor.vector = Vector.new(1, 0)
+		@actor.vector = Vector.new(0, 0)
 		action = ApproachAction.new(Vector.new(1, 0), 500)
+		add_action(action, @actor)
 		#Act.
-		action.do(@actor, @target)
+		@environment.interact
+
 		#Ensure actor is approaching target directly.
 		assert_equal(1.0, action.heading.speed)
 		assert_equal(45, action.heading.pitch)
 		#Ensure actor's resulting vector is correct.
-		assert_in_delta(1.707, @actor.vector.x, 0.001)
+		assert_in_delta(0.707, @actor.vector.x, 0.001)
 		assert_in_delta(0.707, @actor.vector.y, 0.001)
 		
 	end
 	
 	
+	#A FleeAction pushes the actor away from a target.
 	def test_flee_action
 
 		#Create a FleeAction with a 0-degree vector, turn rate of 40 degrees/sec.
-		@actor.vector = Vector.new(1, 0)
+		@actor.vector = Vector.new(0, 0)
 		action = FleeAction.new(Vector.new(1, 0), 40)
+		add_action(action, @actor)
 		#Act.
-		action.do(@actor, @target)
+		@environment.interact
 		#Ensure action's thrust vector is correct for 0.1 seconds.
 		assert_equal(1.0, action.heading.speed)
 		assert_equal(356.0, action.heading.pitch) #Should be heading away.
 		#Ensure actor's resulting vector is correct.
-		assert_in_delta(1.997, @actor.vector.x, 0.001)
+		assert_in_delta(0.997, @actor.vector.x, 0.001)
 		assert_in_delta(-0.069, @actor.vector.y, 0.001)
-		
+	end
+	
+	#Ensure flee action doesn't oversteer.
+	def test_flee_action_accuracy
+	
 		#Create a FleeAction with a 0-degree vector, turn rate high enough to turn more than 135 degrees in 0.1 seconds.
 		#Action should turn directly away from target, but no farther.
-		@actor.vector = Vector.new(1, 0)
+		@actor.vector = Vector.new(0, 0)
 		action = FleeAction.new(Vector.new(1, 0), 1400)
+		add_action(action, @actor)
 		#Act.
-		action.do(@actor, @target)
+		@environment.interact
 		#Ensure actor is fleeing directly away from target.
 		assert_equal(1.0, action.heading.speed)
 		assert_equal(225, action.heading.pitch)
 		#Ensure actor's resulting vector is correct.
-		assert_in_delta(0.293, @actor.vector.x, 0.001)
+		assert_in_delta(-0.707, @actor.vector.x, 0.001)
 		assert_in_delta(-0.707, @actor.vector.y, 0.001)
 		
 	end
 	
 	
+	#A DestroyAction removes the target from the environment.
 	def test_destroy_action
-		#Create an environment, and add the objects.
-		environment = Environment.new
-		environment.objects << @actor << @target
 		#Create a DestroyAction, linked to the environment.
-		action = DestroyAction.new(environment)
+		add_action(DestroyAction.new(@environment), @actor)
 		#Act.
-		action.do(@actor, @target)
+		@environment.interact
 		#Verify target is removed from environment.
-		assert(! environment.objects.include?(@target))
+		assert(! @environment.objects.include?(@target1))
+		#Verify non-target is removed from environment.
+		assert(@environment.objects.include?(@target2))
+		#Act again.
+		@environment.interact
+		#Verify targets were switched.
+		assert(! @environment.objects.include?(@target2))
 	end
 	
 	
+	#An EatAction is like a DestroyAction, but also makes the actor grow in size.
 	def test_eat_action
-		#Create an environment, and add the objects.
-		environment = Environment.new
-		environment.objects << @actor << @target
 		#Create an EatAction, linked to the environment.
-		action = EatAction.new(environment)
+		add_action(EatAction.new(@environment), @actor)
 		#Act.
 		@actor.size = 1
-		@target.size = 1
-		action.do(@actor, @target)
+		@target1.size = 1
+		@environment.interact
 		#Verify target is removed from environment.
-		assert(! environment.objects.include?(@target))
+		assert(! @environment.objects.include?(@target1))
 		#Verify creature has grown by the appropriate amount.
 		assert_equal(2, @actor.size)
 	end
 	
 	
+	#A TagAction adds a tag to the target.
 	def test_tag_action
 		#Create a TagAction, and act.
-		TagAction.new("tag").do(@actor, @target)
+		add_action(TagAction.new("tag"), @actor)
+		@environment.interact
 		#Verify target has appropriate tag.
-		assert(@target.tags.include?("tag"))
+		assert(@target1.tags.include?("tag"))
 	end
 	
 	
-	def test_blend_action
+	#A BlendAction shifts the target's color toward the given color.
+	def test_blend_action_black
 		#Create a BlendAction that blends to black.
-		action = BlendAction.new(Color.new(0, 0, 0))
+		add_action(BlendAction.new(Color.new(0, 0, 0)), @actor)
 		#Set the target's color.
-		@target.color = Color.new(0.5, 0.5, 0.5)
+		@target1.color = Color.new(0.5, 0.5, 0.5)
 		#Act.
-		action.do(@actor, @target)
+		@environment.interact
 		#Verify the target's new color.
-		assert_equal(0.25, @target.color.red)
-		assert_equal(0.25, @target.color.green)
-		assert_equal(0.25, @target.color.blue)
+		assert_equal(0.25, @target1.color.red)
+		assert_equal(0.25, @target1.color.green)
+		assert_equal(0.25, @target1.color.blue)
+	end
+		
+	#Test shifting colors toward white.
+	def test_blend_action_white
 		#Create a BlendAction that blends to white.
-		action = BlendAction.new(Color.new(1, 1, 1))
+		add_action(BlendAction.new(Color.new(1, 1, 1)), @actor)
 		#Set the target's color.
-		@target.color = Color.new(0.5, 0.5, 0.5)
+		@target1.color = Color.new(0.5, 0.5, 0.5)
 		#Act.
-		action.do(@actor, @target)
+		@environment.interact
 		#Verify the target's new color.
-		assert_equal(0.75, @target.color.red)
-		assert_equal(0.75, @target.color.green)
-		assert_equal(0.75, @target.color.blue)
+		assert_equal(0.75, @target1.color.red)
+		assert_equal(0.75, @target1.color.green)
+		assert_equal(0.75, @target1.color.blue)
 	end
 	
 	
