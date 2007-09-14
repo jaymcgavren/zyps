@@ -201,7 +201,7 @@ class Behavior
 	#Calls test() on each condition.  If all are true (or there are no conditions), calls start() (if not started) and do() on each action.  Then it marks the target as active, and will not operate on another one until a condition fails on a subsequent update.
 	#If not all conditions are true, call stop() on each action (if started).  Then de-select the active target.
 	def perform(subject, target)
-	
+		
 		#If current target is not the active one, skip it.
 		return false if @active_target and @active_target != target
 		
@@ -209,20 +209,33 @@ class Behavior
 		if conditions.all?{|condition| condition.test(subject, target)}
 			actions.each do |action|
 				action.start(subject, target) unless action.started
-				action.do(subject, target)
+				result = action.do(subject, target)
+				#Stop the behavior if any action returns false.
+				if result == false
+					stop(subject, target)
+					return false
+				end
 			end
 			#Make this target the active one (if it wasn't already).
 			@active_target = target
 			return true
-		#If any conditions fail, stop the action and de-select the active target.
+		#If any conditions fail, stop the behavior.
 		else
+			stop(subject, target)
+			return false
+		end
+	end
+	
+	
+	private
+		
+		#Stop all actions and de-select the active target.
+		def stop(subject, target)
 			actions.each do |action|
 				action.stop(subject, target) if action.started
 			end
 			@active_target = nil
-			return false
 		end
-	end
 	
 end
 

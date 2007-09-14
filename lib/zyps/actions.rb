@@ -162,6 +162,8 @@ class DestroyAction < Action
 	#Remove the target from the environment.
 	def do(actor, target)
 		@environment.objects.delete(target)
+		#Discontinue action.
+		return false
 	end
 end
 
@@ -170,10 +172,10 @@ end
 class EatAction < DestroyAction
 	#Remove the target from the environment, and increase actor's size by size of target.
 	def do(actor, target)
-		#Remove the target from the environment.
-		super
 		#Grow in size.
 		actor.size += target.size
+		#Remove the target from the environment.
+		super
 	end
 end
 
