@@ -222,6 +222,30 @@ class TestEnvironment < Test::Unit::TestCase
 	end
 	
 	
+	#Test that creatures can switch targets when one is removed from the environment.
+	def test_object_removal
+	
+		#Set up behaviors that will log interactions.
+		log = LogAction.new
+		@environment.objects.each do |creature|
+			behavior = Behavior.new
+			behavior.actions << log
+			creature.behaviors << behavior
+		end
+		
+		#Have environment elements interact.
+		@environment.interact
+		#Remove the original target from the environment.
+		@environment.objects.delete_at(1)
+		#Interact again.
+		@environment.interact
+
+		#Look for expected interactions (each should only occur once).
+		assert_equal(1, log.interactions.find_all{|i| i == "1 targeting 3"}.length)
+		
+	end
+	
+	
 end
 
 
