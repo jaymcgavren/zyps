@@ -37,7 +37,7 @@ class Environment
 	#Allow everything in the environment to interact with each other.
 	#Objects are first moved according to their preexisting vectors and the amount of time since the last call.
 	#Then each EnvironmentalFactor is allowed to act on each object.
-	#Finally, each GameObject with an act() method is allowed to act on every other object.
+	#Finally, each GameObject with an act() method is allowed to act on the environment.
 	def interact
 	
 		#Get time since last interaction.
@@ -51,12 +51,9 @@ class Environment
 			#Have all environmental factors interact with each object.
 			environmental_factors.each {|factor| factor.act(object)}
 			
-			#Have all creatures interact with each other.
+			#Have all creatures interact with the environment.
 			if object.respond_to?(:act)
-				objects.each do |target|
-					next if target.equal?(object) #Ensure object does not act on itself.
-					object.act(target)
-				end
+				object.act(self)
 			end
 			
 		end
@@ -126,9 +123,9 @@ class Creature < GameObject
 		self.behaviors = behaviors
 	end
 	
-	#Call Behavior.perform on each of the object's assigned Behaviors, with the object and a target as arguments.
-	def act(target)
-		behaviors.each {|behavior| behavior.perform(self, target)}
+	#Call Behavior.perform(self, environment) on each of the creature's assigned Behaviors.
+	def act(environment)
+		behaviors.each {|behavior| behavior.perform(self, environment)}
 	end
 	
 end
@@ -197,45 +194,58 @@ class Behavior
 		@active_target = nil
 	end
 	
-	#If the subject and target meet the conditions, act on it.
-	#Calls test() on each condition.  If all are true (or there are no conditions), calls start() (if not started) and do() on each action.  Then it marks the target as active, and will not operate on another one until a condition fails on a subsequent update.
-	#If not all conditions are true, call stop() on each action (if started).  Then de-select the active target.
-	def perform(subject, target)
+	#Test all conditions against each object in the evironment.
+	#For the first object that meets all of them, mark it active (and operate on it first next time).
+	#Then call start() (if applicable) and perform() for all actions against the active target.
+	#If any action or condition returns false, stop all actions, and deselect the active target.
+	def perform(actor, environment)
 		
-		#If current target is not the active one, skip it.
-		return false if @active_target and @active_target != target
-		
-		#If all conditions match, do the actions.
-		if conditions.all?{|condition| condition.test(subject, target)}
+		begin
+			#Select a target.
+			target = select_target(actor, environment.objects)
+			#Do the actions on the target.
 			actions.each do |action|
-				action.start(subject, target) unless action.started
-				result = action.do(subject, target)
-				#Stop the behavior if any action returns false.
-				if result == false
-					stop(subject, target)
-					return false
-				end
+				action.start(actor, target) unless action.started
+				action.do(actor, target)
 			end
-			#Make this target the active one (if it wasn't already).
-			@active_target = target
-			return true
-		#If any conditions fail, stop the behavior.
-		else
-			stop(subject, target)
-			return false
+		rescue
+			#If the behavior can no longer be performed, halt it.
+			stop(actor, target)
 		end
+		
 	end
 	
 	
 	private
-		
+
 		#Stop all actions and de-select the active target.
-		def stop(subject, target)
+		def stop(actor, target)
 			actions.each do |action|
-				action.stop(subject, target) if action.started
+				action.stop(actor, target) if action.started
 			end
 			@active_target = nil
 		end
+		
+		#Select a target that matches all conditions.
+		def select_target(actor, targets)
+			#If a target is already active, still present in the environment, and all conditions are true for it, simply re-select it.
+			if @active_target and targets.include?(@active_target) and conditions.all?{|condition| condition.test(actor, @active_target)}
+				return @active_target 
+			end
+			#For each object in environment:
+			targets.each do |target|
+				#Don't let actor target itself.
+				next if target == actor
+				#If all conditions match (or there are no conditions), select the object.
+				if conditions.all?{|condition| condition.test(actor, target)}
+					@active_target = target
+					return target
+				end
+			end
+			#If there were no matches, throw an exception.
+			raise "No matching targets found."
+		end
+	
 	
 end
 
