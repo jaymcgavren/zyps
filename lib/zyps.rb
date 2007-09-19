@@ -182,7 +182,7 @@ end
 #Likewise, the subject can change its own attributes, it can approach or flee from the target, it can spawn new Creatures or GameObjects (like bullets), or anything else.
 class Behavior
 
-	#A list of Condition objects, which are called with the object itself and its target.  A condition can consider the tags on the target, the distance from the subject, or any other criteria.  If any condition returns false, the behavior will not be carried out.
+	#A list of Condition objects, which are called with the object itself and its target.  A condition can consider the tags on the target, the distance from the subject, or any other criteria.  If any condition returns false, the behavior will not be carried out (or stopped if it has begun).
 	attr_accessor :conditions
 	#A list of Action objects, which are called with the object and its target when all conditions are met.  An action can act on the subject or its target.
 	attr_accessor :actions

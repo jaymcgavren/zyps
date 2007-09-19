@@ -37,13 +37,6 @@ end
 
 class Application
 
-	#Tags to randomly choose from.
-	attr_accessor :tag_pool
-	#Colors to randomly choose from.
-	attr_accessor :color_pool
-	#Seconds between creature creation.
-	attr_accessor :birth_rate
-	
 	#Create app window, game environment, and view.
 	def initialize(width, height)
 		
@@ -147,31 +140,14 @@ class Application
 					Utility.find_angle(@press_location, @release_location) #Move in direction of drag.
 				),
 				0,
-				1,
-				@tags_box.text.split(/,\s*/)
+				1
 			)
 			behavior = Behavior.new
-			condition_tags = @tag_condition_box.text
-			condition_tags.split(/,\s*/).each do |tag|
-				behavior.conditions << TagCondition.new(tag)
-			end
-			proximity = @proximity_condition_slider.value
-			behavior.conditions << ProximityCondition.new(proximity) if proximity > 0
-			age = @age_condition_slider.value
-			behavior.conditions << AgeCondition.new(age) if age > 0
-			acceleration = @acceleration_slider.value
-			behavior.actions << AccelerateAction.new(acceleration) if acceleration != 0
-			turn = @turn_slider.value
-			behavior.actions << TurnAction.new(turn) if turn != 0
-			approach_angle = @approach_slider.value
-			behavior.actions << ApproachAction.new(Vector.new(5, creature.vector.pitch), approach_angle) if approach_angle > 0
-			flee_angle = @flee_slider.value
-			behavior.actions << FleeAction.new(Vector.new(5, creature.vector.pitch), flee_angle) if flee_angle > 0
-			behavior.actions << EatAction.new(@environment) if @eat_flag.active?
-			apply_tags = @tag_action_box.text
-			apply_tags.split(/,\s*/).each do |tag|
-				behavior.actions << TagAction.new(tag)
-			end
+			behavior.actions << AccelerateAction.new(1) if @accelerate_flag.active?
+			behavior.actions << TurnAction.new(90) if @turn_flag.active?
+			behavior.actions << ApproachAction.new(creature.vector, 90) if @approach_flag.active?
+			behavior.actions << FleeAction.new(creature.vector) if @flee_flag.active?
+			behavior.actions << BlendAction.new(creature.color) if @paint_flag.active?
 			creature.behaviors << behavior
 			@environment.objects << creature
 		end
@@ -195,64 +171,24 @@ class Application
 		attribute_controls.pack_start(@blue_slider, expand, fill, padding)
 		@red_slider.value, @green_slider.value, @blue_slider.value = 1, 1, 1
 				
-		#Add a text box for the tags.
-		attribute_controls.pack_start(Gtk::Label.new("Tags"), expand, fill, padding)
-		@tags_box = Gtk::Entry.new
-		attribute_controls.pack_start(@tags_box, expand, fill, padding)
-		
 		#Add the attribute controls to the panel.
 		control_panel.pack_start(attribute_controls, expand, fill, padding)
 		
-		#Create a group for the conditions.
-		condition_controls = Gtk::VBox.new(homogeneous, spacing)
-		condition_controls.pack_start(Gtk::Label.new("Target"), expand, fill, padding)
-		#Add a text box for the tag condition.
-		condition_controls.pack_start(Gtk::Label.new("Tags"), expand, fill, padding)
-		@tag_condition_box = Gtk::Entry.new
-		condition_controls.pack_start(@tag_condition_box, expand, fill, padding)
-		#Add a slider for the age condition.
-		@age_condition_slider = Gtk::HScale.new(0, 300, 30)
-		condition_controls.pack_start(Gtk::Label.new("Age"), expand, fill, padding)
-		condition_controls.pack_start(@age_condition_slider, expand, fill, padding)
-		#Add a slider for the proximity condition.
-		@proximity_condition_slider = Gtk::HScale.new(1, 100, 10)
-		condition_controls.pack_start(Gtk::Label.new("Proximity"), expand, fill, padding)
-		condition_controls.pack_start(@proximity_condition_slider, expand, fill, padding)
-		#Add the condition controls to the panel.
-		control_panel.pack_start(condition_controls, expand, fill, padding)
-
 		#Create a group for the actions.
 		action_controls = Gtk::VBox.new(homogeneous, spacing)
 		action_controls.pack_start(Gtk::Label.new("Actions"), expand, fill, padding)
-		#Add a slider for the accelerate action.
-		@acceleration_slider = Gtk::HScale.new(-10, 10, 2)
-		action_controls.pack_start(Gtk::Label.new("Accelerate"), expand, fill, padding)
-		action_controls.pack_start(@acceleration_slider, expand, fill, padding)
-		@acceleration_slider.value = 0
-		#Add a slider for the turn action.
-		@turn_slider = Gtk::HScale.new(-180, 180, 20)
-		action_controls.pack_start(Gtk::Label.new("Turn"), expand, fill, padding)
-		action_controls.pack_start(@turn_slider, expand, fill, padding)
-		@turn_slider.value = 0
-		#Add a slider for the approach angle.
-		@approach_slider = Gtk::HScale.new(-180, 180, 20)
-		action_controls.pack_start(Gtk::Label.new("Approach"), expand, fill, padding)
-		action_controls.pack_start(@approach_slider, expand, fill, padding)
-		@approach_slider.value = 0
-		#Add a slider for the flee action.
-		@flee_slider = Gtk::HScale.new(-180, 180, 20)
-		action_controls.pack_start(Gtk::Label.new("Flee"), expand, fill, padding)
-		action_controls.pack_start(@flee_slider, expand, fill, padding)
-		@flee_slider.value = 0
-		#Add a checkbox for the eat action.
+		@accelerate_flag = Gtk::CheckButton.new("Accelerate")
+		action_controls.pack_start(@accelerate_flag, expand, fill, padding)
+		@turn_flag = Gtk::CheckButton.new("Turn")
+		action_controls.pack_start(@turn_flag, expand, fill, padding)
+		@approach_flag = Gtk::CheckButton.new("Approach")
+		action_controls.pack_start(@approach_flag, expand, fill, padding)
+		@flee_flag = Gtk::CheckButton.new("Flee")
+		action_controls.pack_start(@flee_flag, expand, fill, padding)
 		@eat_flag = Gtk::CheckButton.new("Eat")
 		action_controls.pack_start(@eat_flag, expand, fill, padding)
-		#Add a checkbox for the spawn action.
-		#TODO
-		#Add a text box for the tag action.
-		action_controls.pack_start(Gtk::Label.new("Apply Tag"), expand, fill, padding)
-		@tag_action_box = Gtk::Entry.new
-		action_controls.pack_start(@tag_action_box, expand, fill, padding)
+		@paint_flag = Gtk::CheckButton.new("Paint")
+		action_controls.pack_start(@paint_flag, expand, fill, padding)
 		#Add the action controls to the panel.
 		control_panel.pack_start(action_controls, expand, fill, padding)
 		

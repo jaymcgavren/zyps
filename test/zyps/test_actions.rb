@@ -166,7 +166,7 @@ class TestActions < Test::Unit::TestCase
 		#Act again.
 		@environment.interact
 		#Verify targets were switched.
-		assert(! @environment.objects.include?(@target2))
+		assert(! @environment.objects.include?(@target2), "Targets should have been switched.")
 	end
 	
 	
