@@ -143,12 +143,21 @@ class Application
 				1
 			)
 			behavior = Behavior.new
+			behavior.conditions << ProximityCondition.new(200)
 			behavior.actions << AccelerateAction.new(1) if @accelerate_flag.active?
 			behavior.actions << TurnAction.new(90) if @turn_flag.active?
 			behavior.actions << ApproachAction.new(creature.vector, 90) if @approach_flag.active?
 			behavior.actions << FleeAction.new(creature.vector) if @flee_flag.active?
+			behavior.actions << PushAction.new(100) if @push_flag.active?
+			behavior.actions << PullAction.new(100) if @pull_flag.active?
 			behavior.actions << BlendAction.new(creature.color) if @paint_flag.active?
 			creature.behaviors << behavior
+			if @eat_flag.active?
+				behavior = Behavior.new
+				behavior.actions << EatAction.new(@environment)
+				behavior.conditions << ProximityCondition.new(10)
+				creature.behaviors << behavior
+			end
 			@environment.objects << creature
 		end
 		
@@ -185,6 +194,10 @@ class Application
 		action_controls.pack_start(@approach_flag, expand, fill, padding)
 		@flee_flag = Gtk::CheckButton.new("Flee")
 		action_controls.pack_start(@flee_flag, expand, fill, padding)
+		@push_flag = Gtk::CheckButton.new("Push")
+		action_controls.pack_start(@push_flag, expand, fill, padding)
+		@pull_flag = Gtk::CheckButton.new("Pull")
+		action_controls.pack_start(@pull_flag, expand, fill, padding)
 		@eat_flag = Gtk::CheckButton.new("Eat")
 		action_controls.pack_start(@eat_flag, expand, fill, padding)
 		@paint_flag = Gtk::CheckButton.new("Paint")

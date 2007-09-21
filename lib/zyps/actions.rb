@@ -206,3 +206,53 @@ class BlendAction < Action
 		target.color += @color
 	end
 end
+
+
+#Pushes target away.
+class PushAction < Action
+	#Units/second to accelerate target by.
+	attr_accessor :force
+	def initialize(force = 1)
+		@force = force
+		@clock = Clock.new
+	end
+	#Begin tracking time between actions.
+	def start(actor, target)
+		super
+		@clock.reset_elapsed_time
+	end
+	#Accelerate away from the target, but limited by turn rate.
+	def do(actor, target)
+		#Angle to target is also angle of push force.
+		push_angle = Utility.find_angle(actor.location, target.location)
+		#Acceleration will be limited by elapsed time.
+		push_force = @force * @clock.elapsed_time
+		#Apply the force to the creature's movement vector.
+		target.vector += Vector.new(push_force, push_angle)
+	end
+end
+
+
+#Pulls target toward actor.
+class PullAction < Action
+	#Units/second to accelerate target by.
+	attr_accessor :force
+	def initialize(force = 1)
+		@force = force
+		@clock = Clock.new
+	end
+	#Begin tracking time between actions.
+	def start(actor, target)
+		super
+		@clock.reset_elapsed_time
+	end
+	#Accelerate away from the target, but limited by turn rate.
+	def do(actor, target)
+		#Angle from target to actor is also angle of pull force (opposite of that for push).
+		pull_angle = Utility.find_angle(target.location, actor.location)
+		#Acceleration will be limited by elapsed time.
+		pull_force = @force * @clock.elapsed_time
+		#Apply the force to the creature's movement vector.
+		target.vector += Vector.new(pull_force, pull_angle)
+	end
+end

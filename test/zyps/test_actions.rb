@@ -224,4 +224,25 @@ class TestActions < Test::Unit::TestCase
 	end
 	
 	
+	#A PushAction pushes the target away.
+	def test_push_action
+		#Create a PushAction, and act.
+		add_action(PushAction.new(1), @actor)
+		@environment.interact
+		#Verify target's speed and direction are correct.
+		assert_equal(0.1, @target1.vector.speed, "@target1 should have been pushed away from @actor.")
+		assert_equal(45.0, @target1.vector.pitch, "@target1's angle should be facing away from @actor.")
+	end
+
+	
+	#A PullAction pulls the target toward the actor.
+	def test_pull_action
+		#Create a PullAction, and act.
+		add_action(PullAction.new(1), @actor)
+		@environment.interact
+		#Verify target's speed and direction are correct.
+		assert_equal(0.1, @target1.vector.speed, "@target1 should have been pulled toward @actor.")
+		assert_equal(225.0, @target1.vector.pitch, "@target1's angle should be facing toward @actor.")
+	end
+	
 end
