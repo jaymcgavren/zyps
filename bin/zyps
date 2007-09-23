@@ -74,6 +74,9 @@ class Application
 		enclosure.top = @height
 		enclosure.right = @width
 		@environment.environmental_factors << enclosure
+		
+		#Keep all objects under a certain speed.
+		@environment.environmental_factors << SpeedLimit.new(100)
 
 		#Create thread to update environment.
 		thread = Thread.new do
@@ -146,10 +149,10 @@ class Application
 			behavior.conditions << ProximityCondition.new(200)
 			behavior.actions << AccelerateAction.new(1) if @accelerate_flag.active?
 			behavior.actions << TurnAction.new(90) if @turn_flag.active?
-			behavior.actions << ApproachAction.new(creature.vector, 90) if @approach_flag.active?
+			behavior.actions << ApproachAction.new(creature.vector, 720) if @approach_flag.active?
 			behavior.actions << FleeAction.new(creature.vector) if @flee_flag.active?
-			behavior.actions << PushAction.new(100) if @push_flag.active?
-			behavior.actions << PullAction.new(100) if @pull_flag.active?
+			behavior.actions << PushAction.new(1000) if @push_flag.active?
+			behavior.actions << PullAction.new(1000) if @pull_flag.active?
 			behavior.actions << BlendAction.new(creature.color) if @paint_flag.active?
 			creature.behaviors << behavior
 			if @eat_flag.active?

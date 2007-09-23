@@ -86,3 +86,36 @@ end
 
 
 
+class TestSpeedLimit < Test::Unit::TestCase
+
+
+	def test_speed_limit
+	
+		creature = Creature.new
+		
+		#Create a speed limit.
+		limit = SpeedLimit.new(10)
+		
+		#Act on a creature going under the limit, and ensure it's unaffected.
+		creature.vector.speed = 1
+		limit.act(creature)
+		assert_equal(1, creature.vector.speed)
+		
+		#Act on a creature going over the limit, and ensure its speed is reduced.
+		creature.vector.speed = 11
+		limit.act(creature)
+		assert_equal(10, creature.vector.speed)
+		
+		#Act on a creature going in reverse, and ensure its speed is reduced.
+		creature.vector.speed = -11
+		limit.act(creature)
+		assert_equal(-10, creature.vector.speed)
+		
+		
+	end
+	
+	
+end
+
+
+

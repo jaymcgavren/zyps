@@ -53,3 +53,19 @@ end
 
 
 
+#Keeps all objects at/under the assigned speed.
+class SpeedLimit < EnvironmentalFactor
+	
+	#Maximum allowed speed in units.
+	attr_accessor :maximum
+	def initialize(units)
+		self.maximum = units
+	end
+	#If object is over the speed, reduce its speed.
+	def act(object)
+		object.vector.speed = Utility.constrain_value(object.vector.speed, @maximum)
+	end
+end
+
+
+
