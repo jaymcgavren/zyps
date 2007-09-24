@@ -78,6 +78,9 @@ class Application
 		
 		#Keep all objects under a certain speed.
 		@environment.environmental_factors << SpeedLimit.new(100)
+		
+		#Set up a creature generator.
+		@generator = CreatureGenerator.new(@environment)
 
 		#Create thread to update environment.
 		thread = Thread.new do
@@ -127,65 +130,34 @@ class Application
 		#Add view to interface.
 		@view = TrailsView.new(width, height)
 		interface.pack_start(@view.canvas, expand, fill, padding)
-		#Get mouse events on view.
+		
+		#When mouse button pressed, record location for use in release event handler.
 		@view.canvas.add_events(Gdk::Event::BUTTON_PRESS_MASK)
 		@view.canvas.signal_connect("button-press-event") do |canvas, event|
 			@press_location = Location.new(event.x, event.y)
 		end
+		
+		#Create a creature on button release.
 		@view.canvas.add_events(Gdk::Event::BUTTON_RELEASE_MASK)
 		@view.canvas.signal_connect("button-release-event") do |canvas, event|
 			@release_location = Location.new(event.x, event.y)
-			creature = Creature.new(
-				'',
-				@release_location,
-				Color.new(@red_slider.value, @green_slider.value, @blue_slider.value),
-				Vector.new(
-					Utility.find_distance(@press_location, @release_location) * 2, #Use distance dragged as speed.
-					Utility.find_angle(@press_location, @release_location) #Move in direction of drag.
-				),
-				0,
-				1
+			@generator.create_creature(
+				:x => event.x,
+				:y => event.y,
+				:speed => Utility.find_distance(@press_location, @release_location) * 2, #Use distance dragged as speed.
+				:pitch => Utility.find_angle(@press_location, @release_location), #Move in direction of drag.
+				:accelerate => @accelerate_flag.active?,
+				:turn => @turn_flag.active?,
+				:approach => @approach_flag.active?,
+				:flee => @flee_flag.active?,
+				:push => @push_flag.active?,
+				:pull => @pull_flag.active?,
+				:eat => @eat_flag.active?
 			)
-			behavior = Behavior.new
-			behavior.conditions << ProximityCondition.new(200)
-			behavior.actions << AccelerateAction.new(1) if @accelerate_flag.active?
-			behavior.actions << TurnAction.new(90) if @turn_flag.active?
-			behavior.actions << ApproachAction.new(creature.vector, 720) if @approach_flag.active?
-			behavior.actions << FleeAction.new(creature.vector) if @flee_flag.active?
-			behavior.actions << PushAction.new(1000) if @push_flag.active?
-			behavior.actions << PullAction.new(1000) if @pull_flag.active?
-			behavior.actions << BlendAction.new(creature.color) if @paint_flag.active?
-			creature.behaviors << behavior
-			if @eat_flag.active?
-				behavior = Behavior.new
-				behavior.actions << EatAction.new(@environment)
-				behavior.conditions << ProximityCondition.new(10)
-				creature.behaviors << behavior
-			end
-			@environment.objects << creature
 		end
 		
 		#Create a VBox for all controls.
 		control_panel = Gtk::VBox.new(homogeneous, spacing)
-	
-		#Create a group for the new object's attributes.
-		attribute_controls = Gtk::VBox.new(homogeneous, spacing)
-		
-		#Add sliders for the color components.
-		attribute_controls.pack_start(Gtk::Label.new("Color"), expand, fill, padding)
-		attribute_controls.pack_start(Gtk::Label.new("R"), expand, fill, padding)
-		@red_slider = Gtk::HScale.new(0, 1, 0.1)
-		attribute_controls.pack_start(@red_slider, expand, fill, padding)
-		attribute_controls.pack_start(Gtk::Label.new("G"), expand, fill, padding)
-		@green_slider = Gtk::HScale.new(0, 1, 0.1)
-		attribute_controls.pack_start(@green_slider, expand, fill, padding)
-		attribute_controls.pack_start(Gtk::Label.new("B"), expand, fill, padding)
-		@blue_slider = Gtk::HScale.new(0, 1, 0.1)
-		attribute_controls.pack_start(@blue_slider, expand, fill, padding)
-		@red_slider.value, @green_slider.value, @blue_slider.value = 1, 1, 1
-				
-		#Add the attribute controls to the panel.
-		control_panel.pack_start(attribute_controls, expand, fill, padding)
 		
 		#Create a group for the actions.
 		action_controls = Gtk::VBox.new(homogeneous, spacing)
@@ -204,8 +176,6 @@ class Application
 		action_controls.pack_start(@pull_flag, expand, fill, padding)
 		@eat_flag = Gtk::CheckButton.new("Eat")
 		action_controls.pack_start(@eat_flag, expand, fill, padding)
-		@paint_flag = Gtk::CheckButton.new("Paint")
-		action_controls.pack_start(@paint_flag, expand, fill, padding)
 		#Add the action controls to the panel.
 		control_panel.pack_start(action_controls, expand, fill, padding)
 		
@@ -218,6 +188,121 @@ class Application
 	
 
 end
+
+
+
+class CreatureGenerator
+	
+	#Environment creatures will be added to.
+	attr_accessor :environment
+	#Default required proximity for actions.
+	attr_accessor :action_proximity
+	#Speed of new AccelerateActions.
+	attr_accessor :acceleration_rate
+	#Rate of new TurnActions.
+	attr_accessor :turn_rate
+	#Turn rate of new ApproachActions.
+	attr_accessor :approach_turn_rate
+	#Turn rate of new FleeActions.
+	attr_accessor :flee_turn_rate
+	#Strength of new PullActions.
+	attr_accessor :pull_strength
+	#Strength of new PushActions.
+	attr_accessor :push_strength
+	
+	def initialize(environment)
+	
+		@environment = environment
+		
+		#Set up defaults for attributes.
+		@action_proximity = 200
+		@acceleration_rate = 1
+		@turn_rate = 90
+		@approach_turn_rate = 720
+		@flee_turn_rate = @approach_turn_rate
+		@pull_strength = 1000
+		@push_strength = @pull_strength
+		
+	end
+
+
+	#Create a creature and add it to the environment.
+	def create_creature(options = {})
+	
+		{
+			:x => 0,
+			:y => 0,
+			:speed => 1,
+			:pitch => 0,
+			:action_proximity => @action_proximity,
+			:accelerate => false,
+			:turn => false,
+			:approach => false,
+			:flee => false,
+			:push => false,
+			:pull => false,
+			:eat => false,
+		}.merge!(options)
+		
+		#Set up the creature's vector.
+		vector = Vector.new(options[:speed], options[:pitch])
+		
+		#Set up actions and merge colors according to selected behaviors.
+		behavior = Behavior.new
+		behavior.conditions << ProximityCondition.new(@action_proximity)
+		color = Color.new(0.25, 0.25, 0.25)
+		if options[:accelerate]
+			color.red += 0.25
+			color.green += 0.25
+			color.blue += 0.25
+			behavior.actions << AccelerateAction.new(@acceleration_rate)
+		end
+		if options[:turn]
+			color.blue += 1
+			behavior.actions << TurnAction.new(@turn_rate)
+		end
+		if options[:approach]
+			color.red += 1
+			behavior.actions << ApproachAction.new(vector, @approach_turn_rate)
+		end
+		if options[:flee]
+			color.red += 0.5; color.green += 0.5 #Yellow.
+			behavior.actions << FleeAction.new(vector, @flee_turn_rate)
+		end
+		if options[:push]
+			color.red += 0.5; color.blue += 0.5 #Purple.
+			behavior.actions << PushAction.new(@push_strength)
+		end
+		if options[:pull]
+			color.blue += 0.75; color.green += 0.75 #Aqua.
+			behavior.actions << PullAction.new(@pull_strength)
+		end
+		
+		#Create a creature.
+		creature = Creature.new(
+			'',
+			Location.new(options[:x], options[:y]),
+			color,
+			vector,
+			0,
+			1
+		)
+		creature.behaviors << behavior
+		
+		#Special handling for eat action, which needs a CollisionCondition.
+		if options[:eat]
+			creature.color.green += 1
+			behavior = Behavior.new
+			behavior.actions << EatAction.new(@environment)
+			behavior.conditions << CollisionCondition.new
+			creature.behaviors << behavior
+		end
+		
+		@environment.objects << creature
+		
+	end
+end
+
 
 
 begin
