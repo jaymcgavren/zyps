@@ -229,7 +229,7 @@ class Behavior
 		#Select a target that matches all conditions.
 		def select_target(actor, targets)
 			#If a target is already active, still present in the environment, and all conditions are true for it, simply re-select it.
-			if @active_target and targets.include?(@active_target) and conditions.all?{|condition| condition.test(actor, @active_target)}
+			if @active_target and targets.include?(@active_target) and conditions.all?{|condition| condition.met?(actor, @active_target)}
 				return @active_target 
 			end
 			#For each object in environment:
@@ -237,7 +237,7 @@ class Behavior
 				#Don't let actor target itself.
 				next if target == actor
 				#If all conditions match (or there are no conditions), select the object.
-				if conditions.all?{|condition| condition.test(actor, target)}
+				if conditions.all?{|condition| condition.met?(actor, target)}
 					@active_target = target
 					return target
 				end

@@ -26,7 +26,7 @@ class TagCondition < Condition
 		self.tag = tag
 	end
 	#True if the target has the assigned tag.
-	def test(actor, target)
+	def met?(actor, target)
 		target.tags.include?(@tag)
 	end
 end
@@ -40,7 +40,7 @@ class AgeCondition < Condition
 		self.age = age
 	end
 	#True if the target is older than the assigned age.
-	def test(actor, target)
+	def met?(actor, target)
 		target.age > @age
 	end
 end
@@ -54,7 +54,7 @@ class ProximityCondition < Condition
 		self.distance = distance
 	end
 	#True if the actor and target are equal to or closer than the given distance.
-	def test(actor, target)
+	def met?(actor, target)
 		Utility.find_distance(actor.location, target.location) <= @distance
 	end
 end
@@ -63,7 +63,7 @@ end
 #True only if collided with target.
 class CollisionCondition < Condition
 	#True if the objects have collided.
-	def test(actor, target)
+	def met?(actor, target)
 		Utility.collided?(actor, target)
 	end
 end

@@ -46,6 +46,7 @@ class Application
 		
 		#Create a window, and set GTK up to quit when it is closed.
 		window = Gtk::Window.new
+		window.resizable = false
 		window.signal_connect("delete_event") {false}
 		window.signal_connect("destroy") {Gtk.main_quit}
 		

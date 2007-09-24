@@ -196,7 +196,7 @@ class TestEnvironment < Test::Unit::TestCase
 	
 	#A condition that is false unless actor and target have specific names.
 	class NameCondition < Condition
-		def test(actor, target)
+		def met?(actor, target)
 			return true if actor.name == '1' and target.name == '2'
 		end
 	end
@@ -478,13 +478,13 @@ class TestBehavior < Test::Unit::TestCase
 
 	#Always true.
 	class TrueCondition < Condition
-		def test(actor, target)
+		def met?(actor, target)
 			true
 		end
 	end
 	#Always false.
 	class FalseCondition < Condition
-		def test(actor, target)
+		def met?(actor, target)
 			false
 		end
 	end

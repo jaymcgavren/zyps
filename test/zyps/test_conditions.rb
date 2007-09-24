@@ -39,10 +39,10 @@ class TestConditions < Test::Unit::TestCase
 	def test_tag_condition
 		condition = TagCondition.new("tag")
 		#Test for falsehood.
-		assert(! condition.test(@actor, @target))
+		assert(! condition.met?(@actor, @target))
 		#Test for truth.
 		@target.tags << "tag"
-		assert(condition.test(@actor, @target))
+		assert(condition.met?(@actor, @target))
 	end
 	
 	
@@ -50,22 +50,22 @@ class TestConditions < Test::Unit::TestCase
 		condition = AgeCondition.new(0.2)
 		#Test for falsehood.
 		@target.age = 0.1
-		assert(! condition.test(@actor, @target))
+		assert(! condition.met?(@actor, @target))
 		#Test for truth.
 		@target.age = 0.2
-		assert(condition.test(@actor, @target))
+		assert(condition.met?(@actor, @target))
 		@target.age = 0.3
-		assert(condition.test(@actor, @target))
+		assert(condition.met?(@actor, @target))
 	end
 	
 	
 	def test_proximity_condition
 		condition = ProximityCondition.new(1)
 		#Test for falsehood.
-		assert(! condition.test(@actor, @target))
+		assert(! condition.met?(@actor, @target))
 		#Test for truth.
 		@target.location = Location.new(0.5, 0.5)
-		assert(condition.test(@actor, @target))
+		assert(condition.met?(@actor, @target))
 	end
 	
 	
@@ -73,10 +73,10 @@ class TestConditions < Test::Unit::TestCase
 		condition = CollisionCondition.new
 		#Test for falsehood.
 		@actor.size, @target.size = 0.196, 0.196 #Radius = 0.25
-		assert(! condition.test(@actor, @target))
+		assert(! condition.met?(@actor, @target))
 		#Test for truth.
 		@actor.size, @target.size = 1.766, 1.766 #Radius = 0.75
-		assert(condition.test(@actor, @target))
+		assert(condition.met?(@actor, @target))
 	end
 	
 	
