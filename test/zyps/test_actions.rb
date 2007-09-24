@@ -21,6 +21,10 @@ require 'zyps/actions'
 require 'test/unit'
 
 
+#Allowed deviation for assert_in_delta.
+REQUIRED_ACCURACY = 0.001
+
+
 #Redefine Clock to return a predictable time.
 class Clock
 	def elapsed_time; 0.1; end
@@ -53,7 +57,7 @@ class TestActions < Test::Unit::TestCase
 	def test_face_action
 		add_action(FaceAction.new, @actor)
 		@environment.interact
-		assert_equal(45, @actor.vector.pitch)
+		assert_in_delta(45, @actor.vector.pitch, REQUIRED_ACCURACY)
 	end
 	
 	
@@ -63,7 +67,7 @@ class TestActions < Test::Unit::TestCase
 		add_action(AccelerateAction.new(1), @actor)
 		@environment.interact
 		#Clock always returns 0.1 seconds, so actor should be moving 0.1 unit/second faster.
-		assert_equal(0.1, @actor.vector.speed)
+		assert_in_delta(0.1, @actor.vector.speed, REQUIRED_ACCURACY)
 	end
 	
 	
@@ -73,7 +77,7 @@ class TestActions < Test::Unit::TestCase
 		add_action(TurnAction.new(1), @actor)
 		@environment.interact
 		#Clock always returns 0.1 seconds, so actor should be turned 0.1 degrees.
-		assert_equal(0.1, @actor.vector.pitch)
+		assert_in_delta(0.1, @actor.vector.pitch, REQUIRED_ACCURACY)
 	end
 	
 	
@@ -87,11 +91,11 @@ class TestActions < Test::Unit::TestCase
 		#Act.
 		@environment.interact
 		#Ensure action's thrust vector is correct for 0.1 seconds.
-		assert_equal(1.0, action.heading.speed)
-		assert_equal(4.0, action.heading.pitch)
+		assert_in_delta(1.0, action.heading.speed, REQUIRED_ACCURACY)
+		assert_in_delta(4.0, action.heading.pitch, REQUIRED_ACCURACY)
 		#Ensure actor's resulting vector is correct.
-		assert_in_delta(0.997, @actor.vector.x, 0.001)
-		assert_in_delta(0.069, @actor.vector.y, 0.001)
+		assert_in_delta(0.997, @actor.vector.x, REQUIRED_ACCURACY)
+		assert_in_delta(0.069, @actor.vector.y, REQUIRED_ACCURACY)
 
 	end
 	
@@ -107,11 +111,11 @@ class TestActions < Test::Unit::TestCase
 		@environment.interact
 
 		#Ensure actor is approaching target directly.
-		assert_equal(1.0, action.heading.speed)
-		assert_equal(45, action.heading.pitch)
+		assert_in_delta(1.0, action.heading.speed, REQUIRED_ACCURACY)
+		assert_in_delta(45, action.heading.pitch, REQUIRED_ACCURACY)
 		#Ensure actor's resulting vector is correct.
-		assert_in_delta(0.707, @actor.vector.x, 0.001)
-		assert_in_delta(0.707, @actor.vector.y, 0.001)
+		assert_in_delta(0.707, @actor.vector.x, REQUIRED_ACCURACY)
+		assert_in_delta(0.707, @actor.vector.y, REQUIRED_ACCURACY)
 		
 	end
 	
@@ -126,11 +130,11 @@ class TestActions < Test::Unit::TestCase
 		#Act.
 		@environment.interact
 		#Ensure action's thrust vector is correct for 0.1 seconds.
-		assert_equal(1.0, action.heading.speed)
-		assert_equal(356.0, action.heading.pitch) #Should be heading away.
+		assert_in_delta(1.0, action.heading.speed, REQUIRED_ACCURACY)
+		assert_in_delta(356.0, action.heading.pitch, REQUIRED_ACCURACY) #Should be heading away.
 		#Ensure actor's resulting vector is correct.
-		assert_in_delta(0.997, @actor.vector.x, 0.001)
-		assert_in_delta(-0.069, @actor.vector.y, 0.001)
+		assert_in_delta(0.997, @actor.vector.x, REQUIRED_ACCURACY)
+		assert_in_delta(-0.069, @actor.vector.y, REQUIRED_ACCURACY)
 	end
 	
 	#Ensure flee action doesn't oversteer.
@@ -144,11 +148,11 @@ class TestActions < Test::Unit::TestCase
 		#Act.
 		@environment.interact
 		#Ensure actor is fleeing directly away from target.
-		assert_equal(1.0, action.heading.speed)
-		assert_equal(225, action.heading.pitch)
+		assert_in_delta(1.0, action.heading.speed, REQUIRED_ACCURACY)
+		assert_in_delta(225, action.heading.pitch, REQUIRED_ACCURACY)
 		#Ensure actor's resulting vector is correct.
-		assert_in_delta(-0.707, @actor.vector.x, 0.001)
-		assert_in_delta(-0.707, @actor.vector.y, 0.001)
+		assert_in_delta(-0.707, @actor.vector.x, REQUIRED_ACCURACY)
+		assert_in_delta(-0.707, @actor.vector.y, REQUIRED_ACCURACY)
 		
 	end
 	
@@ -181,7 +185,7 @@ class TestActions < Test::Unit::TestCase
 		#Verify target is removed from environment.
 		assert(! @environment.objects.include?(@target1))
 		#Verify creature has grown by the appropriate amount.
-		assert_equal(2, @actor.size)
+		assert_in_delta(2, @actor.size, REQUIRED_ACCURACY)
 	end
 	
 	
@@ -204,9 +208,9 @@ class TestActions < Test::Unit::TestCase
 		#Act.
 		@environment.interact
 		#Verify the target's new color.
-		assert_equal(0.25, @target1.color.red)
-		assert_equal(0.25, @target1.color.green)
-		assert_equal(0.25, @target1.color.blue)
+		assert_in_delta(0.25, @target1.color.red, REQUIRED_ACCURACY)
+		assert_in_delta(0.25, @target1.color.green, REQUIRED_ACCURACY)
+		assert_in_delta(0.25, @target1.color.blue, REQUIRED_ACCURACY)
 	end
 		
 	#Test shifting colors toward white.
@@ -218,9 +222,9 @@ class TestActions < Test::Unit::TestCase
 		#Act.
 		@environment.interact
 		#Verify the target's new color.
-		assert_equal(0.75, @target1.color.red)
-		assert_equal(0.75, @target1.color.green)
-		assert_equal(0.75, @target1.color.blue)
+		assert_in_delta(0.75, @target1.color.red, REQUIRED_ACCURACY)
+		assert_in_delta(0.75, @target1.color.green, REQUIRED_ACCURACY)
+		assert_in_delta(0.75, @target1.color.blue, REQUIRED_ACCURACY)
 	end
 	
 	
@@ -230,8 +234,8 @@ class TestActions < Test::Unit::TestCase
 		add_action(PushAction.new(1), @actor)
 		@environment.interact
 		#Verify target's speed and direction are correct.
-		assert_equal(0.1, @target1.vector.speed, "@target1 should have been pushed away from @actor.")
-		assert_equal(45.0, @target1.vector.pitch, "@target1's angle should be facing away from @actor.")
+		assert_in_delta(0.1, @target1.vector.speed, REQUIRED_ACCURACY, "@target1 should have been pushed away from @actor.")
+		assert_in_delta(45.0, @target1.vector.pitch, REQUIRED_ACCURACY, "@target1's angle should be facing away from @actor.")
 	end
 
 	
@@ -241,8 +245,8 @@ class TestActions < Test::Unit::TestCase
 		add_action(PullAction.new(1), @actor)
 		@environment.interact
 		#Verify target's speed and direction are correct.
-		assert_equal(0.1, @target1.vector.speed, "@target1 should have been pulled toward @actor.")
-		assert_equal(225.0, @target1.vector.pitch, "@target1's angle should be facing toward @actor.")
+		assert_in_delta(0.1, @target1.vector.speed, REQUIRED_ACCURACY, "@target1 should have been pulled toward @actor.")
+		assert_in_delta(225.0, @target1.vector.pitch, REQUIRED_ACCURACY, "@target1's angle should be facing toward @actor.")
 	end
 	
 end
