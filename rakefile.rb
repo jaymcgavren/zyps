@@ -9,7 +9,7 @@ require 'rake/testtask'
 
 #Configuration variables.
 PRODUCT_NAME = "Zyps"
-PRODUCT_VERSION = "0.5.1"
+PRODUCT_VERSION = "0.5.2"
 SUMMARY = "A game library for Ruby"
 AUTHOR = "Jay McGavren"
 AUTHOR_EMAIL = "jay@mcgavren.com"
