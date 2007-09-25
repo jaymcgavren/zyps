@@ -285,7 +285,7 @@ class CreatureGenerator
 			color,
 			vector,
 			0,
-			1
+			5
 		)
 		creature.behaviors << behavior
 		
