@@ -31,24 +31,31 @@ rescue LoadError
 	require 'drb'
 end
 
+#Extend Environment for serving over DRb.
+class Environment
 
-#An Environment intended for serving over DRb.
-class RemoteEnvironment < Environment
-	def initialize
-		super
+	include DRbUndumped
+	
+	def initialize (objects = [], environmental_factors = [])
+		@objects, @environmental_factors = objects, environmental_factors
+		@clock = Clock.new
 		@objects.extend DRbUndumped
 		@environmental_factors.extend DRbUndumped
 	end
+	
+	alias old_objects= objects=
 	def objects=(value)
-		@objects = value
+		old_objects=(value)
 		@objects.extend DRbUndumped
 	end
+	
+	alias old_environmental_factors= environmental_factors=
 	def environmental_factors=(value)
-		@environmental_factors = value
+		old_environmental_factors=(value)
 		@environmental_factors.extend DRbUndumped
 	end
+	
 end
-
 
 #A server for a Zyps Environment.
 class EnvironmentServer
@@ -83,10 +90,11 @@ class EnvironmentServer
 		window.show_all
 		
 		#Create environment.
-		environment = RemoteEnvironment.new
+		environment = Environment.new
+		
 		#Point view at environment.
 		environment.add_observer(view)
-		
+				
 		#Create thread to update environment.
 		update_thread = Thread.new do
 		
@@ -94,11 +102,16 @@ class EnvironmentServer
 			
 				loop do
 				
-					environment.interact
+					begin
+						environment.interact
+					rescue Exception => exception
+						puts exception, exception.backtrace
+						puts environment.inspect
+					end
 					
 					#Control population.
 					environment.objects.shift while environment.objects.length > @max_population
-					
+
 					#Determine how much time is left in this frame.
 					time_left_in_frame = time_per_frame - clock.elapsed_time
 					#Sleep for the remaining time.
@@ -125,6 +138,9 @@ class EnvironmentServer
 		#If port was automatically chosen, display our URI.
 		puts DRb.uri unless @port
 		
+		#Disable file system access.
+		$SAFE = 2
+
 		#Activate the GUI.
 		Gtk.main
 		
