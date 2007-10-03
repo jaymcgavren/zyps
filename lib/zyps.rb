@@ -208,7 +208,7 @@ class Behavior
 				action.start(actor, target) unless action.started
 				action.do(actor, target)
 			end
-		rescue
+		rescue NoMatchException => exception
 			#If the behavior can no longer be performed, halt it.
 			stop(actor, target)
 		end
@@ -243,7 +243,7 @@ class Behavior
 				end
 			end
 			#If there were no matches, throw an exception.
-			raise "No matching targets found."
+			raise NoMatchException, "No matching targets found."
 		end
 	
 	
@@ -449,3 +449,6 @@ module Utility
 	end
 	
 end
+
+
+class NoMatchException < RuntimeError; end
