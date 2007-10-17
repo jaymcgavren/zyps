@@ -171,7 +171,7 @@ end
 
 
 #A condition for one Creature to act on another.
-#Conditions must implement a test(actor, target) instance method.
+#Conditions must implement a met?(actor, target) instance method.
 class Condition
 end
 
