@@ -69,7 +69,7 @@ class EnvironmentServer
 	
 	#Set up default values.
 	def initialize(port = nil, max_population = 25, fps = 60, view_width = 800, view_height = 600)
-		@port, @max_population, @fps, @view_width, @view_height = port, max_population, fps, view_width, view_height
+		@url, @max_population, @fps, @view_width, @view_height = port, max_population, fps, view_width, view_height
 	end
 
 	#Create app window, game environment, view, and network service.
@@ -132,11 +132,11 @@ class EnvironmentServer
 		
 		#Start a network service.
 		DRb.start_service(
-			@port ? "druby://localhost:#{@port}" : nil,
+			@url,
 			environment
 		)
-		#If port was automatically chosen, display our URI.
-		puts DRb.uri unless @port
+		#Display our URI.
+		puts "Zyps server active at #{DRb.uri}"
 		
 		#Disable file system access.
 		$SAFE = 2
@@ -165,11 +165,11 @@ class EnvironmentServer
 			"The maximum number of allowed game objects.  25 by default."
 		) {|value| @max_population = value}
 		options.on(
-			"-p",
-			"--port [number]",
-			Integer,
-			"Port number to run the server on.  If not defined, next available one will be selected and the URI printed to STDOUT."
-		) {|value| @port = value}
+			"-u",
+			"--url [url]",
+			String,
+			"dRuby URL to run the server on.  If not defined, next available one will be selected and the URI printed to STDOUT."
+		) {|value| @url = value}
 		options.on(
 			"-f",
 			"--fps [frames]",
