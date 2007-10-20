@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+gems_loaded = false
 begin
 	require 'zyps'
 	require 'zyps/actions'
@@ -25,12 +26,13 @@ begin
 	require 'zyps/environmental_factors'
 	require 'zyps/views/trails'
 rescue LoadError
-	require 'rubygems'
-	require 'zyps'
-	require 'zyps/actions'
-	require 'zyps/conditions'
-	require 'zyps/environmental_factors'
-	require 'zyps/views/trails'
+	if gems_loaded == false
+		require 'rubygems'
+		gems_loaded = true
+		retry
+	else
+		raise
+	end
 end
 
 
@@ -81,6 +83,9 @@ class Application
 		#Keep all objects under a certain speed.
 		@environment.environmental_factors << SpeedLimit.new(100)
 		
+		#Limit population.
+		@environment.environmental_factors << PopulationLimit.new(@environment, 25)
+		
 		#Set up a creature generator.
 		@generator = CreatureGenerator.new(@environment)
 
@@ -95,9 +100,6 @@ class Application
 				loop do
 				
 					@environment.interact
-					
-					#Control population.
-					@environment.objects.shift while @environment.objects.length > 25
 					
 					#Determine how much time is left in this frame.
 					time_left_in_frame = (time_per_frame) - drawing_clock.elapsed_time

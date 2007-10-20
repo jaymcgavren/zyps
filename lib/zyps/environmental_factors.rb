@@ -120,4 +120,26 @@ class Friction < EnvironmentalFactor
 end
 
 
+class PopulationLimit < EnvironmentalFactor
+	
+	#Environment to remove objects from.
+	attr_accessor :environment
+	#Maximum allowed population.
+	attr_accessor :count
+	
+	def initialize(environment, count)
+		self.environment = environment
+		self.count = count
+	end
+	
+	#Remove target if there are too many objects in environment.
+	def act(object)
+		if environment.objects.length > @count
+			environment.objects.delete(object)
+		end
+	end
+	
+end
+
+
 end #module Zyps

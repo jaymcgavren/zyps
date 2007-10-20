@@ -164,3 +164,41 @@ class TestFriction < Test::Unit::TestCase
 	end
 
 end
+
+
+class TestPopulationLimit < Test::Unit::TestCase
+	
+	def test_limit
+	
+		#Create an environment.
+		environment = Environment.new
+		#Create a population limit for the environment.
+		limit = PopulationLimit.new(environment, 2)
+		
+		#Ensure population is not affected when under/at the limit.
+		creature_1 = Creature.new
+		environment.objects << creature_1
+		limit.act(creature_1)
+		assert(environment.objects.include?(creature_1))
+		creature_2 = Creature.new
+		environment.objects << creature_2
+		limit.act(creature_1)
+		assert(environment.objects.include?(creature_1))
+		assert(environment.objects.include?(creature_2))
+		limit.act(creature_2)
+		assert(environment.objects.include?(creature_1))
+		assert(environment.objects.include?(creature_2))
+		
+		#Ensure first creature is removed when limit is exceeded.
+		creature_3 = Creature.new
+		environment.objects << creature_3
+		limit.act(creature_1)
+		assert(! environment.objects.include?(creature_1))
+		
+		#Ensure other creatures aren't touched.
+		assert(environment.objects.include?(creature_2))
+		assert(environment.objects.include?(creature_3))
+		
+	end
+	
+end
