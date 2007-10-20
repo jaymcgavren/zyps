@@ -19,6 +19,9 @@
 require 'gtk2'
 
 
+module Zyps
+
+
 #A view of game objects.
 class TrailsView
 
@@ -145,3 +148,6 @@ class TrailsView
 		end
 	
 end
+
+
+end #module Zyps

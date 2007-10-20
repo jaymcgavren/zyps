@@ -18,6 +18,9 @@
 require 'zyps'
 
 
+module Zyps
+
+
 #Head toward a target.
 class FaceAction < Action
 	#Set the actor's heading to point directly at target.
@@ -25,6 +28,7 @@ class FaceAction < Action
 		actor.vector.pitch = Utility.find_angle(actor.location, target.location)
 	end
 end
+
 
 #Increase/decrease speed over time.
 class AccelerateAction < Action
@@ -221,7 +225,7 @@ class PushAction < Action
 		super
 		@clock.reset_elapsed_time
 	end
-	#Accelerate away from the target, but limited by turn rate.
+	#Accelerate the target away from the actor, but limited by elapsed time.
 	def do(actor, target)
 		#Angle to target is also angle of push force.
 		push_angle = Utility.find_angle(actor.location, target.location)
@@ -256,3 +260,6 @@ class PullAction < Action
 		target.vector += Vector.new(pull_force, pull_angle)
 	end
 end
+
+
+end #module Zyps

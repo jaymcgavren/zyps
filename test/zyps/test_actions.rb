@@ -21,6 +21,9 @@ require 'zyps/actions'
 require 'test/unit'
 
 
+include Zyps
+
+
 #Allowed deviation for assert_in_delta.
 REQUIRED_ACCURACY = 0.001
 

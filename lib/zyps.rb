@@ -18,6 +18,7 @@
 
 require 'observer'
 
+module Zyps
 
 #A virtual environment.
 class Environment
@@ -382,8 +383,8 @@ end
 
 #Various methods for working with Vectors, etc.
 module Utility
-
-	PI2 = Math::PI * 2.0
+	
+	PI2 = Math::PI * 2.0 #:nodoc:
 	
 	#Get the angle (in degrees) from one Location to another.
 	def Utility.find_angle(origin, target)
@@ -452,3 +453,5 @@ end
 
 
 class NoMatchException < RuntimeError; end
+
+end #module Zyps

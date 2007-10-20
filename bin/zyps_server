@@ -31,6 +31,10 @@ rescue LoadError
 	require 'drb'
 end
 
+
+include Zyps
+
+
 #Extend Environment for serving over DRb.
 class Environment
 

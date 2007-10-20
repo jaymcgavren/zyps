@@ -34,6 +34,8 @@ rescue LoadError
 end
 
 
+include Zyps
+
 
 class Application
 

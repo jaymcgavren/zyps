@@ -32,6 +32,9 @@ rescue LoadError
 end
 
 
+include Zyps
+
+
 class Demo
 
 	#The view width.

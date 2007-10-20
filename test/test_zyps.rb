@@ -20,6 +20,9 @@ require 'zyps'
 require 'test/unit'
 
 
+include Zyps
+
+
 #Redefine Clock to return a predictable time.
 class Clock
 	def elapsed_time; 0.1; end

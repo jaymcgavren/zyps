@@ -18,6 +18,9 @@
 require 'zyps'
 
 
+module Zyps
+
+
 #Act only on objects with the correct tag.
 class TagCondition < Condition
 	#The tag to look for on the target.
@@ -67,3 +70,6 @@ class CollisionCondition < Condition
 		Utility.collided?(actor, target)
 	end
 end
+
+
+end #module Zyps
