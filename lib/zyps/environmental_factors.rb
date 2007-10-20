@@ -18,6 +18,9 @@
 require 'zyps'
 
 
+module Zyps
+
+
 #Keeps all objects within a set of walls.
 class Enclosure < EnvironmentalFactor
 	
@@ -29,9 +32,11 @@ class Enclosure < EnvironmentalFactor
 	attr_accessor :right
 	#Y coordinate of bottom boundary.
 	attr_accessor :bottom
+	
 	def initialize(left = 0, top = 0, right = 0, bottom = 0)
 		self.left, self.top, self.right, self.bottom = left, top, right, bottom
 	end
+	
 	#If object is beyond a boundary, set its position equal to the boundary and reflect it.
 	def act(object)
 		if (object.location.x < @left) then
@@ -49,6 +54,7 @@ class Enclosure < EnvironmentalFactor
 			object.vector.pitch = Utility.find_reflection_angle(180, object.vector.pitch)
 		end
 	end
+	
 end
 
 
@@ -58,14 +64,60 @@ class SpeedLimit < EnvironmentalFactor
 	
 	#Maximum allowed speed in units.
 	attr_accessor :maximum
+	
 	def initialize(units)
 		self.maximum = units
 	end
+	
 	#If object is over the speed, reduce its speed.
 	def act(object)
 		object.vector.speed = Utility.constrain_value(object.vector.speed, @maximum)
 	end
+	
 end
 
 
+#A force that pushes on all objects.
+class Accelerator < EnvironmentalFactor
+	
+	#Vector to apply to objects.
+	attr_accessor :vector
+	
+	def initialize(vector)
+		self.vector = vector
+		@clock = Clock.new
+	end
 
+	#Accelerate the target away from the actor, but limited by elapsed time.
+	def act(object)
+		object.vector += Vector.new(@vector.speed * @clock.elapsed_time, @vector.pitch)
+	end
+
+end
+
+#Gravity pulls all objects downward.
+class Gravity < Accelerator
+	def initialize; super(Vector(9.8, 270)); end
+end
+
+
+#A force that slows all objects.
+class Friction < EnvironmentalFactor
+	
+	#Rate of slowing.
+	attr_accessor :force
+	
+	def initialize(force)
+		self.force = force
+		@clock = Clock.new
+	end
+	
+	#Reduce the target's speed at the given rate.
+	def act(object)
+		object.vector.speed -= @force * @clock.elapsed_time
+	end
+	
+end
+
+
+end #module Zyps
