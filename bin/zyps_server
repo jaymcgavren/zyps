@@ -18,21 +18,33 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+gems_loaded = false
 begin
 	require 'optparse'
 	require 'zyps'
+	require 'zyps/environmental_factors'
 	require 'zyps/views/trails'
 	require 'drb'
 rescue LoadError
-	require 'optparse'
-	require 'rubygems'
-	require 'zyps'
-	require 'zyps/views/trails'
-	require 'drb'
+	if gems_loaded == false
+		require 'rubygems'
+		gems_loaded = true
+		retry
+	else
+		raise
+	end
 end
 
 
 include Zyps
+
+
+DEFAULT_VIEW_WIDTH = 800
+DEFAULT_VIEW_HEIGHT = 600
+DEFAULT_MAX_SPEED = 500
+DEFAULT_MAX_POPULATION = 25
+DEFAULT_FPS = 60
+DEFAULT_ENCLOSURE = true
 
 
 #Extend Environment for serving over DRb.
@@ -40,24 +52,32 @@ class Environment
 
 	include DRbUndumped
 	
-	def initialize (objects = [], environmental_factors = [])
-		@objects, @environmental_factors = objects, environmental_factors
-		@clock = Clock.new
-		@objects.extend DRbUndumped
-		@environmental_factors.extend DRbUndumped
+	def add_object(object)
+		@objects << object
 	end
 	
-	alias old_objects= objects=
-	def objects=(value)
-		old_objects=(value)
-		@objects.extend DRbUndumped
+	def add_environmental_factor(environmental_factor)
+		@environmental_factors << environmental_factor
 	end
 	
-	alias old_environmental_factors= environmental_factors=
-	def environmental_factors=(value)
-		old_environmental_factors=(value)
-		@environmental_factors.extend DRbUndumped
-	end
+# 	def initialize (objects = [], environmental_factors = [])
+# 		@objects, @environmental_factors = objects, environmental_factors
+# 		@clock = Clock.new
+# 		@objects.extend DRbUndumped
+# 		@environmental_factors.extend DRbUndumped
+# 	end
+# 	
+# 	alias old_objects= objects=
+# 	def objects=(value)
+# 		old_objects=(value)
+# 		@objects.extend DRbUndumped
+# 	end
+# 	
+# 	alias old_environmental_factors= environmental_factors=
+# 	def environmental_factors=(value)
+# 		old_environmental_factors=(value)
+# 		@environmental_factors.extend DRbUndumped
+# 	end
 	
 end
 
@@ -65,15 +85,24 @@ end
 class EnvironmentServer
 
 	#Port to open service on.
-	attr_accessor :port
+	attr_accessor :url
 	#Maximum allowed number of objects.
 	attr_accessor :max_population
 	#View dimensions.
 	attr_accessor :view_width, :view_height
 	
 	#Set up default values.
-	def initialize(port = nil, max_population = 25, fps = 60, view_width = 800, view_height = 600)
-		@url, @max_population, @fps, @view_width, @view_height = port, max_population, fps, view_width, view_height
+	def initialize(
+		url = nil,
+		view_width = DEFAULT_VIEW_WIDTH,
+		view_height = DEFAULT_VIEW_HEIGHT,
+		fps = DEFAULT_FPS,
+		max_population = DEFAULT_MAX_POPULATION,
+		max_speed = DEFAULT_MAX_SPEED,
+		enclosure = DEFAULT_ENCLOSURE
+	)
+		@url, @view_width, @view_height, @fps, @max_population, @max_speed, @enclosure =
+		url, view_width, view_height, fps, max_population, max_speed, enclosure
 	end
 
 	#Create app window, game environment, view, and network service.
@@ -98,7 +127,23 @@ class EnvironmentServer
 		
 		#Point view at environment.
 		environment.add_observer(view)
-				
+		
+		#Limit population.
+		environment.environmental_factors << PopulationLimit.new(environment, @max_population) if @max_population
+		
+		#Limit speed of objects.
+		environment.environmental_factors << SpeedLimit.new(@max_speed) if @max_speed
+		
+		#Keep objects on screen.
+		if @enclosure
+			enclosure = Enclosure.new()
+			enclosure.left = 0
+			enclosure.bottom = 0
+			enclosure.top = @view_height
+			enclosure.right = @view_width
+			environment.environmental_factors << enclosure
+		end
+		
 		#Create thread to update environment.
 		update_thread = Thread.new do
 		
@@ -166,29 +211,40 @@ class EnvironmentServer
 			"-m",
 			"--max-population [number]",
 			Integer,
-			"The maximum number of allowed game objects.  25 by default."
+			"The maximum number of allowed game objects.  #{DEFAULT_MAX_POPULATION} by default."
 		) {|value| @max_population = value}
+		options.on(
+			"-s",
+			"--max-speed [number]",
+			Integer,
+			"The fastest an object can go.  #{DEFAULT_MAX_SPEED ? DEFAULT_MAX_SPEED : 'No limit'} by default."
+		) {|value| @max_population = value}
+		options.on(
+			"-e",
+			"--enclosure",
+			"A barrier will keep objects on the screen.  #{DEFAULT_ENCLOSURE ? 'Enabled' : 'Disabled'} by default."
+		) {|value| @enclosure = value}
 		options.on(
 			"-u",
 			"--url [url]",
 			String,
-			"dRuby URL to run the server on.  If not defined, next available one will be selected and the URI printed to STDOUT."
+			"dRuby URL to run the server on.  If not defined, one will be selected and printed to STDOUT."
 		) {|value| @url = value}
 		options.on(
 			"-f",
 			"--fps [frames]",
 			Integer,
-			"Number of frames to draw per second."
+			"Number of frames to draw per second.  #{DEFAULT_FPS} by default."
 		) {|value| @fps = value}
 		options.on(
 			"--view-width [pixels]",
 			Integer,
-			"Window width.  800 by default."
+			"Window width.  #{DEFAULT_VIEW_WIDTH} by default."
 		) {|value| @view_width = value}
 		options.on(
 			"--view-height [pixels]",
 			Integer,
-			"Window height.  600 by default."
+			"Window height.  #{DEFAULT_VIEW_HEIGHT} by default."
 		) {|value| @view_height = value}
 		
 		#Parse the options, printing usage if parsing fails.

@@ -46,16 +46,41 @@ class Environment
 		
 		objects.each do |object|
 		
+		
 			#Move each object according to its vector.
-			object.move(elapsed_time)
+			begin
+				object.move(elapsed_time)
+			#Remove misbehaving objects.
+			rescue Exception => exception
+				puts exception, exception.backtrace
+				objects.delete(object)
+				next
+			end
 			
 			#Have all environmental factors interact with each object.
-			environmental_factors.each {|factor| factor.act(object)}
+			environmental_factors.each do |factor|
+				begin
+					factor.act(object)
+				#Remove misbehaving environmental factors.
+				rescue Exception => exception
+					environmental_factors.delete(factor)
+					puts exception, exception.backtrace
+					next
+				end
+			end
 			
 			#Have all creatures interact with the environment.
 			if object.respond_to?(:act)
-				object.act(self)
+				begin
+					object.act(self)
+				#Remove misbehaving objects.
+				rescue Exception => exception
+					puts exception, exception.backtrace
+					objects.delete(object)
+					next
+				end
 			end
+				
 			
 		end
 		
