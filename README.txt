@@ -34,6 +34,24 @@ To see a tutorial on the library, at a command line, type:
 
 	zyps_demo
 
+To run a DRb server that clients can connect to:
+
+	zyps_server [options]
+	    -h, --help                       Display program help.
+	    -m, --max-population [number]    The maximum number of allowed game objects.
+	                                     25 by default.
+	    -s, --max-speed [number]         The fastest an object can go.  500 by
+	                                     default.
+	    -e, --enclosure                  A barrier will keep objects on the screen.
+	                                     Enabled by default.
+	    -u, --url [url]                  dRuby URL to run the server on.  If not
+	                                     defined, one will be selected and printed to
+	                                     STDOUT.
+	    -f, --fps [frames]               Number of frames to draw per second.  60 by
+	                                     default.
+	        --view-width [pixels]        Window width.  800 by default.
+	        --view-height [pixels]       Window height.  600 by default.
+
 
 == Development
 
