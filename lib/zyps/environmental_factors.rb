@@ -97,7 +97,7 @@ end
 
 #Gravity pulls all objects downward.
 class Gravity < Accelerator
-	def initialize; super(Vector(9.8, 270)); end
+	def initialize; super(Vector.new(9.8, 270)); end
 end
 
 
