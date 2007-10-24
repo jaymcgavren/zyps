@@ -22,6 +22,8 @@ gems_loaded = false
 begin
 	require 'optparse'
 	require 'zyps'
+	require 'zyps/actions'
+	require 'zyps/conditions'
 	require 'zyps/environmental_factors'
 	require 'zyps/views/trails'
 	require 'drb'
@@ -52,32 +54,24 @@ class Environment
 
 	include DRbUndumped
 	
-	def add_object(object)
-		@objects << object
+	def initialize (objects = [], environmental_factors = [])
+		@objects, @environmental_factors = objects, environmental_factors
+		@clock = Clock.new
+		@objects.extend DRbUndumped
+		@environmental_factors.extend DRbUndumped
 	end
 	
-	def add_environmental_factor(environmental_factor)
-		@environmental_factors << environmental_factor
+	alias old_objects= objects=
+	def objects=(value)
+		old_objects=(value)
+		@objects.extend DRbUndumped
 	end
 	
-# 	def initialize (objects = [], environmental_factors = [])
-# 		@objects, @environmental_factors = objects, environmental_factors
-# 		@clock = Clock.new
-# 		@objects.extend DRbUndumped
-# 		@environmental_factors.extend DRbUndumped
-# 	end
-# 	
-# 	alias old_objects= objects=
-# 	def objects=(value)
-# 		old_objects=(value)
-# 		@objects.extend DRbUndumped
-# 	end
-# 	
-# 	alias old_environmental_factors= environmental_factors=
-# 	def environmental_factors=(value)
-# 		old_environmental_factors=(value)
-# 		@environmental_factors.extend DRbUndumped
-# 	end
+	alias old_environmental_factors= environmental_factors=
+	def environmental_factors=(value)
+		old_environmental_factors=(value)
+		@environmental_factors.extend DRbUndumped
+	end
 	
 end
 
