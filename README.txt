@@ -11,7 +11,7 @@ Zyps are small creatures with minds of their own.  You can create dozens of Zyps
 == Requirements
 
 * Ruby: http://www.ruby-lang.org
-* Ruby-GNOME2: http://ruby-gnome2.sourceforge.jp
+* Ruby-GNOME2 (for the GUI): http://ruby-gnome2.sourceforge.jp
 * Rake (to build from source): http://rake.rubyforge.org
 
 
@@ -34,7 +34,7 @@ To see a tutorial on the library, at a command line, type:
 
 	zyps_demo
 
-To run a DRb server that clients can connect to:
+To run a server that offers a DRb Environment object clients can connect to:
 
 	zyps_server [options]
 	    -h, --help                       Display program help.
@@ -42,8 +42,8 @@ To run a DRb server that clients can connect to:
 	                                     25 by default.
 	    -s, --max-speed [number]         The fastest an object can go.  500 by
 	                                     default.
-	    -e, --enclosure                  A barrier will keep objects on the screen.
-	                                     Enabled by default.
+	    -n, --no-enclosure               Disables the barrier that normally keeps
+	                                     objects on the screen.
 	    -u, --url [url]                  dRuby URL to run the server on.  If not
 	                                     defined, one will be selected and printed to
 	                                     STDOUT.
