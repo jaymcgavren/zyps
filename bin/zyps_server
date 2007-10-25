@@ -46,7 +46,6 @@ DEFAULT_VIEW_HEIGHT = 600
 DEFAULT_MAX_SPEED = 500
 DEFAULT_MAX_POPULATION = 25
 DEFAULT_FPS = 60
-DEFAULT_ENCLOSURE = true
 
 
 #Extend Environment for serving over DRb.
@@ -93,7 +92,7 @@ class EnvironmentServer
 		fps = DEFAULT_FPS,
 		max_population = DEFAULT_MAX_POPULATION,
 		max_speed = DEFAULT_MAX_SPEED,
-		enclosure = DEFAULT_ENCLOSURE
+		enclosure = true
 	)
 		@url, @view_width, @view_height, @fps, @max_population, @max_speed, @enclosure =
 		url, view_width, view_height, fps, max_population, max_speed, enclosure
@@ -214,10 +213,10 @@ class EnvironmentServer
 			"The fastest an object can go.  #{DEFAULT_MAX_SPEED ? DEFAULT_MAX_SPEED : 'No limit'} by default."
 		) {|value| @max_population = value}
 		options.on(
-			"-e",
-			"--enclosure",
-			"A barrier will keep objects on the screen.  #{DEFAULT_ENCLOSURE ? 'Enabled' : 'Disabled'} by default."
-		) {|value| @enclosure = value}
+			"-n",
+			"--no-enclosure",
+			"Disables the barrier that normally keeps objects on the screen."
+		) {|value| @enclosure = ! value}
 		options.on(
 			"-u",
 			"--url [url]",
