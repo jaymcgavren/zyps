@@ -211,12 +211,12 @@ class EnvironmentServer
 			"--max-speed [number]",
 			Integer,
 			"The fastest an object can go.  #{DEFAULT_MAX_SPEED ? DEFAULT_MAX_SPEED : 'No limit'} by default."
-		) {|value| @max_population = value}
+		) {|value| @max_speed = value}
 		options.on(
 			"-n",
 			"--no-enclosure",
 			"Disables the barrier that normally keeps objects on the screen."
-		) {|value| @enclosure = ! value}
+		) {|value| @enclosure = false}
 		options.on(
 			"-u",
 			"--url [url]",
