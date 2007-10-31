@@ -25,9 +25,8 @@ include Zyps
 
 
 #Redefine Clock to return a predictable time.
-ELAPSED_TIME = 0.1
 class Clock
-	def elapsed_time; ELAPSED_TIME; end
+	def elapsed_time; 0.1; end
 end
 
 
