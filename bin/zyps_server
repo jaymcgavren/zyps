@@ -25,6 +25,7 @@ begin
 	require 'zyps/actions'
 	require 'zyps/conditions'
 	require 'zyps/environmental_factors'
+	require 'zyps/remote'
 	require 'zyps/views/trails'
 	require 'drb'
 rescue LoadError
@@ -48,34 +49,8 @@ DEFAULT_MAX_POPULATION = 25
 DEFAULT_FPS = 60
 
 
-#Extend Environment for serving over DRb.
-class Environment
-
-	include DRbUndumped
-	
-	def initialize (objects = [], environmental_factors = [])
-		@objects, @environmental_factors = objects, environmental_factors
-		@clock = Clock.new
-		@objects.extend DRbUndumped
-		@environmental_factors.extend DRbUndumped
-	end
-	
-	alias old_objects= objects=
-	def objects=(value)
-		old_objects=(value)
-		@objects.extend DRbUndumped
-	end
-	
-	alias old_environmental_factors= environmental_factors=
-	def environmental_factors=(value)
-		old_environmental_factors=(value)
-		@environmental_factors.extend DRbUndumped
-	end
-	
-end
-
 #A server for a Zyps Environment.
-class EnvironmentServer
+class ZypsServer
 
 	#Port to open service on.
 	attr_accessor :url
@@ -173,12 +148,10 @@ class EnvironmentServer
 		end
 		
 		#Start a network service.
-		DRb.start_service(
-			@url,
-			environment
-		)
+		server = EnvironmentServer.new(environment, @url)
+		server.start
 		#Display our URI.
-		puts "Zyps server active at #{DRb.uri}"
+		puts "Zyps server active at #{server.uri}"
 		
 		#Disable file system access.
 		$SAFE = 2
@@ -251,7 +224,7 @@ end
 
 begin
 	#Create a server.
-	server = EnvironmentServer.new
+	server = ZypsServer.new
 	#Parse the command line.
 	server.process_options(ARGV)
 	#Start the server.
