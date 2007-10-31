@@ -85,19 +85,32 @@ class Accelerator < EnvironmentalFactor
 	
 	def initialize(vector)
 		self.vector = vector
-		@clock = Clock.new
+		#Track time since last action for each GameObject.
+		@clocks = Hash.new {|h, k| h[k] = Clock.new}
 	end
 
 	#Accelerate the target away from the actor, but limited by elapsed time.
 	def act(object)
-		object.vector += Vector.new(@vector.speed * @clock.elapsed_time, @vector.pitch)
+		object.vector += Vector.new(@vector.speed * @clocks[object].elapsed_time, @vector.pitch)
 	end
 
 end
 
 #Gravity pulls all objects downward.
 class Gravity < Accelerator
-	def initialize; super(Vector.new(9.8, 270)); end
+
+	#Rate of acceleration.
+	attr_accessor :force
+	
+	def initialize(force = 9.8)
+		super(Vector.new(force, 90))
+		self.force = force
+	end
+	
+	def force= (force)
+		@vector.speed = force
+	end
+	
 end
 
 
@@ -109,12 +122,13 @@ class Friction < EnvironmentalFactor
 	
 	def initialize(force)
 		self.force = force
-		@clock = Clock.new
+		#Track time since last action for each GameObject.
+		@clocks = Hash.new {|h, k| h[k] = Clock.new}
 	end
 	
 	#Reduce the target's speed at the given rate.
 	def act(object)
-		object.vector.speed -= @force * @clock.elapsed_time
+		object.vector.speed -= @force * @clocks[object].elapsed_time
 	end
 	
 end
