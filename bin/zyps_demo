@@ -22,6 +22,7 @@ begin
 	require 'zyps'
 	require 'zyps/actions'
 	require 'zyps/conditions'
+	require 'zyps/environmental_factors'
 	require 'zyps/views/trails'
 rescue LoadError
 	require 'rubygems'
@@ -187,13 +188,6 @@ class Demo
 	end
 
 
-	class Gravity < EnvironmentalFactor
-		#Accelerate object toward the 'ground'.
-		def act(target)
-			target.vector.y += 9.8
-		end
-	end
-	
 	#Demonstrates environmental factors by adding gravity to the environment.
 	def test_environmental_factors
 
@@ -205,7 +199,7 @@ class Demo
 			animate(FRAME_COUNT)
 			
 			say("Let's add a new EnvironmentalFactor to simulate gravity.")
-			gravity = Gravity.new
+			gravity = Gravity.new(200)
 			
 			say("We add gravity to the Environment.")
 			@environment.environmental_factors << gravity
