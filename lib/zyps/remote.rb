@@ -26,7 +26,8 @@ require 'zyps/conditions'
 require 'zyps/environmental_factors'
 
 
-
+#An Environment proxy, served over DRb.
+#As with all DRb services, it is recommended you set $SAFE to 1 or higher.
 class EnvironmentServer
 
 
@@ -68,9 +69,6 @@ class EnvironmentServer
 		)
 		@uri ||= @server.uri
 		
-		#Disable file system access and other unsafe operations.
-# 		$SAFE = 2
-				
 	end
 
 	
@@ -89,6 +87,8 @@ class EnvironmentServer
 end
 
 
+#Get proxies to remote Environment objects via DRb.
+#As with all DRb services, it is recommended you set $SAFE to 1 or higher.
 module EnvironmentClient
 
 	#Get an environment proxy from the given URI.
@@ -98,61 +98,6 @@ module EnvironmentClient
 	end
 	
 end
-
-
-# module Remote
-
-
-# 	#Offer the given environment for remote connections.
-# 	def Remote.serve_environment(environment, uri = nil)
-# 	
-# 		#Ensure GameObject and EnvironmentalFactor lists stay on server side.
-# 		environment.objects.extend DRbUndumped
-# 		environment.environmental_factors.extend DRbUndumped
-# 		
-# 		#Ensure Environment stays on server side.
-# 		class <<environment
-# 			include DRbUndumped
-# 			alias old_objects= objects=
-# 			def objects=(value)
-# 				old_objects=(value)
-# 				@objects.extend DRbUndumped
-# 			end
-# 			alias old_environmental_factors= environmental_factors=
-# 			def environmental_factors=(value)
-# 				old_environmental_factors=(value)
-# 				@environmental_factors.extend DRbUndumped
-# 			end
-# 		end
-# 		
-# 		#Start a network service.
-# 		DRb.start_service(
-# 			uri,
-# 			environment
-# 		)
-# 		
-# 		#Disable file system access and other unsafe operations.
-# # 		$SAFE = 2
-# 		
-# 		return DRb.uri
-# 		
-# 	end
-# 	
-# 	
-# 	#Stop serving environments.
-# 	def Remote.stop_service
-# 		DRb.stop_service
-# 	end
-# 	
-# 	
-# 	#Get an environment proxy from the given URI.
-# 	def Remote.get_environment(uri)
-# 		DRb.start_service()
-# 		DRbObject.new(nil, uri)
-# 	end
-# 	
-
-# end
 
 
 end #module Zyps
