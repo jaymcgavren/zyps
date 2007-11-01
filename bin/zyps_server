@@ -53,7 +53,7 @@ DEFAULT_FPS = 60
 class ZypsServer
 
 	#Port to open service on.
-	attr_accessor :url
+	attr_accessor :uri
 	#Maximum allowed number of objects.
 	attr_accessor :max_population
 	#View dimensions.
@@ -61,7 +61,7 @@ class ZypsServer
 	
 	#Set up default values.
 	def initialize(
-		url = nil,
+		uri = nil,
 		view_width = DEFAULT_VIEW_WIDTH,
 		view_height = DEFAULT_VIEW_HEIGHT,
 		fps = DEFAULT_FPS,
@@ -69,8 +69,8 @@ class ZypsServer
 		max_speed = DEFAULT_MAX_SPEED,
 		enclosure = true
 	)
-		@url, @view_width, @view_height, @fps, @max_population, @max_speed, @enclosure =
-		url, view_width, view_height, fps, max_population, max_speed, enclosure
+		@uri, @view_width, @view_height, @fps, @max_population, @max_speed, @enclosure =
+		uri, view_width, view_height, fps, max_population, max_speed, enclosure
 	end
 
 	#Create app window, game environment, view, and network service.
@@ -148,7 +148,7 @@ class ZypsServer
 		end
 		
 		#Start a network service.
-		server = EnvironmentServer.new(environment, @url)
+		server = EnvironmentServer.new(environment, @uri)
 		server.start
 		#Display our URI.
 		puts "Zyps server active at #{server.uri}"
@@ -192,10 +192,10 @@ class ZypsServer
 		) {|value| @enclosure = false}
 		options.on(
 			"-u",
-			"--url [url]",
+			"--uri [uri]",
 			String,
-			"dRuby URL to run the server on.  If not defined, one will be selected and printed to STDOUT."
-		) {|value| @url = value}
+			"dRuby URI to run the server on.  If not defined, one will be selected and printed to STDOUT."
+		) {|value| @uri = value}
 		options.on(
 			"-f",
 			"--fps [frames]",
