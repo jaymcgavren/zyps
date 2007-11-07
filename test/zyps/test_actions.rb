@@ -261,6 +261,8 @@ class TestActions < Test::Unit::TestCase
 		@target1.color = Color.new(0, 0, 0)
 		add_action(TagAction.new("1"), @actor)
 		add_action(TagAction.new("2"), @target1)
+		#Set actor's location to a non-standard place.
+		@actor.location = Location.new(33, 33)
 		#Create a BreedAction using the Environment, and act.
 		add_action(BreedAction.new(@environment, 0.2), @actor) #0.1 delay ensures modified Clock will trigger action on second operation.
 		@environment.interact
@@ -269,9 +271,10 @@ class TestActions < Test::Unit::TestCase
 		child = @environment.objects.last
 		#Ensure child's color is a mix of parents'.
 		assert_equal(Color.new(0.5, 0.5, 0.5), child.color)
-		#Ensure child's behaviors combine the parents'.
+		#Ensure child's behaviors combine the parents', but exclude those with BreedActions.
 		assert_equal("1", child.behaviors[0].actions.first.tag)
-		assert_equal("2", child.behaviors[2].actions.first.tag)
+		assert_equal("2", child.behaviors[1].actions.first.tag)
+		assert_equal(2, child.behaviors.length)
 		#Ensure child appears at actor's location.
 		assert_equal(@actor.location.x, child.location.x)
 		assert_equal(@actor.location.y, child.location.y)
