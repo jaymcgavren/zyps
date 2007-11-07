@@ -54,15 +54,15 @@ class Application
 		window.signal_connect("delete_event") {false}
 		window.signal_connect("destroy") {Gtk.main_quit}
 		
+		#Create environment.
+		@environment = Environment.new
+		
 		#Set up controls.
 		window.add(create_controls)
 	
 		#Show all widgets.
 		window.show_all
-		
-		#Create environment.
-		@environment = Environment.new
-		
+			
 		#Point view at environment.
 		@environment.add_observer(@view)
 		
@@ -185,6 +185,15 @@ class Application
 		action_controls.pack_start(@eat_flag, expand, fill, padding)
 		#Add the action controls to the panel.
 		control_panel.pack_start(action_controls, expand, fill, padding)
+		
+		#Create a group for environment controls.
+		environment_controls = Gtk::VBox.new(homogeneous, spacing)
+		environment_controls.pack_start(Gtk::Label.new("Environment"), expand, fill, padding)
+		@clear_button = Gtk::Button.new("Clear")
+		@clear_button.signal_connect("clicked") {@environment.objects = []}
+		environment_controls.pack_start(@clear_button, expand, fill, padding)
+		#Add the environment controls to the panel.
+		control_panel.pack_start(environment_controls, expand, fill, padding)
 		
 		#Add the control panel to the interface.
 		interface.pack_start(control_panel, expand, fill, padding)
