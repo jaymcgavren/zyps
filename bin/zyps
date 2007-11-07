@@ -98,7 +98,7 @@ class Application
 				time_per_frame = 1.0 / @fps
 				
 				loop do
-				
+
 					@environment.interact
 					
 					#Determine how much time is left in this frame.
@@ -156,6 +156,7 @@ class Application
 				:flee => @flee_flag.active?,
 				:push => @push_flag.active?,
 				:pull => @pull_flag.active?,
+				:breed => @breed_flag.active?,
 				:eat => @eat_flag.active?
 			)
 		end
@@ -178,6 +179,8 @@ class Application
 		action_controls.pack_start(@push_flag, expand, fill, padding)
 		@pull_flag = Gtk::CheckButton.new("Pull")
 		action_controls.pack_start(@pull_flag, expand, fill, padding)
+		@breed_flag = Gtk::CheckButton.new("Breed")
+		action_controls.pack_start(@breed_flag, expand, fill, padding)
 		@eat_flag = Gtk::CheckButton.new("Eat")
 		action_controls.pack_start(@eat_flag, expand, fill, padding)
 		#Add the action controls to the panel.
@@ -233,7 +236,7 @@ class CreatureGenerator
 	#Create a creature and add it to the environment.
 	def create_creature(options = {})
 	
-		{
+		options = {
 			:x => 0,
 			:y => 0,
 			:speed => 1,
@@ -245,66 +248,86 @@ class CreatureGenerator
 			:flee => false,
 			:push => false,
 			:pull => false,
+			:breed => false,
 			:eat => false,
-		}.merge!(options)
-		
-		#Set up the creature's vector.
-		vector = Vector.new(options[:speed], options[:pitch])
-		
-		#Set up actions and merge colors according to selected behaviors.
-		behavior = Behavior.new
-		behavior.conditions << ProximityCondition.new(@action_proximity)
-		color = Color.new(0.25, 0.25, 0.25)
-		if options[:accelerate]
-			color.red += 0.25
-			color.green += 0.25
-			color.blue += 0.25
-			behavior.actions << AccelerateAction.new(@acceleration_rate)
-		end
-		if options[:turn]
-			color.blue += 1
-			behavior.actions << TurnAction.new(@turn_rate)
-		end
-		if options[:approach]
-			color.red += 1
-			behavior.actions << ApproachAction.new(vector, @approach_turn_rate)
-		end
-		if options[:flee]
-			color.red += 0.5; color.green += 0.5 #Yellow.
-			behavior.actions << FleeAction.new(vector, @flee_turn_rate)
-		end
-		if options[:push]
-			color.red += 0.5; color.blue += 0.5 #Purple.
-			behavior.actions << PushAction.new(@push_strength)
-		end
-		if options[:pull]
-			color.blue += 0.75; color.green += 0.75 #Aqua.
-			behavior.actions << PullAction.new(@pull_strength)
-		end
+		}.merge(options)
 		
 		#Create a creature.
 		creature = Creature.new(
 			'',
 			Location.new(options[:x], options[:y]),
-			color,
-			vector,
+			Color.new,
+			Vector.new(options[:speed], options[:pitch]),
 			0,
 			5
 		)
-		creature.behaviors << behavior
 		
-		#Special handling for eat action, which needs a CollisionCondition.
-		if options[:eat]
-			creature.color.green += 1
-			behavior = Behavior.new
-			behavior.actions << EatAction.new(@environment)
-			behavior.conditions << CollisionCondition.new
-			creature.behaviors << behavior
+		#Set up actions and merge colors according to selected behaviors.
+		color = Color.new(0.25, 0.25, 0.25)
+		if options[:accelerate]
+			color.red += 0.25
+			color.green += 0.25
+			color.blue += 0.25
+			creature.behaviors << create_behavior(:actions => [AccelerateAction.new(@acceleration_rate)])
 		end
+		if options[:turn]
+			color.blue += 1
+			creature.behaviors << create_behavior(:actions => [TurnAction.new(@turn_rate)])
+		end
+		if options[:approach]
+			color.red += 1
+			creature.behaviors << create_behavior(:actions => [ApproachAction.new(creature.vector, @approach_turn_rate)])
+		end
+		if options[:flee]
+			color.red += 0.5; color.green += 0.5 #Yellow.
+			creature.behaviors << create_behavior(:actions => [FleeAction.new(creature.vector, @flee_turn_rate)])
+		end
+		if options[:push]
+			color.red += 0.5; color.blue += 0.5 #Purple.
+			creature.behaviors << create_behavior(:actions => [PushAction.new(@push_strength)])
+		end
+		if options[:pull]
+			color.blue += 0.75; color.green += 0.75 #Aqua.
+			creature.behaviors << create_behavior(:actions => [PullAction.new(@pull_strength)])
+		end
+		if options[:breed]
+			color.green -= 0.1 #Make a bit redder.
+			color.blue -= 0.1
+			creature.behaviors << create_behavior(
+				:actions => [BreedAction.new(@environment, 1)],
+				:conditions => [CollisionCondition.new] #The default ProximityCondition won't do.
+			)
+		end
+		if options[:eat]
+			color.green += 1
+			creature.behaviors << create_behavior(
+				:actions => [EatAction.new(@environment)],
+				:conditions => [CollisionCondition.new] #The default ProximityCondition won't do.
+			)
+		end
+		
+		creature.color = color
 		
 		@environment.objects << creature
 		
 	end
+	
+	
+	def create_behavior(options = {})
+	
+		options = {
+			:actions => [],
+			:conditions => [ProximityCondition.new(@action_proximity)],
+		}.merge(options)
+		
+		behavior = Behavior.new
+		behavior.actions = options[:actions]
+		behavior.conditions = options[:conditions]
+		behavior
+		
+	end
+	
+	
 end
 
 
