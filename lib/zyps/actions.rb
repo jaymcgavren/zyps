@@ -262,4 +262,35 @@ class PullAction < Action
 end
 
 
+class BreedAction < Action
+	DEFAULT_DELAY = 60
+	#Environment to place children into.
+	attr_accessor :environment
+	#Delay between actions.
+	attr_accessor :delay
+	def initialize(environment, delay = DEFAULT_DELAY)
+		self.environment, self.delay = environment, delay
+		@clock = Clock.new
+		@time_since_last_action = 0
+	end
+	def do(actor, target)
+		#Stop action if target is not a Creature.
+		return false unless target.is_a?(Creature)
+		#Get time since last action, and stop if it hasn't been long enough.
+		@time_since_last_action += @clock.elapsed_time
+		return false unless @time_since_last_action >= @delay
+		#Create a child.
+		child = Creature.new
+		#Combine colors.
+		child.color = actor.color + target.color
+		#Combine behaviors.
+		child.behaviors = child.behaviors.concat(actor.behaviors).concat(target.behaviors)
+		#Add child to environment.
+		@environment.objects << child
+		#Reset elapsed time.
+		@time_since_last_action = 0
+	end
+end
+
+
 end #module Zyps

@@ -40,9 +40,9 @@ class TestActions < Test::Unit::TestCase
 
 	#Create and populate an environment.
 	def setup
-		@actor = Creature.new('name', Location.new(0, 0))
-		@target1 = GameObject.new('name', Location.new(1, 1))
-		@target2 = GameObject.new('name', Location.new(-2, -2))
+		@actor = Creature.new('actor', Location.new(0, 0))
+		@target1 = Creature.new('target1', Location.new(1, 1))
+		@target2 = Creature.new('target2', Location.new(-2, -2))
 		#Create an environment, and add the objects.
 		@environment = Environment.new
 		#Order is important - we want to act on target 1 first.
@@ -251,6 +251,30 @@ class TestActions < Test::Unit::TestCase
 		#Verify target's speed and direction are correct.
 		assert_in_delta(0.1, @target1.vector.speed, REQUIRED_ACCURACY, "@target1 should have been pulled toward @actor.")
 		assert_in_delta(225.0, @target1.vector.pitch, REQUIRED_ACCURACY, "@target1's angle should be facing toward @actor.")
+	end
+	
+	
+	#A BreedAction creates a new Creature by combining the actor's color and behaviors with another creature.
+	def test_breed_action
+		#Create two creatures with different colors and behaviors.
+		@actor.color = Color.new(1, 1, 1)
+		@target1.color = Color.new(0, 0, 0)
+		add_action(TagAction.new("1"), @actor)
+		add_action(TagAction.new("2"), @target1)
+		#Create a BreedAction using the Environment, and act.
+		add_action(BreedAction.new(@environment, 0.2), @actor) #0.1 delay ensures modified Clock will trigger action on second operation.
+		@environment.interact
+		@environment.interact #Act twice to trigger action on actor (and only actor).
+		#Find child.
+		child = @environment.objects.last
+		#Ensure child's color is a mix of parents'.
+		assert_equal(Color.new(0.5, 0.5, 0.5), child.color)
+		#Ensure child's behaviors combine the parents'.
+		assert_equal("1", child.behaviors[0].actions.first.tag)
+		assert_equal("2", child.behaviors[2].actions.first.tag)
+		#Ensure child appears at actor's location.
+		assert_equal(@actor.location.x, child.location.x)
+		assert_equal(@actor.location.y, child.location.y)
 	end
 	
 end
