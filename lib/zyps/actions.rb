@@ -166,8 +166,6 @@ class DestroyAction < Action
 	#Remove the target from the environment.
 	def do(actor, target)
 		@environment.objects.delete(target)
-		#Discontinue action.
-		return false
 	end
 end
 
@@ -274,17 +272,24 @@ class BreedAction < Action
 		@time_since_last_action = 0
 	end
 	def do(actor, target)
-		#Stop action if target is not a Creature.
+		#Skip action if target is not a Creature.
 		return false unless target.is_a?(Creature)
-		#Get time since last action, and stop if it hasn't been long enough.
+		#Get time since last action, and skip if it hasn't been long enough.
 		@time_since_last_action += @clock.elapsed_time
 		return false unless @time_since_last_action >= @delay
 		#Create a child.
 		child = Creature.new
 		#Combine colors.
 		child.color = actor.color + target.color
-		#Combine behaviors.
-		child.behaviors = child.behaviors.concat(actor.behaviors).concat(target.behaviors)
+		#Combine behaviors EXCEPT those with BreedActions.
+		behaviors = (actor.behaviors + target.behaviors).find_all do |behavior|
+			! behavior.actions.any?{|action| action.is_a?(BreedAction)}
+		end
+		behaviors.each {|behavior| child.behaviors << behavior.clone}
+		#Location should equal actor's.
+		child.location = Location.new(actor.location.x, actor.location.y)
+		#Add parents' vectors to get child's vector.
+		child.vector = actor.vector + target.vector
 		#Add child to environment.
 		@environment.objects << child
 		#Reset elapsed time.
