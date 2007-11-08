@@ -21,6 +21,41 @@ require 'zyps'
 module Zyps
 
 
+#Superclass for actions that need to happen at a specific rate.
+class TimedAction < Action
+
+	#A Clock that tracks time between actions.
+	attr_accessor :clock
+	#Units per second for action.
+	attr_accessor :rate
+	
+	def initialize(rate, *arguments)
+		self.rate = rate
+		@clock = Clock.new
+	end
+	
+	#Make a deep copy.
+	def copy
+		copy = super
+		#Copies should have their own Clock.
+		copy.clock = Clock.new
+		copy
+	end
+	
+	#Units to add to the attribute being changed.
+	def delta
+		@clock.elapsed_time * rate
+	end
+	
+	#Begin tracking time between actions.
+	def start(actor, target)
+		super
+		@clock.reset_elapsed_time
+	end
+	
+end
+
+
 #Head toward a target.
 class FaceAction < Action
 	#Set the actor's heading to point directly at target.
@@ -31,61 +66,44 @@ end
 
 
 #Increase/decrease speed over time.
-class AccelerateAction < Action
+class AccelerateAction < TimedAction
 	#Units per second to accelerate.
 	#Can be negative to slow down or go in reverse.
 	attr_accessor :rate
-	def initialize(rate = 0)
-		self.rate = rate
-		@clock = Clock.new
-	end
-	#Begin tracking time between actions.
-	def start(actor, target)
-		super
-		@clock.reset_elapsed_time
-	end
 	#Increase or decrease speed according to elapsed time.
 	def do(actor, target)
-		actor.vector.speed += @clock.elapsed_time * rate
+		actor.vector.speed += delta
 	end
 end
 
 
 #Turn over time.
-class TurnAction < Action
+class TurnAction < TimedAction
 	#Degrees per second to turn.
 	#Positive turns clockwise, negative turns counter-clockwise.
 	attr_accessor :rate
-	def initialize(rate = 0)
-		self.rate = rate
-		@clock = Clock.new
-	end
-	#Begin tracking time between actions.
-	def start(actor, target)
-		super
-		@clock.reset_elapsed_time
-	end
 	#Turn according to elapsed time.
 	def do(actor, target)
-		actor.vector.pitch += @clock.elapsed_time * rate
+		actor.vector.pitch += delta
 	end
 end
 
 
 #Approaches the target, but obeys law of inertia.
-class ApproachAction < Action
+class ApproachAction < TimedAction
 	#Direction/speed actor is accelerating in.
 	attr_accessor :heading
 	#Degrees per second the direction of acceleration can change.
-	attr_accessor :turn_rate
-	def initialize(heading = Vector.new, turn_rate = 360)
-		self.heading, self.turn_rate = heading, turn_rate
-		@clock = Clock.new
-	end
-	#Begin tracking time between actions.
-	def start(actor, target)
+	attr_accessor :rate
+	def initialize(rate = 360, heading = Vector.new)
 		super
-		@clock.reset_elapsed_time
+		self.heading = heading
+	end
+	#Make a deep copy.
+	def copy
+		copy = super
+		copy.heading = @heading.copy
+		copy
 	end
 	#Accelerate toward the target, but limited by turn rate.
 	def do(actor, target)
@@ -98,7 +116,7 @@ class ApproachAction < Action
 			turn_angle += 360.0
 		end
 		#The creature can only turn as fast as the elapsed time, of course.
-		maximum_turn = turn_rate * @clock.elapsed_time
+		maximum_turn = delta
 		if turn_angle.abs > maximum_turn
 			if turn_angle > 0
 				turn_angle = maximum_turn
@@ -115,19 +133,20 @@ end
 
 
 #Flees from the target, but obeys law of inertia.
-class FleeAction < Action
+class FleeAction < TimedAction
 	#Direction/speed actor is accelerating in.
 	attr_accessor :heading
 	#Degrees per second the direction of acceleration can change.
-	attr_accessor :turn_rate
-	def initialize(heading = Vector.new, turn_rate = 360)
-		self.heading, self.turn_rate = heading, turn_rate
-		@clock = Clock.new
-	end
-	#Begin tracking time between actions.
-	def start(actor, target)
+	attr_accessor :rate
+	def initialize(rate = 360, heading = Vector.new)
 		super
-		@clock.reset_elapsed_time
+		self.heading = heading
+	end
+	#Make a deep copy.
+	def copy
+		copy = super
+		copy.heading = @heading.copy
+		copy
 	end
 	#Accelerate away from the target, but limited by turn rate.
 	def do(actor, target)
@@ -140,7 +159,7 @@ class FleeAction < Action
 			turn_angle += 360.0
 		end
 		#The creature can only turn as fast as the elapsed time, of course.
-		maximum_turn = turn_rate * @clock.elapsed_time
+		maximum_turn = delta
 		if turn_angle.abs > maximum_turn
 			if turn_angle > 0
 				turn_angle = maximum_turn
@@ -211,24 +230,15 @@ end
 
 
 #Pushes target away.
-class PushAction < Action
+class PushAction < TimedAction
 	#Units/second to accelerate target by.
-	attr_accessor :force
-	def initialize(force = 1)
-		@force = force
-		@clock = Clock.new
-	end
-	#Begin tracking time between actions.
-	def start(actor, target)
-		super
-		@clock.reset_elapsed_time
-	end
+	attr_accessor :rate
 	#Accelerate the target away from the actor, but limited by elapsed time.
 	def do(actor, target)
 		#Angle to target is also angle of push force.
 		push_angle = Utility.find_angle(actor.location, target.location)
 		#Acceleration will be limited by elapsed time.
-		push_force = @force * @clock.elapsed_time
+		push_force = delta
 		#Apply the force to the creature's movement vector.
 		target.vector += Vector.new(push_force, push_angle)
 	end
@@ -236,24 +246,15 @@ end
 
 
 #Pulls target toward actor.
-class PullAction < Action
+class PullAction < TimedAction
 	#Units/second to accelerate target by.
-	attr_accessor :force
-	def initialize(force = 1)
-		@force = force
-		@clock = Clock.new
-	end
-	#Begin tracking time between actions.
-	def start(actor, target)
-		super
-		@clock.reset_elapsed_time
-	end
+	attr_accessor :rate
 	#Accelerate away from the target, but limited by turn rate.
 	def do(actor, target)
 		#Angle from target to actor is also angle of pull force (opposite of that for push).
 		pull_angle = Utility.find_angle(target.location, actor.location)
 		#Acceleration will be limited by elapsed time.
-		pull_force = @force * @clock.elapsed_time
+		pull_force = delta
 		#Apply the force to the creature's movement vector.
 		target.vector += Vector.new(pull_force, pull_angle)
 	end
@@ -273,10 +274,10 @@ class BreedAction < Action
 	end
 	def do(actor, target)
 		#Skip action if target is not a Creature.
-		return false unless target.is_a?(Creature)
+		return unless target.is_a?(Creature)
 		#Get time since last action, and skip if it hasn't been long enough.
 		@time_since_last_action += @clock.elapsed_time
-		return false unless @time_since_last_action >= @delay
+		return unless @time_since_last_action >= @delay
 		#Create a child.
 		child = Creature.new
 		#Combine colors.
@@ -285,11 +286,13 @@ class BreedAction < Action
 		behaviors = (actor.behaviors + target.behaviors).find_all do |behavior|
 			! behavior.actions.any?{|action| action.is_a?(BreedAction)}
 		end
-		behaviors.each {|behavior| child.behaviors << behavior.clone}
+		behaviors.each {|behavior| child.behaviors << behavior.copy}
 		#Location should equal actor's.
-		child.location = Location.new(actor.location.x, actor.location.y)
+		child.location = actor.location.copy
 		#Add parents' vectors to get child's vector.
 		child.vector = actor.vector + target.vector
+		#Child's size should be half the average size of the parents'.
+		child.size = ((actor.size + target.size) / 2) / 2
 		#Add child to environment.
 		@environment.objects << child
 		#Reset elapsed time.
