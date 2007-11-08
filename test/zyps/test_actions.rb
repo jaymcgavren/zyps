@@ -90,7 +90,7 @@ class TestActions < Test::Unit::TestCase
 	
 		#Create an ApproachAction with a 0-degree vector, turn rate of 40 degrees/sec.
 		@actor.vector = Vector.new(0, 0)
-		action = ApproachAction.new(Vector.new(1, 0), 40)
+		action = ApproachAction.new(40, Vector.new(1, 0))
 		add_action(action, @actor)
 		#Act.
 		@environment.interact
@@ -109,7 +109,7 @@ class TestActions < Test::Unit::TestCase
 		#Create an ApproachAction with a 0-degree vector, turn rate high enough to turn more than 45 degrees in 0.1 seconds.
 		#Action should only turn as far as target.
 		@actor.vector = Vector.new(0, 0)
-		action = ApproachAction.new(Vector.new(1, 0), 500)
+		action = ApproachAction.new(500, Vector.new(1, 0))
 		add_action(action, @actor)
 		#Act.
 		@environment.interact
@@ -129,7 +129,7 @@ class TestActions < Test::Unit::TestCase
 
 		#Create a FleeAction with a 0-degree vector, turn rate of 40 degrees/sec.
 		@actor.vector = Vector.new(0, 0)
-		action = FleeAction.new(Vector.new(1, 0), 40)
+		action = FleeAction.new(40, Vector.new(1, 0))
 		add_action(action, @actor)
 		#Act.
 		@environment.interact
@@ -147,7 +147,7 @@ class TestActions < Test::Unit::TestCase
 		#Create a FleeAction with a 0-degree vector, turn rate high enough to turn more than 135 degrees in 0.1 seconds.
 		#Action should turn directly away from target, but no farther.
 		@actor.vector = Vector.new(0, 0)
-		action = FleeAction.new(Vector.new(1, 0), 1400)
+		action = FleeAction.new(1400, Vector.new(1, 0))
 		add_action(action, @actor)
 		#Act.
 		@environment.interact
