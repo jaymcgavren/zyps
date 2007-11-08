@@ -20,10 +20,12 @@
 
 gems_loaded = false
 begin
+	require 'optparse'
 	require 'zyps'
 	require 'zyps/actions'
 	require 'zyps/conditions'
 	require 'zyps/environmental_factors'
+	require 'zyps/remote'
 	require 'zyps/views/trails'
 rescue LoadError
 	if gems_loaded == false
@@ -39,14 +41,36 @@ end
 include Zyps
 
 
+DEFAULT_VIEW_WIDTH = 800
+DEFAULT_VIEW_HEIGHT = 600
+DEFAULT_MAX_SPEED = 200
+DEFAULT_MAX_POPULATION = 100
+DEFAULT_FPS = 60
+
+
 class Application
 
+	#Port to open service on.
+	attr_accessor :uri
+	#Maximum allowed number of objects.
+	attr_accessor :max_population
+	#View dimensions.
+	attr_accessor :view_width, :view_height
+	
 	#Create app window, game environment, and view.
-	def initialize(width, height)
+	#Set up default values.
+	def initialize(
+		uri = nil,
+		view_width = DEFAULT_VIEW_WIDTH,
+		view_height = DEFAULT_VIEW_HEIGHT,
+		fps = DEFAULT_FPS,
+		max_population = DEFAULT_MAX_POPULATION,
+		max_speed = DEFAULT_MAX_SPEED,
+		enclosure = true
+	)
 		
-		@width, @height = width, height
-		@birth_rate = 1
-		@fps = 30.0
+		@uri, @view_width, @view_height, @fps, @max_population, @max_speed, @enclosure =
+		uri, view_width, view_height, fps, max_population, max_speed, enclosure
 		
 		#Create a window, and set GTK up to quit when it is closed.
 		window = Gtk::Window.new
@@ -58,6 +82,7 @@ class Application
 		@environment = Environment.new
 		
 		#Set up controls.
+		#Also initializes @view.
 		window.add(create_controls)
 	
 		#Show all widgets.
@@ -71,20 +96,21 @@ class Application
 	
 	def main
 	
-	
-		#Keep all objects within a boundary.
-		enclosure = Enclosure.new
-		enclosure.left = 0
-		enclosure.bottom = 0
-		enclosure.top = @height
-		enclosure.right = @width
-		@environment.environmental_factors << enclosure
+		#Keep objects on screen.
+		if @enclosure
+			enclosure = Enclosure.new()
+			enclosure.left = 0
+			enclosure.bottom = 0
+			enclosure.top = @view_height
+			enclosure.right = @view_width
+			@environment.environmental_factors << enclosure
+		end
 		
 		#Keep all objects under a certain speed.
-		@environment.environmental_factors << SpeedLimit.new(100)
+		@environment.environmental_factors << SpeedLimit.new(@max_speed) if @max_speed
 		
 		#Limit population.
-		@environment.environmental_factors << PopulationLimit.new(@environment, 25)
+		@environment.environmental_factors << PopulationLimit.new(@environment, @max_population) if @max_population
 		
 		#Set up a creature generator.
 		@generator = CreatureGenerator.new(@environment)
@@ -119,6 +145,16 @@ class Application
 			
 		end
 		
+		
+		#Start a network service.
+		if @uri
+			server = EnvironmentServer.new(@environment, @uri)
+			server.start
+			#Disable file system access.
+			$SAFE = 2
+		end
+
+		
 		#Activate the GUI.
 		Gtk.main
 		
@@ -126,13 +162,13 @@ class Application
 	
 	
 	#Create a view and controls.
-	def create_controls(width = @width, height = @height, homogeneous = false, spacing = 0, expand = false, fill = false, padding = 0)
+	def create_controls(view_width = @view_width, view_height = @view_height, homogeneous = false, spacing = 0, expand = false, fill = false, padding = 0)
 	
 		#Create a container for the view and controls.
 		interface = Gtk::HBox.new(homogeneous, spacing)
 		
 		#Add view to interface.
-		@view = TrailsView.new(width, height)
+		@view = TrailsView.new(view_width, view_height)
 		interface.pack_start(@view.canvas, expand, fill, padding)
 		
 		#When mouse button pressed, record location for use in release event handler.
@@ -190,7 +226,9 @@ class Application
 		environment_controls = Gtk::VBox.new(homogeneous, spacing)
 		environment_controls.pack_start(Gtk::Label.new("Environment"), expand, fill, padding)
 		@clear_button = Gtk::Button.new("Clear")
-		@clear_button.signal_connect("clicked") {@environment.objects = []}
+		@clear_button.signal_connect("clicked") {
+			@environment.objects = []
+		}
 		environment_controls.pack_start(@clear_button, expand, fill, padding)
 		#Add the environment controls to the panel.
 		control_panel.pack_start(environment_controls, expand, fill, padding)
@@ -201,7 +239,64 @@ class Application
 		interface
 		
 	end
+
+
+	#Set attributes according to command-line arguments.
+	def process_options(arguments)
 	
+		#Set up option parser.
+		options = OptionParser.new
+		
+		#Define valid options.
+		options.on("-h", "--help", TrueClass, "Display program help.") {
+			puts options.help
+			exit
+		}
+		options.on(
+			"-m",
+			"--max-population [number]",
+			Integer,
+			"The maximum number of allowed game objects.  #{DEFAULT_MAX_POPULATION} by default."
+		) {|value| @max_population = value}
+		options.on(
+			"-s",
+			"--max-speed [number]",
+			Integer,
+			"The fastest an object can go.  #{DEFAULT_MAX_SPEED ? DEFAULT_MAX_SPEED : 'No limit'} by default."
+		) {|value| @max_speed = value}
+		options.on(
+			"-n",
+			"--no-enclosure",
+			"Disables the barrier that normally keeps objects on the screen."
+		) {|value| @enclosure = false}
+		options.on(
+			"-u",
+			"--uri [uri]",
+			String,
+			"dRuby URI to run the server on.  If not defined, one will be selected and printed to STDOUT."
+		) {|value| @uri = value}
+		options.on(
+			"-f",
+			"--fps [frames]",
+			Integer,
+			"Number of frames to draw per second.  #{DEFAULT_FPS} by default."
+		) {|value| @fps = value}
+		options.on(
+			"--view-width [pixels]",
+			Integer,
+			"Window width.  #{DEFAULT_VIEW_WIDTH} by default."
+		) {|value| @view_width = value}
+		options.on(
+			"--view-height [pixels]",
+			Integer,
+			"Window height.  #{DEFAULT_VIEW_HEIGHT} by default."
+		) {|value| @view_height = value}
+		
+		#Parse the options, printing usage if parsing fails.
+		options.parse(arguments) rescue puts "#{$!}\nType '#{$0} --help' for valid options."
+		
+	end
+
 
 end
 
@@ -236,8 +331,9 @@ class CreatureGenerator
 		@turn_rate = 90
 		@approach_turn_rate = 720
 		@flee_turn_rate = @approach_turn_rate
-		@pull_strength = 1000
+		@pull_strength = 100
 		@push_strength = @pull_strength
+		@breed_rate = 10
 		
 	end
 
@@ -285,11 +381,11 @@ class CreatureGenerator
 		end
 		if options[:approach]
 			color.red += 1
-			creature.behaviors << create_behavior(:actions => [ApproachAction.new(creature.vector, @approach_turn_rate)])
+			creature.behaviors << create_behavior(:actions => [ApproachAction.new(@approach_turn_rate, creature.vector)])
 		end
 		if options[:flee]
 			color.red += 0.5; color.green += 0.5 #Yellow.
-			creature.behaviors << create_behavior(:actions => [FleeAction.new(creature.vector, @flee_turn_rate)])
+			creature.behaviors << create_behavior(:actions => [FleeAction.new(@flee_turn_rate, creature.vector)])
 		end
 		if options[:push]
 			color.red += 0.5; color.blue += 0.5 #Purple.
@@ -303,7 +399,7 @@ class CreatureGenerator
 			color.green -= 0.1 #Make a bit redder.
 			color.blue -= 0.1
 			creature.behaviors << create_behavior(
-				:actions => [BreedAction.new(@environment, 1)],
+				:actions => [BreedAction.new(@environment, @breed_rate)],
 				:conditions => [CollisionCondition.new] #The default ProximityCondition won't do.
 			)
 		end
@@ -342,12 +438,11 @@ end
 
 
 begin
-	#The view width.
-	WIDTH = 500
-	#The view height.
-	HEIGHT = 600
-	#Run the application.
-	application = Application.new(WIDTH, HEIGHT)
+	#Create a server.
+	application = Application.new
+	#Parse the command line.
+	application.process_options(ARGV)
+	#Start the server.
 	application.main
 rescue => exception
 	#Print error to STDERR and exit with an abnormal status.
