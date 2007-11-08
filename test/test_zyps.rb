@@ -61,6 +61,27 @@ class TestGameObject < Test::Unit::TestCase
 		assert_in_delta(1, object.location.x, 0.001)
 		assert_in_delta(1, object.location.y, 0.001)
 	end
+	
+	
+	def test_copy
+		object = GameObject.new
+		object.vector = Vector.new(1, 1)
+		object.color = Color.new(0.5, 0.5, 0.5)
+		object.location = Location.new(3, 3)
+		object.tags = ["1", "2"]
+		object.name = "name"
+		copy = object.copy
+		assert_not_same(object.vector, copy.vector, "Copy's vector should not be same object.")
+		assert_equal(object.vector.x, copy.vector.x, "Copy's vector should share attributes.")
+		assert_not_same(object.color, copy.color, "Copy's color should not be same object.")
+		assert_equal(object.color.red, copy.color.red, "Copy's color should share attributes.")
+		assert_not_same(object.location, copy.location, "Copy's location should not be same object.")
+		assert_equal(object.location.x, copy.location.x, "Copy's location should share attributes.")
+		assert_not_same(object.tags, copy.tags, "Copy's tag list should not be same object.")
+		assert_equal(object.tags[0], copy.tags[0], "Copy's tag list should share attributes.")
+		assert_not_equal(object.identifier, copy.identifier, "Copy's identifier should not be identical.")
+		assert_not_equal(object.name, copy.name, "Copy's name should not be identical.")
+	end
 
 
 end
@@ -112,6 +133,17 @@ class TestCreature < Test::Unit::TestCase
 		assert(creature.tags.include?("predator"))
 		assert(creature.tags.include?("blue team"))
 		assert(creature.behaviors.include?(behavior))
+	end
+	
+	
+	def test_copy
+		creature = Creature.new
+		behavior1 = Behavior.new
+		behavior2 = Behavior.new
+		creature.behaviors << behavior1 << behavior2
+		copy = creature.copy
+		assert_not_same(creature.behaviors, copy.behaviors, "Copy's behavior list should not be same object.")
+		assert_not_same(creature.behaviors[0], copy.behaviors[0], "Behaviors in list should not be same objects.")
 	end
 	
 	
@@ -476,7 +508,7 @@ class TestUtility < Test::Unit::TestCase
 	
 end
 
-#TODO: Rewrite to pass environment.
+
 class TestBehavior < Test::Unit::TestCase
 
 	#Always true.
@@ -549,6 +581,19 @@ class TestBehavior < Test::Unit::TestCase
 		assert_equal(2, action.do_count, "do() should NOT have been called, because conditions are no longer true.")
 		assert_equal(1, action.stop_count, "stop() SHOULD have been called.")
 				
+	end
+	
+	def test_copy
+		original = Behavior.new
+		action = TagAction.new("tag")
+		original.actions << action
+		condition = TagCondition.new("tag")
+		original.conditions << condition
+		copy = original.copy
+		assert_not_same(original.actions, copy.actions, "Copy's action list should not be same object.")
+		assert_not_same(original.actions[0], copy.actions[0], "Actions in list should not be same objects.")
+		assert_not_same(original.conditions, copy.conditions, "Copy's condition list should not be same object.")
+		assert_not_same(original.conditions[0], copy.conditions[0], "Conditions in list should not be same objects.")
 	end
 	
 	

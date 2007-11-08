@@ -117,7 +117,19 @@ class GameObject
 	
 	def initialize (name = nil, location = Location.new, color = Color.new, vector = Vector.new, age = 0, size = 1, tags = [])
 		self.name, self.location, self.color, self.vector, self.age, self.size, self.tags = name, location, color, vector, age, size, tags
-		@identifier = rand(99999999) #TODO: Current setup won't necessarily be unique.
+		@identifier = generate_identifier
+	end
+	
+	#Make a deep copy.
+	def copy
+		copy = self.clone
+		copy.vector = @vector.copy
+		copy.color = @color.copy
+		copy.location = @location.copy
+		copy.tags = @tags.clone
+		copy.identifier = generate_identifier
+		copy.name = @name ? "Copy of " + @name : nil
+		copy
 	end
 	
 	#Size must be positive.
@@ -133,6 +145,19 @@ class GameObject
 	def age; Time.new.to_f - @birth_time; end
 	def age=(age); @birth_time = Time.new.to_f - age; end
 	
+	#Set identifier.
+	#Not part of API; copy() needs this to make copy's ID unique.
+	def identifier=(value) #:nodoc:
+		@identifier = value
+	end
+	
+	private
+	
+		#Make a unique GameObject identifier.
+		def generate_identifier
+			rand(99999999) #TODO: Current setup won't necessarily be unique.
+		end
+	
 end
 
 
@@ -147,6 +172,15 @@ class Creature < GameObject
 	def initialize (name = nil, location = Location.new, color = Color.new, vector = Vector.new, age = 0, size = 1, tags = [], behaviors = [])
 		super(name, location, color, vector, age, size, tags)
 		self.behaviors = behaviors
+	end
+	
+	#Make a deep copy.
+	def copy
+		copy = super
+		#Make deep copy of each behavior.
+		copy.behaviors = []
+		@behaviors.each {|behavior| copy.behaviors << behavior.copy}
+		copy
 	end
 	
 	#Call Behavior.perform(self, environment) on each of the creature's assigned Behaviors.
@@ -175,15 +209,18 @@ class Action
 		@started = false
 	end
 	
+	#Make a deep copy.
+	def copy; self.clone; end
+	
 	#Start the action.
 	#Overriding subclasses must either call "super" or set the @started attribute to true.
 	def start(actor, target)
 		@started = true
 	end
 	
-	#Perform the action.
-	#Subclasses should override this.
+	#Action subclasses must implement a do(actor, target) instance method.
 	def do(actor, target)
+		raise NotImplementedError.new("Action subclasses must implement a do(actor, target) instance method.")
 	end
 	
 	#Stop the action.
@@ -197,8 +234,16 @@ end
 
 
 #A condition for one Creature to act on another.
-#Conditions must implement a met?(actor, target) instance method.
 class Condition
+
+	#Make a deep copy.
+	def copy; self.clone; end
+	
+	#Condition subclasses must implement a met?(actor, target) instance method.
+	def met?(actor, target)
+		raise NotImplementedError.new("Condition subclasses must implement a met?(actor, target) instance method.")
+	end
+	
 end
 
 
@@ -218,6 +263,18 @@ class Behavior
 		self.actions, self.conditions = actions, conditions
 		#Tracks current target.
 		@active_target = nil
+	end
+	
+	#Make a deep copy.
+	def copy
+		copy = self.clone #Currently, we overwrite everything anyway, but we may add some clonable attributes later.
+		#Make a deep copy of all actions.
+		copy.actions = []
+		@actions.each {|action| copy.actions << action.copy}
+		#Make a deep copy of all conditions.
+		copy.conditions = []
+		@conditions.each {|condition| copy.conditions << condition.copy}
+		copy
 	end
 	
 	#Test all conditions against each object in the evironment.
@@ -294,6 +351,9 @@ class Color
 		self.red, self.green, self.blue = red, green, blue
 	end
 	
+	#Make a deep copy.
+	def copy; self.clone; end
+	
 	#Automatically constrains value to the range 0 - 1.
 	def red=(v); v = 0 if v < 0; v = 1 if v > 1; @red = v; end
 	#Automatically constrains value to the range 0 - 1.
@@ -329,6 +389,9 @@ class Location
 	def initialize (x = 0, y = 0)
 		self.x, self.y = x, y
 	end
+
+	#Make a deep copy.
+	def copy; self.clone; end
 	
 end
 
@@ -345,6 +408,9 @@ class Vector
 		self.speed = speed
 		self.pitch = pitch
 	end
+	
+	#Make a deep copy.
+	def copy; self.clone; end
 	
 	#The angle along the X/Y axes.
 	def pitch; Utility.to_degrees(@pitch); end
@@ -389,6 +455,9 @@ class Clock
 	def initialize
 		reset_elapsed_time
 	end
+	
+	#Make a deep copy.
+	def copy; self.clone; end
 	
 	#Returns the time in (fractional) seconds since this method was last called (or on the first call, time since the Clock was created).
 	def elapsed_time
