@@ -273,7 +273,7 @@ class Application
 			"-u",
 			"--uri [uri]",
 			String,
-			"dRuby URI to run the server on.  If not defined, one will be selected and printed to STDOUT."
+			"URI to serve the environment on via dRuby.  If not specified, no server will be started."
 		) {|value| @uri = value}
 		options.on(
 			"-f",

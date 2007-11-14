@@ -30,27 +30,22 @@ At a command line, type:
 
 	zyps
 
-To see a tutorial on the library, at a command line, type:
+The following options can be specified if desired:
 
-	zyps_demo
-
-To run a server that offers a DRb Environment object clients can connect to:
-
-	zyps_server [options]
 	    -h, --help                       Display program help.
 	    -m, --max-population [number]    The maximum number of allowed game objects.
-	                                     25 by default.
-	    -s, --max-speed [number]         The fastest an object can go.  500 by
+	                                     100 by default.
+	    -s, --max-speed [number]         The fastest an object can go.  200 by 
 	                                     default.
 	    -n, --no-enclosure               Disables the barrier that normally keeps
 	                                     objects on the screen.
-	    -u, --url [url]                  dRuby URL to run the server on.  If not
-	                                     defined, one will be selected and printed to
-	                                     STDOUT.
-	    -f, --fps [frames]               Number of frames to draw per second.  60 by
-	                                     default.
+	    -u, --uri [uri]                  URI to serve the environment on via dRuby.
+	                                     If not specified, no server will be started.
+	    -f, --fps [frames]               Number of frames to draw per second.
+	                                     60 by default.
 	        --view-width [pixels]        Window width.  800 by default.
 	        --view-height [pixels]       Window height.  600 by default.
+
 
 
 == Development
@@ -78,7 +73,9 @@ Also see "bin/zyps_demo" and the "test" subfolder in the project directory for s
 
 == Thanks
 
-The GUI is provided via Ruby-GNOME2.  Thanks to its authors for their considerable effort in making their library easy to use.
+Glen Franta, Scott McGinty, and so many other math, science, and computer science teachers whose names I've forgotten.  Nothing I do today would be possible without your efforts so long ago.
+
+My lovely wife, Diana, for patience and usability testing.
 
 
 == Author
