@@ -17,6 +17,8 @@
 
 
 require 'zyps'
+require 'zyps/actions'
+require 'zyps/conditions'
 require 'test/unit'
 
 
