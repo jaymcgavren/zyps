@@ -32,9 +32,18 @@ class TrailsView
 	#Number of line segments to draw for each object.
 	attr_accessor :trail_length
 
-	def initialize (width = 600, height = 400, trail_length = 5)
+	#Takes a hash with these keys and defaults:
+	#	:width => 600
+	#	:height => 400
+	#	:trail_length => 5
+	def initialize (options = {})
 	
-		@width, @height, @trail_length, = width, height, trail_length
+		options = {
+			:width => 600,
+			:height => 400,
+			:trail_length => 5
+		}.merge(options)
+		@width, @height, @trail_length, = options[:width], options[:height], options[:trail_length]
 	
 		#Create a drawing area.
 		@canvas = Gtk::DrawingArea.new

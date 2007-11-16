@@ -28,8 +28,8 @@ class TestConditions < Test::Unit::TestCase
 
 
 	def setup
-		@actor = Creature.new('name', Location.new(1, 1))
-		@target = GameObject.new('name', Location.new(2, 2))
+		@actor = Creature.new(:name => 'name', :location => Location.new(1, 1))
+		@target = GameObject.new(:name => 'name', :location => Location.new(2, 2))
 	end
 
 

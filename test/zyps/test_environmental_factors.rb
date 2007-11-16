@@ -37,11 +37,12 @@ class TestEnclosure < Test::Unit::TestCase
 		creature = Creature.new
 		
 		#Create an enclosure.
-		enclosure = Enclosure.new
-		enclosure.left = 1
-		enclosure.top = 3
-		enclosure.right = 3
-		enclosure.bottom = 1
+		enclosure = Enclosure.new(
+			:left => 1,
+			:top => 3,
+			:right => 3,
+			:bottom => 1
+		)
 		
 		#Place creature outside the walls, and act on it.
 		#Ensure it's moved inside and its heading reflects off the walls.

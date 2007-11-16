@@ -33,8 +33,19 @@ class Enclosure < EnvironmentalFactor
 	#Y coordinate of bottom boundary.
 	attr_accessor :bottom
 	
-	def initialize(left = 0, top = 0, right = 0, bottom = 0)
-		self.left, self.top, self.right, self.bottom = left, top, right, bottom
+	#Takes a hash with these keys and defaults:
+	#	:left => 0
+	#	:top => 0
+	#	:right => 0
+	#	:bottom => 0
+	def initialize(options = {})
+		options = {
+			:left => 0,
+			:top => 0,
+			:right => 0,
+			:bottom => 0
+		}.merge(options)
+		self.left, self.top, self.right, self.bottom = options[:left], options[:top], options[:right], options[:bottom]
 	end
 	
 	#If object is beyond a boundary, set its position equal to the boundary and reflect it.

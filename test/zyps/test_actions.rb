@@ -40,9 +40,9 @@ class TestActions < Test::Unit::TestCase
 
 	#Create and populate an environment.
 	def setup
-		@actor = Creature.new('actor', Location.new(0, 0))
-		@target1 = Creature.new('target1', Location.new(1, 1))
-		@target2 = Creature.new('target2', Location.new(-2, -2))
+		@actor = Creature.new(:name => 'actor', :location => Location.new(0, 0))
+		@target1 = Creature.new(:name => 'target1', :location => Location.new(1, 1))
+		@target2 = Creature.new(:name => 'target2', :location => Location.new(-2, -2))
 		#Create an environment, and add the objects.
 		@environment = Environment.new
 		#Order is important - we want to act on target 1 first.

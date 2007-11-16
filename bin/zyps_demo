@@ -61,7 +61,7 @@ class Demo
 		window.signal_connect("destroy") {Gtk.main_quit}
 		
 		#Add view to window.
-		@view = TrailsView.new(WIDTH, HEIGHT)
+		@view = TrailsView.new(:width => WIDTH, :height => HEIGHT)
 		window.add(@view.canvas)
 		window.show_all
 		
@@ -115,12 +115,11 @@ class Demo
 		count.times do |i|
 			multiplier = i / count.to_f
 			environment.objects << Creature.new(
-				i, #Name.
-				Location.new(multiplier * @view.width, multiplier * @view.height),
-				Color.new(multiplier, 1 - multiplier, multiplier / 2 + 0.5),
-				Vector.new(100 * multiplier, multiplier * 360),
-				0, #Age.
-				DEFAULT_OBJECT_SIZE #Size.
+				:name => i,
+				:location => Location.new(multiplier * @view.width, multiplier * @view.height),
+				:color => Color.new(multiplier, 1 - multiplier, multiplier / 2 + 0.5),
+				:vector => Vector.new(100 * multiplier, multiplier * 360),
+				:size => DEFAULT_OBJECT_SIZE
 			)
 		end
 	end
@@ -160,20 +159,18 @@ class Demo
 			
 			say("Let's add a couple more objects with different colors and vectors.")
 			@environment.objects << GameObject.new(
-				"Duey", #Name.
-				Location.new(@view.width/2, @view.height/2),
-				Color.new(0, 1, 0),
-				Vector.new(20, 135),
-				0, #Age.
-				DEFAULT_OBJECT_SIZE * 2 #Size.
+				:name => "Duey",
+				:location => Location.new(@view.width/2, @view.height/2),
+				:color => Color.new(0, 1, 0),
+				:vector => Vector.new(20, 135),
+				:size => DEFAULT_OBJECT_SIZE * 2
 			)
 			@environment.objects << GameObject.new(
-				"Louie", #Name.
-				Location.new(@view.width/2, @view.height/2),
-				Color.new(0, 0, 1),
-				Vector.new(30, 225),
-				0, #Age.
-				DEFAULT_OBJECT_SIZE * 3 #Size.
+				:name => "Louie",
+				:location => Location.new(@view.width/2, @view.height/2),
+				:color => Color.new(0, 0, 1),
+				:vector => Vector.new(30, 225),
+				:size => DEFAULT_OBJECT_SIZE * 3
 			)
 			animate(FRAME_COUNT)
 			
@@ -240,13 +237,12 @@ class Demo
 			
 			say("Then we'll toss a piece of food (a GameObject with the label 'food') into the environment.")
 			@environment.objects << GameObject.new(
-				"target", #Name.
-				Location.new(@view.width / 2, @view.height / 2),
-				Color.new(1, 1, 1),
-				Vector.new(50, 315),
-				0, #Age.
-				DEFAULT_OBJECT_SIZE * 2, #Size.
-				["food"] #Tags.
+				:name => "target",
+				:location => Location.new(@view.width / 2, @view.height / 2),
+				:color => Color.new(1, 1, 1),
+				:vector => Vector.new(50, 315),
+				:size => DEFAULT_OBJECT_SIZE * 2, #Size.
+				:tags => ["food"]
 			)
 			
 			say("Let's see what the creatures do.")
@@ -281,11 +277,26 @@ class Demo
 		say("Morphers are created with a single behavior, which shifts the color of any nearby target to match the Morpher's color.")
 		
 		say("Let's place a red Morpher...")
-		@environment.objects << Morpher.new(nil, Location.new(0, 100), Color.new(1, 0, 0), Vector.new(100, 0), 0, DEFAULT_OBJECT_SIZE)
+		@environment.objects << Morpher.new(
+			:location => Location.new(0, 100),
+			:color => Color.new(1, 0, 0),
+			:vector => Vector.new(100, 0),
+			:size => DEFAULT_OBJECT_SIZE
+		)
 		say("a green one...")
-		@environment.objects << Morpher.new(nil, Location.new(0, 150), Color.new(0, 1, 0), Vector.new(200, 0), 0, DEFAULT_OBJECT_SIZE)
+		@environment.objects << Morpher.new(
+			:location => Location.new(0, 150),
+			:color => Color.new(0, 1, 0),
+			:vector => Vector.new(200, 0),
+			:size => DEFAULT_OBJECT_SIZE
+		)
 		say("and a blue one...")
-		@environment.objects << Morpher.new(nil, Location.new(0, 200), Color.new(0, 0, 1), Vector.new(300, 0), 0, DEFAULT_OBJECT_SIZE)
+		@environment.objects << Morpher.new(
+			:location => Location.new(0, 200),
+			:color => Color.new(0, 0, 1),
+			:vector => Vector.new(300, 0),
+			:size => DEFAULT_OBJECT_SIZE
+		)
 		
 		say("And see what they do.")
 		thread = Thread.new {animate(FRAME_COUNT)}
@@ -300,7 +311,6 @@ class Demo
 		
 		thread = Thread.new do
 
-		
 			say("Here are some Creatures, just plodding along.")
 			animate(FRAME_COUNT / 4)
 			say("We're going to have them pick up the pace.")
@@ -363,13 +373,11 @@ class Demo
 		
 		say("Add a target...")
 		@environment.objects << Creature.new(
-			"target",
-			Location.new(@view.width / 2, @view.height / 3),
-			Color.new(1, 1, 1),
-			Vector.new(3, 0),
-			0, #Age.
-			DEFAULT_OBJECT_SIZE, #Size.
-			["food"] #Tags.
+			:name => "target",
+			:location => Location.new(@view.width / 2, @view.height / 3),
+			:vector => Vector.new(3, 0),
+			:size => DEFAULT_OBJECT_SIZE,
+			:tags => ["food"]
 		)
 		
 		say("And watch them all TRY to catch it.")
@@ -393,13 +401,11 @@ class Demo
 		end
 		
 		@environment.objects << Creature.new(
-			"target",
-			Location.new(@view.width / 2, @view.height / 2),
-			Color.new(1, 1, 1),
-			Vector.new(3, 0),
-			0, #Age.
-			DEFAULT_OBJECT_SIZE, #Size.
-			["predator"] #Tags.
+			:name => "hunter",
+			:location => Location.new(@view.width / 2, @view.height / 2),
+			:vector => Vector.new(3, 0),
+			:size => DEFAULT_OBJECT_SIZE,
+			:tags => ["predator"]
 		)
 		
 		thread = Thread.new {animate(FRAME_COUNT)}
@@ -415,7 +421,12 @@ class Demo
 		
 		say("Most games are all about destruction, but there hasn't been much so far.")
 		say("Let's create a creature that causes some havoc.")
-		predator = Creature.new(nil, Location.new(0, 150), Color.new(0, 1, 0), Vector.new(200, 0), 0, DEFAULT_OBJECT_SIZE * 2)
+		predator = Creature.new(
+			:location => Location.new(0, 150),
+			:color => Color.new(0, 1, 0),
+			:vector => Vector.new(200, 0), 
+			:size => DEFAULT_OBJECT_SIZE * 5
+		)
 		
 		say("The EatAction eats targets by removing them from their environment.")
 		say("Creatures and their Actions normally know nothing about the Environment they belong to, so EatAction takes an Environment in its constructor.")
@@ -447,7 +458,7 @@ class Demo
 		say("-" * 30)
 		demo {test_render}
 		demo {test_environmental_factors}
-		demo {test_behaviors}
+ 		demo {test_behaviors}
 		demo {test_change_color}
 		demo {test_accelerate}
 		demo {test_turn}

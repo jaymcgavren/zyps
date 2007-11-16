@@ -30,8 +30,15 @@ class Environment
 	#An array of EnvironmentalFactor objects that act on any GameObject in the Environment.
 	attr_accessor :environmental_factors
 	
-	def initialize (objects = [], environmental_factors = [])
-		self.objects, self.environmental_factors = objects, environmental_factors
+	#Takes a hash with these keys and defaults:
+	#	:objects => [], 
+	#	:environmental_factors => []
+	def initialize (options = {})
+		options = {
+			:objects => [], 
+			:environmental_factors => []
+		}.merge(options)
+		self.objects, self.environmental_factors = options[:objects], options[:environmental_factors]
 		@clock = Clock.new
 	end
 	
@@ -115,8 +122,25 @@ class GameObject
 	#An array of Strings with tags that determine how the object will be treated by Creature and EnvironmentalFactor objects in its environment.
 	attr_accessor :tags
 	
-	def initialize (name = nil, location = Location.new, color = Color.new, vector = Vector.new, age = 0, size = 1, tags = [])
-		self.name, self.location, self.color, self.vector, self.age, self.size, self.tags = name, location, color, vector, age, size, tags
+#Takes a hash with these keys and defaults:
+#	:name => nil,
+#	:location => Location.new,
+#	:color => Color.new,
+#	:vector => Vector.new,
+#	:age => 0,
+#	:size => 1,
+#	:tags => []
+	def initialize (options = {})
+		options = {
+			:name => nil,
+			:location => Location.new,
+			:color => Color.new,
+			:vector => Vector.new,
+			:age => 0,
+			:size => 1,
+			:tags => []
+		}.merge(options)
+		self.name, self.location, self.color, self.vector, self.age, self.size, self.tags = options[:name], options[:location], options[:color], options[:vector], options[:age], options[:size], options[:tags]
 		@identifier = generate_identifier
 	end
 	
@@ -169,9 +193,21 @@ class Creature < GameObject
 	attr_accessor :behaviors
 	
 	#Identical to the GameObject constructor, except that it also takes a list of Behavior objects.
-	def initialize (name = nil, location = Location.new, color = Color.new, vector = Vector.new, age = 0, size = 1, tags = [], behaviors = [])
-		super(name, location, color, vector, age, size, tags)
-		self.behaviors = behaviors
+	#Takes a hash with these keys and defaults:
+	#	:name => nil
+	#	:location => Location.new
+	#	:color => Color.new
+	#	:vector => Vector.new
+	#	:age => 0
+	#	:size => 1
+	#	:tags => []
+	#	:behaviors => []
+	def initialize (options = {})
+		options = {
+			:behaviors => []
+		}.merge(options)
+		super
+		self.behaviors = options[:behaviors]
 	end
 	
 	#Make a deep copy.
@@ -258,9 +294,15 @@ class Behavior
 	#A list of Action objects, which are called with the object and its target when all conditions are met.  An action can act on the subject or its target.
 	attr_accessor :actions
 	
-	#Optionally takes an array of actions and one of conditions.
-	def initialize (actions = [], conditions = [])
-		self.actions, self.conditions = actions, conditions
+	#Takes a hash with these keys and defaults:
+	#	:actions => []
+	#	:conditions => []
+	def initialize (options = {})
+		options = {
+			:actions => [],
+			:conditions => []
+		}.merge(options)
+		self.actions, self.conditions = options[:actions], options[:conditions]
 		#Tracks current target.
 		@active_target = nil
 	end

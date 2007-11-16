@@ -36,14 +36,7 @@ class TestGameObject < Test::Unit::TestCase
 
 	def test_constraints
 		#Test at initialization.
-		object = GameObject.new(
-			"", #Name.
-			Location.new,
-			Color.new,
-			Vector.new,
-			0,
-			-1 #Size.
-		)
+		object = GameObject.new(:size => -1)
 		assert_equal(0, object.size)
 		#Test accessors.
 		object = GameObject.new
@@ -114,14 +107,14 @@ class TestCreature < Test::Unit::TestCase
 	def test_explicit_initialization
 		behavior = Behavior.new
 		creature = Creature.new(
-			"name",
-			Location.new(10, -3),
-			Color.new(0.5, 0.6, 0.7),
-			Vector.new(1.5, 225),
-			2.001, #Age.
-			5.0, #Size.
-			["predator", "blue team"],
-			[behavior]
+			:name => "name",
+			:location => Location.new(10, -3),
+			:color => Color.new(0.5, 0.6, 0.7),
+			:vector => Vector.new(1.5, 225),
+			:age => 2.001,
+			:size => 5.0, #Size.
+			:tags => ["predator", "blue team"],
+			:behaviors => [behavior]
 		)
 		assert_equal("name", creature.name)
 		assert_equal(10, creature.location.x)
@@ -160,9 +153,9 @@ class TestEnvironment < Test::Unit::TestCase
 	
 		#Create an environment and add creatures.
 		@environment = Environment.new
-		@environment.objects << Creature.new('1')
-		@environment.objects << Creature.new('2')
-		@environment.objects << Creature.new('3')
+		@environment.objects << Creature.new(:name => '1')
+		@environment.objects << Creature.new(:name => '2')
+		@environment.objects << Creature.new(:name => '3')
 		
 	end
 	
@@ -488,23 +481,23 @@ class TestUtility < Test::Unit::TestCase
 	def test_collided?
 		#Objects apart.
 		assert(! Utility.collided?(
-			GameObject.new("", Location.new(0, 0), Color.new, Vector.new, 0, 0.196), #Radius = 0.25
-			GameObject.new("", Location.new(1, 0), Color.new, Vector.new, 0, 0.196)
+			GameObject.new(:location => Location.new(0, 0), :size =>0.196), #Radius = 0.25
+			GameObject.new(:location => Location.new(1, 0), :size =>0.196)
 		))
 		#Objects touching (not a collision).
 		assert(! Utility.collided?(
-			GameObject.new("", Location.new(0, 0), Color.new, Vector.new, 0, 0.785), #Radius = 0.5
-			GameObject.new("", Location.new(1, 0), Color.new, Vector.new, 0, 0.785)
+			GameObject.new(:location => Location.new(0, 0), :size =>0.785), #Radius = 0.5
+			GameObject.new(:location => Location.new(1, 0), :size =>0.785)
 		))
 		#Objects collided.
 		assert(Utility.collided?(
-			GameObject.new("", Location.new(0, 0), Color.new, Vector.new, 0, 1.766), #Radius = 0.75
-			GameObject.new("", Location.new(1, 0), Color.new, Vector.new, 0, 1.766)
+			GameObject.new(:location => Location.new(0, 0), :size =>1.766), #Radius = 0.75
+			GameObject.new(:location => Location.new(1, 0), :size =>1.766)
 		))
 		#Objects in same place.
 		assert(Utility.collided?(
-			GameObject.new("", Location.new(0, 0)),
-			GameObject.new("", Location.new(0, 0))
+			GameObject.new(:location => Location.new(0, 0)),
+			GameObject.new(:location => Location.new(0, 0))
 		))
 	end
 	
@@ -528,9 +521,9 @@ class TestBehavior < Test::Unit::TestCase
 	
 	
 	def setup
-		@actor = Creature.new('actor')
-		@target = Creature.new('target')
-		@other = Creature.new('other')
+		@actor = Creature.new(:name => 'actor')
+		@target = Creature.new(:name => 'target')
+		@other = Creature.new(:name => 'other')
 		@environment = Environment.new
 		@environment.objects << @actor << @target << @other
 	end
