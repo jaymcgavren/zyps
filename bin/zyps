@@ -407,7 +407,10 @@ class CreatureGenerator
 		end
 		if options[:approach]
 			color.red += 1
-			creature.behaviors << create_behavior(:actions => [ApproachAction.new(@approach_turn_rate, creature.vector)])
+			speed = creature.vector.speed
+			speed = 1 if speed < 1 #Ensure there is at least some movement.
+			pitch = creature.vector.pitch
+			creature.behaviors << create_behavior(:actions => [ApproachAction.new(@approach_turn_rate, Vector.new(speed, pitch))])
 		end
 		if options[:flee]
 			color.red += 0.5; color.green += 0.5 #Yellow.
@@ -477,3 +480,4 @@ rescue => exception
 	#Print error to STDERR and exit with an abnormal status.
 	abort "Error: " + exception.message + exception.backtrace.join("\n")
 end
+a
