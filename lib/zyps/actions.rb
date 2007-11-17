@@ -53,6 +53,11 @@ class TimedAction < Action
 		@clock.reset_elapsed_time
 	end
 	
+	#Halt tracking time between actions.
+	def stop(actor, target)
+		@clock.reset_elapsed_time
+	end
+	
 end
 
 
@@ -91,86 +96,26 @@ end
 
 #Approaches the target, but obeys law of inertia.
 class ApproachAction < TimedAction
-	#Direction/speed actor is accelerating in.
-	attr_accessor :heading
-	#Degrees per second the direction of acceleration can change.
-	attr_accessor :rate
-	def initialize(rate = 360, heading = Vector.new)
-		super
-		self.heading = heading
-	end
-	#Make a deep copy.
-	def copy
-		copy = super
-		copy.heading = @heading.copy
-		copy
-	end
-	#Accelerate toward the target, but limited by turn rate.
+	#Accelerate toward the target, but limited by rate.
 	def do(actor, target)
-		#Find the difference between the current heading and the angle to the target.
-		turn_angle = Utility.find_angle(actor.location, target.location) - @heading.pitch
-		#If the angle is the long way around from the current heading, change it to the smaller angle.
-		if turn_angle > 180 then
-			turn_angle -= 360.0
-		elsif turn_angle < -180 then
-			turn_angle += 360.0
-		end
-		#The creature can only turn as fast as the elapsed time, of course.
-		maximum_turn = delta
-		if turn_angle.abs > maximum_turn
-			if turn_angle > 0
-				turn_angle = maximum_turn
-			else
-				turn_angle = maximum_turn * -1
-			end
-		end
-		#Turn the appropriate amount.
-		@heading.pitch += turn_angle
-		#Apply the heading to the creature's movement vector.
-		actor.vector += @heading
+		#Apply thrust to the creature's movement vector, adjusted by elapsed time.
+		actor.vector += Vector.new(
+			delta,
+			Utility.find_angle(actor.location, target.location)
+		)
 	end
 end
 
 
 #Flees from the target, but obeys law of inertia.
 class FleeAction < TimedAction
-	#Direction/speed actor is accelerating in.
-	attr_accessor :heading
-	#Degrees per second the direction of acceleration can change.
-	attr_accessor :rate
-	def initialize(rate = 360, heading = Vector.new)
-		super
-		self.heading = heading
-	end
-	#Make a deep copy.
-	def copy
-		copy = super
-		copy.heading = @heading.copy
-		copy
-	end
 	#Accelerate away from the target, but limited by turn rate.
 	def do(actor, target)
-		#Find the difference between the current heading and the angle to the target.
-		turn_angle = Utility.find_angle(actor.location, target.location) - @heading.pitch + 180
-		#If the angle is the long way around from the current heading, change it to the smaller angle.
-		if turn_angle > 180 then
-			turn_angle -= 360.0
-		elsif turn_angle < -180 then
-			turn_angle += 360.0
-		end
-		#The creature can only turn as fast as the elapsed time, of course.
-		maximum_turn = delta
-		if turn_angle.abs > maximum_turn
-			if turn_angle > 0
-				turn_angle = maximum_turn
-			else
-				turn_angle = maximum_turn * -1
-			end
-		end
-		#Turn the appropriate amount.
-		@heading.pitch += turn_angle
-		#Apply the heading to the creature's movement vector.
-		actor.vector += @heading
+		#Apply thrust to the creature's movement vector, adjusted by elapsed time.
+		actor.vector += Vector.new(
+			delta,
+			Utility.find_angle(actor.location, target.location) + 180
+		)
 	end
 end
 
