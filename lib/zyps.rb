@@ -42,6 +42,18 @@ class Environment
 		@clock = Clock.new
 	end
 	
+	#Make a deep copy.
+	def copy
+		copy = self.clone #Currently, we overwrite everything anyway, but we may add some clonable attributes later.
+		#Make a deep copy of all objects.
+		copy.objects = []
+		@objects.each {|object| copy.objects << object.copy}
+		#Make a deep copy of all environmental_factors.
+		copy.environmental_factors = []
+		@environmental_factors.each {|environmental_factor| copy.environmental_factors << environmental_factor.copy}
+		copy
+	end
+	
 	#Allow everything in the environment to interact with each other.
 	#Objects are first moved according to their preexisting vectors and the amount of time since the last call.
 	#Then each EnvironmentalFactor is allowed to act on each object.
