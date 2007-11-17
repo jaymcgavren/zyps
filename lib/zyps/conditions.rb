@@ -72,4 +72,13 @@ class CollisionCondition < Condition
 end
 
 
+#True if the actor's strength is equal to or greater than the target's. 
+class StrengthCondition < Condition
+	#For now, strength is based merely on size.
+	def met?(actor, target)
+		actor.size >= target.size
+	end
+end
+
+
 end #module Zyps

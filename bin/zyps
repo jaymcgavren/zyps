@@ -433,7 +433,10 @@ class CreatureGenerator
 			color.green += 1
 			creature.behaviors << create_behavior(
 				:actions => [EatAction.new(@environment)],
-				:conditions => [CollisionCondition.new] #The default ProximityCondition won't do.
+				:conditions => [
+					CollisionCondition.new, #The default ProximityCondition won't do.
+					StrengthCondition.new #The eater should be as strong or stronger than its dinner.
+				] 
 			)
 		end
 		

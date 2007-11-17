@@ -77,4 +77,23 @@ class TestConditions < Test::Unit::TestCase
 	end
 	
 	
+	def test_strength_condition
+		condition = StrengthCondition.new
+		#For now, "strength" is based merely on size.
+		#Test for falsehood.
+		@actor.size = 1
+		@target.size = 2
+		assert(! condition.met?(@actor, @target))
+		#Test for truth.
+		#Equally strong objects cause the condition to return true.
+		@actor.size = 2
+		@target.size = 2
+		assert(condition.met?(@actor, @target))
+		#As will cases where the actor is stronger, of course.
+		@actor.size = 3
+		@target.size = 2
+		assert(condition.met?(@actor, @target))
+	end
+	
+	
 end
