@@ -209,21 +209,27 @@ class Application
 		#Create a creature on button release.
 		@view.canvas.add_events(Gdk::Event::BUTTON_RELEASE_MASK)
 		@view.canvas.signal_connect("button-release-event") do |canvas, event|
-			@release_location = Location.new(event.x, event.y)
-			@generator.create_creature(
-				:x => event.x,
-				:y => event.y,
-				:speed => Utility.find_distance(@press_location, @release_location) * 2, #Use distance dragged as speed.
-				:pitch => Utility.find_angle(@press_location, @release_location), #Move in direction of drag.
-				:accelerate => @accelerate_flag.active?,
-				:turn => @turn_flag.active?,
-				:approach => @approach_flag.active?,
-				:flee => @flee_flag.active?,
-				:push => @push_flag.active?,
-				:pull => @pull_flag.active?,
-				:breed => @breed_flag.active?,
-				:eat => @eat_flag.active?
-			)
+			#Ensure the mouse was pressed within the canvas.
+			if @press_location
+				#Create creature at release location.
+				@release_location = Location.new(event.x, event.y)
+				@generator.create_creature(
+					:x => event.x,
+					:y => event.y,
+					:speed => Utility.find_distance(@press_location, @release_location) * 2, #Use distance dragged as speed.
+					:pitch => Utility.find_angle(@press_location, @release_location), #Move in direction of drag.
+					:accelerate => @accelerate_flag.active?,
+					:turn => @turn_flag.active?,
+					:approach => @approach_flag.active?,
+					:flee => @flee_flag.active?,
+					:push => @push_flag.active?,
+					:pull => @pull_flag.active?,
+					:breed => @breed_flag.active?,
+					:eat => @eat_flag.active?
+				)
+				#Nullify press location, as it is no longer applicable.
+				@press_location = nil
+			end
 		end
 		
 		#Create a VBox for all controls.
