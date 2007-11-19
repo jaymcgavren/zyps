@@ -55,6 +55,7 @@ class TimedAction < Action
 	
 	#Halt tracking time between actions.
 	def stop(actor, target)
+		super
 		@clock.reset_elapsed_time
 	end
 	

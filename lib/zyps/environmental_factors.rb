@@ -69,7 +69,6 @@ class Enclosure < EnvironmentalFactor
 end
 
 
-
 #Keeps all objects at/under the assigned speed.
 class SpeedLimit < EnvironmentalFactor
 	

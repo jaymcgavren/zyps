@@ -134,14 +134,14 @@ class GameObject
 	#An array of Strings with tags that determine how the object will be treated by Creature and EnvironmentalFactor objects in its environment.
 	attr_accessor :tags
 	
-#Takes a hash with these keys and defaults:
-#	:name => nil,
-#	:location => Location.new,
-#	:color => Color.new,
-#	:vector => Vector.new,
-#	:age => 0,
-#	:size => 1,
-#	:tags => []
+	#Takes a hash with these keys and defaults:
+	#	:name => nil,
+	#	:location => Location.new,
+	#	:color => Color.new,
+	#	:vector => Vector.new,
+	#	:age => 0,
+	#	:size => 1,
+	#	:tags => []
 	def initialize (options = {})
 		options = {
 			:name => nil,
