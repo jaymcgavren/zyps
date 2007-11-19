@@ -88,78 +88,30 @@ class TestActions < Test::Unit::TestCase
 	#An ApproachAction pushes the actor toward the target.
 	def test_approach_action
 	
-		#Create an ApproachAction with a 0-degree vector, turn rate of 40 degrees/sec.
+		#Create an ApproachAction with 1 unit/sec thrust.
 		@actor.vector = Vector.new(0, 0)
-		action = ApproachAction.new(40, Vector.new(1, 0))
-		add_action(action, @actor)
+		add_action(ApproachAction.new(1), @actor)
 		#Act.
 		@environment.interact
-		#Ensure action's thrust vector is correct for 0.1 seconds.
-		assert_in_delta(1.0, action.heading.speed, REQUIRED_ACCURACY)
-		assert_in_delta(4.0, action.heading.pitch, REQUIRED_ACCURACY)
-		#Ensure actor's resulting vector is correct.
-		assert_in_delta(0.997, @actor.vector.x, REQUIRED_ACCURACY)
-		assert_in_delta(0.069, @actor.vector.y, REQUIRED_ACCURACY)
+		#Ensure actor's vector is correct after action's thrust is applied for 0.1 seconds.
+		assert_in_delta(0.1, @actor.vector.speed, REQUIRED_ACCURACY)
+		assert_in_delta(45, @actor.vector.pitch, REQUIRED_ACCURACY)
 
 	end
-	
-	#Ensure ApproachAction doesn't oversteer.
-	def test_approach_action_accuracy
-	
-		#Create an ApproachAction with a 0-degree vector, turn rate high enough to turn more than 45 degrees in 0.1 seconds.
-		#Action should only turn as far as target.
-		@actor.vector = Vector.new(0, 0)
-		action = ApproachAction.new(500, Vector.new(1, 0))
-		add_action(action, @actor)
-		#Act.
-		@environment.interact
-
-		#Ensure actor is approaching target directly.
-		assert_in_delta(1.0, action.heading.speed, REQUIRED_ACCURACY)
-		assert_in_delta(45, action.heading.pitch, REQUIRED_ACCURACY)
-		#Ensure actor's resulting vector is correct.
-		assert_in_delta(0.707, @actor.vector.x, REQUIRED_ACCURACY)
-		assert_in_delta(0.707, @actor.vector.y, REQUIRED_ACCURACY)
-		
-	end
-	
 	
 	#A FleeAction pushes the actor away from a target.
 	def test_flee_action
 
 		#Create a FleeAction with a 0-degree vector, turn rate of 40 degrees/sec.
 		@actor.vector = Vector.new(0, 0)
-		action = FleeAction.new(40, Vector.new(1, 0))
+		action = FleeAction.new(1)
 		add_action(action, @actor)
 		#Act.
 		@environment.interact
-		#Ensure action's thrust vector is correct for 0.1 seconds.
-		assert_in_delta(1.0, action.heading.speed, REQUIRED_ACCURACY)
-		assert_in_delta(356.0, action.heading.pitch, REQUIRED_ACCURACY) #Should be heading away.
-		#Ensure actor's resulting vector is correct.
-		assert_in_delta(0.997, @actor.vector.x, REQUIRED_ACCURACY)
-		assert_in_delta(-0.069, @actor.vector.y, REQUIRED_ACCURACY)
+		#Ensure actor's resulting vector is correct after 0.1 seconds of thrust.
+		assert_in_delta(0.1, @actor.vector.speed, REQUIRED_ACCURACY)
+		assert_in_delta(225, @actor.vector.pitch, REQUIRED_ACCURACY)
 	end
-	
-	#Ensure flee action doesn't oversteer.
-	def test_flee_action_accuracy
-	
-		#Create a FleeAction with a 0-degree vector, turn rate high enough to turn more than 135 degrees in 0.1 seconds.
-		#Action should turn directly away from target, but no farther.
-		@actor.vector = Vector.new(0, 0)
-		action = FleeAction.new(1400, Vector.new(1, 0))
-		add_action(action, @actor)
-		#Act.
-		@environment.interact
-		#Ensure actor is fleeing directly away from target.
-		assert_in_delta(1.0, action.heading.speed, REQUIRED_ACCURACY)
-		assert_in_delta(225, action.heading.pitch, REQUIRED_ACCURACY)
-		#Ensure actor's resulting vector is correct.
-		assert_in_delta(-0.707, @actor.vector.x, REQUIRED_ACCURACY)
-		assert_in_delta(-0.707, @actor.vector.y, REQUIRED_ACCURACY)
-		
-	end
-	
 	
 	#A DestroyAction removes the target from the environment.
 	def test_destroy_action
