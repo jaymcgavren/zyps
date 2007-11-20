@@ -99,16 +99,15 @@ class Accelerator < EnvironmentalFactor
 	
 	def initialize(vector)
 		self.vector = vector
-		@clocks = {} #Don't use Hash.new <block>, as it can't transmit via DRb.
+		@clock = Clock.new
 	end
 
 	#Accelerate the target away from the actor, but limited by elapsed time.
 	def act(environment)
+		elapsed_time = @clock.elapsed_time
 		environment.objects.each do |object|
-			#Track time since last action for each GameObject.
-			@clocks[object] ||= Clock.new
 			#Push on object.
-			object.vector += Vector.new(@vector.speed * @clocks[object].elapsed_time, @vector.pitch)
+			object.vector += Vector.new(@vector.speed * elapsed_time, @vector.pitch)
 		end
 	end
 
@@ -140,17 +139,16 @@ class Friction < EnvironmentalFactor
 	
 	def initialize(force)
 		self.force = force
-		#Track time since last action for each GameObject.
-		@clocks = {} #Don't use Hash.new <block>, as it can't transmit via DRb.
+		#Track time since last action.
+		@clock = Clock.new
 	end
 	
 	#Reduce the target's speed at the given rate.
 	def act(environment)
+		elapsed_time = @clock.elapsed_time
 		environment.objects.each do |object|
-			#Track time since last action for each GameObject.
-			@clocks[object] ||= Clock.new
 			#Slow object.
-			acceleration = @force * @clocks[object].elapsed_time
+			acceleration = @force * elapsed_time
 			speed = object.vector.speed
 			if speed > 0
 				speed -= acceleration 
