@@ -202,9 +202,9 @@ class TestEnvironment < Test::Unit::TestCase
 			#Interactions will be logged here.
 			@interactions = []
 		end
-		def act(target)
+		def act(environment)
 			#Log the interaction.
-			@interactions << "Environment targeting #{target.name}"
+			environment.objects.each {|target| @interactions << "Environment targeting #{target.name}"}
 		end
 	end
 	

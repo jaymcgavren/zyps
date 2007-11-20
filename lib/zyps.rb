@@ -56,15 +56,14 @@ class Environment
 	
 	#Allow everything in the environment to interact with each other.
 	#Objects are first moved according to their preexisting vectors and the amount of time since the last call.
-	#Then each EnvironmentalFactor is allowed to act on each object.
-	#Finally, each GameObject with an act() method is allowed to act on the environment.
+	#Then, each GameObject with an act() method is allowed to act on the environment.
+	#Finally, each EnvironmentalFactor is allowed to act on the Environment.
 	def interact
 	
 		#Get time since last interaction.
 		elapsed_time = @clock.elapsed_time
 		
 		objects.each do |object|
-		
 		
 			#Move each object according to its vector.
 			begin
@@ -74,18 +73,6 @@ class Environment
 				puts exception, exception.backtrace
 				objects.delete(object)
 				next
-			end
-			
-			#Have all environmental factors interact with each object.
-			environmental_factors.each do |factor|
-				begin
-					factor.act(object)
-				#Remove misbehaving environmental factors.
-				rescue Exception => exception
-					environmental_factors.delete(factor)
-					puts exception, exception.backtrace
-					next
-				end
 			end
 			
 			#Have all creatures interact with the environment.
@@ -103,6 +90,18 @@ class Environment
 			
 		end
 		
+		#Have all environmental factors interact with environment.
+		environmental_factors.each do |factor|
+			begin
+				factor.act(self)
+			#Remove misbehaving environmental factors.
+			rescue Exception => exception
+				environmental_factors.delete(factor)
+				puts exception, exception.backtrace
+				next
+			end
+		end
+			
 		#Mark environment as changed.
 		changed
 		

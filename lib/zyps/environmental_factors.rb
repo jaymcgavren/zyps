@@ -49,20 +49,22 @@ class Enclosure < EnvironmentalFactor
 	end
 	
 	#If object is beyond a boundary, set its position equal to the boundary and reflect it.
-	def act(object)
-		if (object.location.x < @left) then
-			object.location.x = @left
-			object.vector.pitch = Utility.find_reflection_angle(90, object.vector.pitch)
-		elsif (object.location.x > @right) then
-			object.location.x = @right
-			object.vector.pitch = Utility.find_reflection_angle(270, object.vector.pitch)
-		end
-		if (object.location.y > @top) then
-			object.location.y = @top
-			object.vector.pitch = Utility.find_reflection_angle(0, object.vector.pitch)
-		elsif (object.location.y < @bottom) then
-			object.location.y = @bottom
-			object.vector.pitch = Utility.find_reflection_angle(180, object.vector.pitch)
+	def act(environment)
+		environment.objects.each do |object|
+			if (object.location.x < @left) then
+				object.location.x = @left
+				object.vector.pitch = Utility.find_reflection_angle(90, object.vector.pitch)
+			elsif (object.location.x > @right) then
+				object.location.x = @right
+				object.vector.pitch = Utility.find_reflection_angle(270, object.vector.pitch)
+			end
+			if (object.location.y > @top) then
+				object.location.y = @top
+				object.vector.pitch = Utility.find_reflection_angle(0, object.vector.pitch)
+			elsif (object.location.y < @bottom) then
+				object.location.y = @bottom
+				object.vector.pitch = Utility.find_reflection_angle(180, object.vector.pitch)
+			end
 		end
 	end
 	
@@ -80,8 +82,10 @@ class SpeedLimit < EnvironmentalFactor
 	end
 	
 	#If object is over the speed, reduce its speed.
-	def act(object)
-		object.vector.speed = Utility.constrain_value(object.vector.speed, @maximum)
+	def act(environment)
+		environment.objects.each do |object|
+			object.vector.speed = Utility.constrain_value(object.vector.speed, @maximum)
+		end
 	end
 	
 end
@@ -99,11 +103,13 @@ class Accelerator < EnvironmentalFactor
 	end
 
 	#Accelerate the target away from the actor, but limited by elapsed time.
-	def act(object)
-		#Track time since last action for each GameObject.
-		@clocks[object] ||= Clock.new
-		#Push on object.
-		object.vector += Vector.new(@vector.speed * @clocks[object].elapsed_time, @vector.pitch)
+	def act(environment)
+		environment.objects.each do |object|
+			#Track time since last action for each GameObject.
+			@clocks[object] ||= Clock.new
+			#Push on object.
+			object.vector += Vector.new(@vector.speed * @clocks[object].elapsed_time, @vector.pitch)
+		end
 	end
 
 end
@@ -139,20 +145,22 @@ class Friction < EnvironmentalFactor
 	end
 	
 	#Reduce the target's speed at the given rate.
-	def act(object)
-		#Track time since last action for each GameObject.
-		@clocks[object] ||= Clock.new
-		#Slow object.
-		acceleration = @force * @clocks[object].elapsed_time
-		speed = object.vector.speed
-		if speed > 0
-			speed -= acceleration 
-			speed = 0 if speed < 0
-		elsif speed < 0
-			speed += acceleration
-			speed = 0 if speed > 0
+	def act(environment)
+		environment.objects.each do |object|
+			#Track time since last action for each GameObject.
+			@clocks[object] ||= Clock.new
+			#Slow object.
+			acceleration = @force * @clocks[object].elapsed_time
+			speed = object.vector.speed
+			if speed > 0
+				speed -= acceleration 
+				speed = 0 if speed < 0
+			elsif speed < 0
+				speed += acceleration
+				speed = 0 if speed > 0
+			end
+			object.vector.speed = speed
 		end
-		object.vector.speed = speed
 	end
 	
 end
@@ -160,21 +168,17 @@ end
 
 class PopulationLimit < EnvironmentalFactor
 	
-	#Environment to remove objects from.
-	attr_accessor :environment
 	#Maximum allowed population.
 	attr_accessor :count
 	
-	def initialize(environment, count)
-		self.environment = environment
+	def initialize(count)
 		self.count = count
 	end
 	
 	#Remove target if there are too many objects in environment.
-	def act(object)
-		if environment.objects.length > @count
-			environment.objects.delete(object)
-		end
+	def act(environment)
+		excess = environment.objects.length - @count
+		environment.objects.slice!(0, excess) if excess > 0
 	end
 	
 end

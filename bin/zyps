@@ -121,7 +121,7 @@ class Application
 		@environment.environmental_factors << SpeedLimit.new(@max_speed) if @max_speed
 		
 		#Limit population.
-		@environment.environmental_factors << PopulationLimit.new(@environment, @max_population) if @max_population
+		@environment.environmental_factors << PopulationLimit.new(@max_population) if @max_population
 		
 		#Set up a creature generator.
 		@generator = CreatureGenerator.new(@environment)
