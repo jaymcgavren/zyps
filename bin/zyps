@@ -218,7 +218,6 @@ class Application
 					:y => event.y,
 					:speed => Utility.find_distance(@press_location, @release_location) * 2, #Use distance dragged as speed.
 					:pitch => Utility.find_angle(@press_location, @release_location), #Move in direction of drag.
-					:accelerate => @accelerate_flag.active?,
 					:turn => @turn_flag.active?,
 					:approach => @approach_flag.active?,
 					:flee => @flee_flag.active?,
@@ -238,11 +237,9 @@ class Application
 		#Create a group for the actions.
 		action_controls = Gtk::VBox.new(options[:homogeneous], options[:spacing])
 		action_controls.pack_start(Gtk::Label.new("Actions"), options[:expand], options[:fill], options[:padding])
-		@accelerate_flag = Gtk::CheckButton.new("Accelerate")
-		action_controls.pack_start(@accelerate_flag, options[:expand], options[:fill], options[:padding])
 		@turn_flag = Gtk::CheckButton.new("Turn")
 		action_controls.pack_start(@turn_flag, options[:expand], options[:fill], options[:padding])
-		@approach_flag = Gtk::CheckButton.new("Approach")
+		@approach_flag = Gtk::CheckButton.new("Chase")
 		action_controls.pack_start(@approach_flag, options[:expand], options[:fill], options[:padding])
 		@flee_flag = Gtk::CheckButton.new("Flee")
 		action_controls.pack_start(@flee_flag, options[:expand], options[:fill], options[:padding])
@@ -342,9 +339,7 @@ class CreatureGenerator
 	#Environment creatures will be added to.
 	attr_accessor :environment
 	#Default required proximity for actions.
-	attr_accessor :action_proximity
-	#Speed of new AccelerateActions.
-	attr_accessor :acceleration_rate
+	attr_accessor :default_proximity
 	#Rate of new TurnActions.
 	attr_accessor :turn_rate
 	#Acceleration rate of new ApproachActions.
@@ -361,13 +356,13 @@ class CreatureGenerator
 		@environment = environment
 		
 		#Set up defaults for attributes.
-		@action_proximity = 200
-		@acceleration_rate = 1
-		@turn_rate = 90
-		@approach_rate = 720
+		@default_proximity = 200
+		@turn_rate = 360
+		@turn_strength = 10
+		@approach_rate = 200
 		@flee_rate = @approach_rate
-		@pull_strength = 100
-		@push_strength = @pull_strength
+		@push_strength = @approach_rate * 2
+		@pull_strength = @push_strength * 0.75
 		@breed_rate = 10
 		
 	end
@@ -381,8 +376,7 @@ class CreatureGenerator
 			:y => 0,
 			:speed => 1,
 			:pitch => 0,
-			:action_proximity => @action_proximity,
-			:accelerate => false,
+			:action_proximity => @default_proximity,
 			:turn => false,
 			:approach => false,
 			:flee => false,
@@ -400,32 +394,41 @@ class CreatureGenerator
 		)
 		
 		#Set up actions and merge colors according to selected behaviors.
-		color = Color.new(0.25, 0.25, 0.25)
-		if options[:accelerate]
-			color.red += 0.25
-			color.green += 0.25
-			color.blue += 0.25
-			creature.behaviors << create_behavior(:actions => [AccelerateAction.new(@acceleration_rate)])
-		end
+		color = Color.new(0.5, 0.5, 0.5)
 		if options[:turn]
 			color.blue += 1
-			creature.behaviors << create_behavior(:actions => [TurnAction.new(@turn_rate)])
+			creature.behaviors << Behavior.new(
+				:actions => [TurnAction.new(@turn_rate, @turn_strength)],
+				:conditions => [ProximityCondition.new(options[:action_proximity] * 2)]
+			)
 		end
 		if options[:approach]
 			color.red += 1
-			creature.behaviors << create_behavior(:actions => [ApproachAction.new(@approach_rate)])
+			creature.behaviors << create_behavior(
+				:actions => [ApproachAction.new(@approach_rate)],
+				:conditions => [ProximityCondition.new(options[:action_proximity])]
+			)
 		end
 		if options[:flee]
 			color.red += 0.5; color.green += 0.5 #Yellow.
-			creature.behaviors << create_behavior(:actions => [FleeAction.new(@flee_rate)])
+			creature.behaviors << create_behavior(
+				:actions => [FleeAction.new(@flee_rate)],
+				:conditions => [ProximityCondition.new(options[:action_proximity] * 0.5)]
+			)
 		end
 		if options[:push]
 			color.red += 0.5; color.blue += 0.5 #Purple.
-			creature.behaviors << create_behavior(:actions => [PushAction.new(@push_strength)])
+			creature.behaviors << create_behavior(
+				:actions => [PushAction.new(@push_strength)],
+				:conditions => [ProximityCondition.new(options[:action_proximity] * 0.25)]
+			)
 		end
 		if options[:pull]
 			color.blue += 0.75; color.green += 0.75 #Aqua.
-			creature.behaviors << create_behavior(:actions => [PullAction.new(@pull_strength)])
+			creature.behaviors << create_behavior(
+				:actions => [PullAction.new(@pull_strength)],
+				:conditions => [ProximityCondition.new(options[:action_proximity] * 0.75)]
+			)
 		end
 		if options[:breed]
 			color.green -= 0.1 #Make a bit redder.
@@ -457,7 +460,7 @@ class CreatureGenerator
 	
 		options = {
 			:actions => [],
-			:conditions => [ProximityCondition.new(@action_proximity)],
+			:conditions => [ProximityCondition.new(@default_proximity)],
 		}.merge(options)
 		
 		behavior = Behavior.new
