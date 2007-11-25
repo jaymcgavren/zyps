@@ -266,13 +266,25 @@ class Application
 		
 		#Create a group for environment controls.
 		environment_controls = Gtk::VBox.new(options[:homogeneous], options[:spacing])
-		environment_controls.pack_start(Gtk::Label.new("Environment"), options[:expand], options[:fill], options[:padding])
+		environment_controls.pack_start(Gtk::Label.new("Length"), options[:expand], options[:fill], options[:padding])
+		@trail_length_slider = Gtk::HScale.new(2, 100, 1)
+		@trail_length_slider.signal_connect("value-changed") {
+			@view.trail_length = @trail_length_slider.value
+		}
+		@trail_length_slider.value = 5
+		environment_controls.pack_start(@trail_length_slider, options[:expand], options[:fill], options[:padding])
+		@trails_flag = Gtk::CheckButton.new("Trails")
+		@trails_flag.signal_connect("toggled") {
+			@view.erase_flag = ! @trails_flag.active?
+		}
+		@trails_flag.active = false
+		environment_controls.pack_start(@trails_flag, options[:expand], options[:fill], options[:padding])
 		@clear_button = Gtk::Button.new("Clear")
 		@clear_button.signal_connect("clicked") {
 			@environment.objects = []
 		}
 		environment_controls.pack_start(@clear_button, options[:expand], options[:fill], options[:padding])
-		#Add the environment controls to the panel.
+		#Add the environment controls to the BOTTOM of the panel.
 		control_panel.pack_end(environment_controls, options[:expand], options[:fill], options[:padding])
 		
 		#Add the control panel to the interface.
@@ -404,7 +416,7 @@ class CreatureGenerator
 		)
 		
 		#Set up actions and merge colors according to selected behaviors.
-		color = Color.new(0.5, 0.5, 0.5)
+		color = Color.new(0.25, 0.25, 0.25)
 		if options[:turn]
 			color.blue += 1
 			creature.behaviors << Behavior.new(

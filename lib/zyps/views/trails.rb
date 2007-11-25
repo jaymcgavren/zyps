@@ -31,19 +31,27 @@ class TrailsView
 	attr_reader :width, :height
 	#Number of line segments to draw for each object.
 	attr_accessor :trail_length
+	#Whether view should be erased before re-drawing.
+	attr_accessor :erase_flag
 
 	#Takes a hash with these keys and defaults:
 	#	:width => 600
 	#	:height => 400
 	#	:trail_length => 5
+	#	:erase_flag => true
 	def initialize (options = {})
 	
 		options = {
 			:width => 600,
 			:height => 400,
-			:trail_length => 5
+			:trail_length => 5,
+			:erase_flag => true
 		}.merge(options)
 		@width, @height, @trail_length, = options[:width], options[:height], options[:trail_length]
+		@width = options[:width]
+		@height = options[:height]
+		@trail_length = options[:trail_length]
+		@erase_flag = options[:erase_flag]
 	
 		#Create a drawing area.
 		@canvas = Gtk::DrawingArea.new
@@ -85,13 +93,15 @@ class TrailsView
 		graphics_context = Gdk::GC.new(buffer)
 		
 		#Clear the background on the buffer.
-		graphics_context.rgb_fg_color = Gdk::Color.new(0, 0, 0)
-		buffer.draw_rectangle(
-			graphics_context,
-			true, #Filled.
-			0, 0, #Lower-left corner.
-			@width, @height #Upper-right corner.
-		)
+		if @erase_flag
+			graphics_context.rgb_fg_color = Gdk::Color.new(0, 0, 0)
+			buffer.draw_rectangle(
+				graphics_context,
+				true, #Filled.
+				0, 0, #Lower-left corner.
+				@width, @height #Upper-right corner.
+			)
+		end
 		
 		#For each GameObject in the environment:
 		environment.objects.each do |object|
@@ -101,7 +111,7 @@ class TrailsView
 			#Add the object's current location to the list.
 			@locations[object.identifier] << [object.location.x, object.location.y]
 			#If the list is larger than the number of tail segments, delete the first position.
-			@locations[object.identifier].shift if @locations[object.identifier].length > @trail_length
+			@locations[object.identifier].shift while @locations[object.identifier].length > @trail_length
 			
 			#For each location in this object's list:
 			@locations[object.identifier].each_with_index do |location, index|
