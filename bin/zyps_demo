@@ -340,10 +340,10 @@ class Demo
 			say("This time we'll use the TurnAction class.")
 			animate(FRAME_COUNT / 2)
 			
-			say("We tell each creature it should turn by 90 degrees/second...")
+			say("We tell each creature it should turn 90 degrees...")
 			@environment.objects.each do |creature|
 				turn = Behavior.new
-				turn.actions << TurnAction.new(90)
+				turn.actions << TurnAction.new(100, 90)
 				creature.behaviors << turn
 			end
 			
