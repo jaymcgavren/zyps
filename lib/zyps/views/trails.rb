@@ -82,8 +82,9 @@ class TrailsView
 	#GameObject.size will be used as the line thickness at the object's head, diminishing to 1 at the tail.
 	def update(environment)
 	
-		#Clear the background on the buffer.
 		graphics_context = Gdk::GC.new(buffer)
+		
+		#Clear the background on the buffer.
 		graphics_context.rgb_fg_color = Gdk::Color.new(0, 0, 0)
 		buffer.draw_rectangle(
 			graphics_context,

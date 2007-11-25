@@ -82,6 +82,11 @@ class Application
 		@uri, @view_width, @view_height, @fps, @max_population, @max_speed, @enclosure =
 		options[:uri], options[:view_width], options[:view_height], options[:fps], options[:max_population], options[:max_speed], options[:enclosure]
 		
+	end
+	
+	
+	def main
+	
 		#Create a window, and set GTK up to quit when it is closed.
 		window = Gtk::Window.new
 		window.resizable = false
@@ -93,7 +98,7 @@ class Application
 		
 		#Set up controls.
 		#Also initializes @view.
-		window.add(create_controls({:view_width => options[:view_width], :view_height => options[:view_height]}))
+		window.add(create_controls({:view_width => @view_width, :view_height => @view_height}))
 	
 		#Show all widgets.
 		window.show_all
@@ -101,11 +106,6 @@ class Application
 		#Point view at environment.
 		@environment.add_observer(@view)
 		
-	end
-	
-	
-	def main
-	
 		#Keep objects on screen.
 		if @enclosure
 			enclosure = Enclosure.new(
@@ -197,7 +197,11 @@ class Application
 		interface = Gtk::HBox.new(options[:homogeneous], options[:spacing])
 		
 		#Add view to interface.
-		@view = TrailsView.new(:width => options[:view_width], :height => options[:view_height])
+		@view = TrailsView.new(
+			:width => options[:view_width],
+			:height => options[:view_height],
+			:trail_length => 5
+		)
 		interface.pack_start(@view.canvas, options[:expand], options[:fill], options[:padding])
 		
 		#When mouse button pressed, record location for use in release event handler.
@@ -357,12 +361,12 @@ class CreatureGenerator
 		
 		#Set up defaults for attributes.
 		@default_proximity = 200
-		@turn_rate = 360
-		@turn_strength = 10
 		@approach_rate = 200
 		@flee_rate = @approach_rate
 		@push_strength = @approach_rate * 2
 		@pull_strength = @push_strength * 0.75
+		@turn_rate = @approach_rate * 1.1
+		@turn_angle = 90
 		@breed_rate = 10
 		
 	end
@@ -398,7 +402,7 @@ class CreatureGenerator
 		if options[:turn]
 			color.blue += 1
 			creature.behaviors << Behavior.new(
-				:actions => [TurnAction.new(@turn_rate, @turn_strength)],
+				:actions => [TurnAction.new(@turn_rate, @turn_angle)],
 				:conditions => [ProximityCondition.new(options[:action_proximity] * 2)]
 			)
 		end

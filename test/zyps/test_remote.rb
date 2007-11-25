@@ -79,12 +79,12 @@ class TestRemote < Test::Unit::TestCase
 		creature = Creature.new
 		creature.vector = Vector.new(SPEED, PITCH)
 		behavior = Behavior.new
-		behavior.actions << TurnAction.new(RATE)
+		behavior.actions << TurnAction.new(RATE, 90)
 		creature.behaviors << behavior
 		@client.objects << creature
 		@client.objects << Creature.new #Second creature to interact with.
 		@environment.interact
-		assert_in_delta(PITCH + 0.1 * RATE, @client.objects[0].vector.pitch, 0.001)
+		assert(@client.objects[0].vector.pitch > PITCH)
 	end
 	
 	#Place Creature with Condition and ensure it's followed.
@@ -92,7 +92,7 @@ class TestRemote < Test::Unit::TestCase
 		creature = Creature.new
 		creature.vector = Vector.new(SPEED, PITCH)
 		behavior = Behavior.new
-		behavior.actions << TurnAction.new(RATE)
+		behavior.actions << TurnAction.new(RATE, 90)
 		behavior.conditions << TagCondition.new('foobar') #Will return false.
 		creature.behaviors << behavior
 		@client.objects << creature

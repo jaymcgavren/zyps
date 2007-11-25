@@ -77,11 +77,13 @@ class TestActions < Test::Unit::TestCase
 	
 	#A TurnAction turns the actor at a given rate.
 	def test_turn_action
-		#Turn 1 degree per second.
-		add_action(TurnAction.new(1), @actor)
+		@actor.vector = Vector.new(1, 0)
+		#Turn 45 degrees off-heading at 1 unit/second.
+		add_action(TurnAction.new(1, 45), @actor)
 		@environment.interact
-		#Clock always returns 0.1 seconds, so actor should be turned 0.1 degrees.
-		assert_in_delta(0.1, @actor.vector.pitch, REQUIRED_ACCURACY)
+		#Clock always returns 0.1 seconds, so ensure actor's vector is adjusted accordingly.
+		assert_in_delta(3.778, @actor.vector.pitch, REQUIRED_ACCURACY)
+		assert_in_delta(1.073, @actor.vector.speed, REQUIRED_ACCURACY)
 	end
 	
 	

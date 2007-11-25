@@ -83,14 +83,19 @@ class AccelerateAction < TimedAction
 end
 
 
-#Turn over time.
+#Apply a thrust that turns actor.
 class TurnAction < TimedAction
-	#Degrees per second to turn.
-	#Positive turns clockwise, negative turns counter-clockwise.
-	attr_accessor :rate
-	#Turn according to elapsed time.
+	#Angle to turn at.
+	attr_accessor :angle
+	def initialize(rate, angle)
+		super
+		@angle = angle
+	end
 	def do(actor, target)
-		actor.vector.pitch += delta
+		actor.vector += Vector.new(
+			delta,
+			actor.vector.pitch + @angle
+		)
 	end
 end
 
