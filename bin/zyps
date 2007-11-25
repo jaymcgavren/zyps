@@ -98,7 +98,13 @@ class Application
 		
 		#Set up controls.
 		#Also initializes @view.
-		window.add(create_controls({:view_width => @view_width, :view_height => @view_height}))
+		window.add(
+			create_controls(
+				:view_width => @view_width,
+				:view_height => @view_height,
+				:spacing => 2
+			)
+		)
 	
 		#Show all widgets.
 		window.show_all
@@ -267,7 +273,7 @@ class Application
 		}
 		environment_controls.pack_start(@clear_button, options[:expand], options[:fill], options[:padding])
 		#Add the environment controls to the panel.
-		control_panel.pack_start(environment_controls, options[:expand], options[:fill], options[:padding])
+		control_panel.pack_end(environment_controls, options[:expand], options[:fill], options[:padding])
 		
 		#Add the control panel to the interface.
 		interface.pack_start(control_panel, options[:expand], options[:fill], options[:padding])
