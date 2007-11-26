@@ -21,62 +21,63 @@ require 'zyps'
 module Zyps
 
 
-#Act only on objects with the correct tag.
+#Select objects with the correct tag.
 class TagCondition < Condition
 	#The tag to look for on the target.
 	attr_accessor :tag
 	def initialize(tag)
 		self.tag = tag
 	end
-	#True if the target has the assigned tag.
-	def met?(actor, target)
-		target.tags.include?(@tag)
+	#Returns an array of targets which have the assigned tag.
+	def select(actor, targets)
+		targets.find_all {|target| target.tags.include?(@tag)}
 	end
 end
 
 
-#Act only on objects older than the given age.
+#Select objects older than the given age.
 class AgeCondition < Condition
 	#The minimum age in seconds.
 	attr_accessor :age
 	def initialize(age)
 		self.age = age
 	end
-	#True if the target is older than the assigned age.
-	def met?(actor, target)
-		target.age > @age
+	#Returns an array of targets which are older than the assigned age.
+	def select(actor, targets)
+		targets.find_all {|target| target.age > @age}
 	end
 end
 
 
-#Act only on objects closer than the given distance.
+#Select objects that are closer than the given distance.
 class ProximityCondition < Condition
 	#The maximum number of units away the target can be.
 	attr_accessor :distance
 	def initialize(distance)
 		self.distance = distance
 	end
-	#True if the actor and target are equal to or closer than the given distance.
-	def met?(actor, target)
-		Utility.find_distance(actor.location, target.location) <= @distance
+	#Returns an array of targets that are at the given distance or closer.
+	def select(actor, targets)
+		targets.find_all {|target| Utility.find_distance(actor.location, target.location) <= @distance}
 	end
 end
 
 
 #True only if collided with target.
 class CollisionCondition < Condition
-	#True if the objects have collided.
-	def met?(actor, target)
-		Utility.collided?(actor, target)
+	#Returns an array of targets that have collided with the actor.
+	def select(actor, targets)
+		targets.find_all {|target| Utility.collided?(actor, target)}
 	end
 end
 
 
 #True if the actor's strength is equal to or greater than the target's. 
 class StrengthCondition < Condition
+	#Returns an array of targets that are weaker than the actor.
 	#For now, strength is based merely on size.
-	def met?(actor, target)
-		actor.size >= target.size
+	def select(actor, targets)
+		targets.find_all {|target| actor.size >= target.size}
 	end
 end
 

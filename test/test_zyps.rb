@@ -228,11 +228,8 @@ class TestEnvironment < Test::Unit::TestCase
 	
 	#A condition that is false unless actor and target have specific names.
 	class NameCondition < Condition
-		def met?(actor, targets)
-			targets.each do |target|
-				choices << target if actor.name == '1' and target.name == '2'
-			end
-			choices
+		def select(actor, targets)
+			targets.find_all {|target| actor.name == '1' and target.name == '2'}
 		end
 	end
 	

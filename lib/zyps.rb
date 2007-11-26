@@ -338,7 +338,6 @@ class Behavior
 		conditions.each {|condition| choices = condition.select(actor, choices)}
 		actions.each do |action|
 			if ! choices.empty?
-choices.each{|choice| puts choice.name}
 				action.start(actor, choices) unless action.started?
 				action.do(actor, choices)
 			else
