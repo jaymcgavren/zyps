@@ -121,14 +121,9 @@ class TestActions < Test::Unit::TestCase
 		add_action(DestroyAction.new(@environment), @actor)
 		#Act.
 		@environment.interact
-		#Verify target is removed from environment.
+		#Verify targets are removed from environment.
 		assert(! @environment.objects.include?(@target1))
-		#Verify non-target is removed from environment.
-		assert(@environment.objects.include?(@target2))
-		#Act again.
-		@environment.interact
-		#Verify targets were switched.
-		assert(! @environment.objects.include?(@target2), "Targets should have been switched.")
+		assert(! @environment.objects.include?(@target2))
 	end
 	
 	
@@ -139,11 +134,13 @@ class TestActions < Test::Unit::TestCase
 		#Act.
 		@actor.size = 1
 		@target1.size = 1
+		@target2.size = 2
 		@environment.interact
-		#Verify target is removed from environment.
+		#Verify targets are removed from environment.
 		assert(! @environment.objects.include?(@target1))
+		assert(! @environment.objects.include?(@target2))
 		#Verify creature has grown by the appropriate amount.
-		assert_in_delta(2, @actor.size, REQUIRED_ACCURACY)
+		assert_in_delta(4, @actor.size, REQUIRED_ACCURACY)
 	end
 	
 	

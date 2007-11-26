@@ -484,16 +484,16 @@ end
 
 class TestBehavior < Test::Unit::TestCase
 
-	#Always true.
+	#True for all targets.
 	class TrueCondition < Condition
-		def met?(actor, targets)
-			true
+		def select(actor, targets)
+			targets #Select all targets.
 		end
 	end
-	#Always false.
+	#False for all targets.
 	class FalseCondition < Condition
-		def met?(actor, targets)
-			false
+		def select(actor, targets)
+			[] #Select no targets.
 		end
 	end
 	
@@ -502,8 +502,8 @@ class TestBehavior < Test::Unit::TestCase
 		@actor = Creature.new(:name => 'actor')
 		@target = Creature.new(:name => 'target')
 		@other = Creature.new(:name => 'other')
-		@environment = Environment.new
-		@environment.objects << @actor << @target << @other
+		@targets = []
+		@targets << @target << @other
 	end
 	
 	
@@ -535,13 +535,13 @@ class TestBehavior < Test::Unit::TestCase
 		behavior.actions << action
 		
 		#Perform the behavior.
-		behavior.perform(@actor, @environment)
+		behavior.perform(@actor, @targets)
 		assert_equal(1, action.start_count, "start() should have been called on the mock action.")
 		assert_equal(1, action.do_count, "do() should have been called.")
 		assert_equal(0, action.stop_count, "stop() should NOT have been called.")
 		
 		#Perform the behavior again.
-		behavior.perform(@actor, @environment)
+		behavior.perform(@actor, @targets)
 		assert_equal(1, action.start_count, "start() should NOT have been called.")
 		assert_equal(2, action.do_count, "do() should have been called.")
 		assert_equal(0, action.stop_count, "stop() should NOT have been called.")
@@ -549,7 +549,7 @@ class TestBehavior < Test::Unit::TestCase
 		#Add a false condition to the behavior.
 		behavior.conditions << FalseCondition.new
 		#Perform the behavior.
-		behavior.perform(@actor, @environment)
+		behavior.perform(@actor, @targets)
 		assert_equal(1, action.start_count, "start() should NOT have been called.")
 		assert_equal(2, action.do_count, "do() should NOT have been called, because conditions are no longer true.")
 		assert_equal(1, action.stop_count, "stop() SHOULD have been called.")
