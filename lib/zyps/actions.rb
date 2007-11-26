@@ -64,9 +64,9 @@ end
 
 #Head toward a target.
 class FaceAction < Action
-	#Set the actor's heading to point directly at target.
-	def do(actor, target)
-		actor.vector.pitch = Utility.find_angle(actor.location, target.location)
+	#Set the actor's heading to point directly at first target.
+	def do(actor, targets)
+		actor.vector.pitch = Utility.find_angle(actor.location, targets[0].location)
 	end
 end
 
@@ -77,7 +77,7 @@ class AccelerateAction < TimedAction
 	#Can be negative to slow down or go in reverse.
 	attr_accessor :rate
 	#Increase or decrease speed according to elapsed time.
-	def do(actor, target)
+	def do(actor, targets)
 		actor.vector.speed += delta
 	end
 end
@@ -91,7 +91,7 @@ class TurnAction < TimedAction
 		super
 		@angle = angle
 	end
-	def do(actor, target)
+	def do(actor, targets)
 		actor.vector += Vector.new(
 			delta,
 			actor.vector.pitch + @angle
@@ -102,12 +102,12 @@ end
 
 #Approaches the target, but obeys law of inertia.
 class ApproachAction < TimedAction
-	#Accelerate toward the target, but limited by rate.
-	def do(actor, target)
+	#Accelerate toward the first target, but limited by rate.
+	def do(actor, targets)
 		#Apply thrust to the creature's movement vector, adjusted by elapsed time.
 		actor.vector += Vector.new(
 			delta,
-			Utility.find_angle(actor.location, target.location)
+			Utility.find_angle(actor.location, targets[0].location)
 		)
 	end
 end
@@ -115,18 +115,18 @@ end
 
 #Flees from the target, but obeys law of inertia.
 class FleeAction < TimedAction
-	#Accelerate away from the target, but limited by turn rate.
-	def do(actor, target)
+	#Accelerate away from the first target, but limited by turn rate.
+	def do(actor, targets)
 		#Apply thrust to the creature's movement vector, adjusted by elapsed time.
 		actor.vector += Vector.new(
 			delta,
-			Utility.find_angle(actor.location, target.location) + 180
+			Utility.find_angle(actor.location, targets[0].location) + 180
 		)
 	end
 end
 
 
-#Destroy the target.
+#Destroy the targets.
 class DestroyAction < Action
 	#The environment to remove objects from.
 	attr_accessor :environment
@@ -134,19 +134,23 @@ class DestroyAction < Action
 		self.environment = environment
 	end
 	#Remove the target from the environment.
-	def do(actor, target)
-		@environment.objects.delete(target)
+	def do(actor, targets)
+		targets.each do |target|
+			@environment.objects.delete(target)
+		end
 	end
 end
 
 
-#Destroy the target and grow in size.
+#Destroy the targets and grow in size.
 class EatAction < DestroyAction
-	#Remove the target from the environment, and increase actor's size by size of target.
-	def do(actor, target)
+	#Remove the targets from the environment, and increase actor's size by size of targets.
+	def do(actor, targets)
 		#Grow in size.
-		actor.size += target.size
-		#Remove the target from the environment.
+		targets.each do |target|
+			actor.size += target.size
+		end
+		#Remove the targets from the environment.
 		super
 	end
 end
@@ -154,44 +158,50 @@ end
 
 #Add a tag to the target.
 class TagAction < Action
-	#Tag to apply to target.
+	#Tag to apply to targets.
 	attr_accessor :tag
 	def initialize(tag)
 		self.tag = tag
 	end
-	#Apply the given tag to the target.
-	def do(actor, target)
-		target.tags << tag unless target.tags.include?(tag)
+	#Apply the given tag to the targets.
+	def do(actor, targets)
+		targets.each do |target|
+			target.tags << tag unless target.tags.include?(tag)
+		end
 	end
 end
 
 
 #Blend the target's color with another color.
 class BlendAction < Action
-	#Color to apply to target.
+	#Color to apply to targets.
 	attr_accessor :color
 	def initialize(color)
 		self.color = color
 	end
-	#Blend the target's color with the assigned color.
-	def do(actor, target)
-		target.color += @color
+	#Blend the targets' color with the assigned color.
+	def do(actor, targets)
+		targets.each do |target|
+			target.color += @color
+		end
 	end
 end
 
 
 #Pushes target away.
 class PushAction < TimedAction
-	#Units/second to accelerate target by.
+	#Units/second to accelerate targets by.
 	attr_accessor :rate
-	#Accelerate the target away from the actor, but limited by elapsed time.
-	def do(actor, target)
-		#Angle to target is also angle of push force.
-		push_angle = Utility.find_angle(actor.location, target.location)
+	#Push the targets away from the actor, with force limited by elapsed time.
+	def do(actor, targets)
 		#Acceleration will be limited by elapsed time.
 		push_force = delta
-		#Apply the force to the creature's movement vector.
-		target.vector += Vector.new(push_force, push_angle)
+		targets.each do |target|
+			#Angle to target is also angle of push force.
+			push_angle = Utility.find_angle(actor.location, target.location)
+			#Apply the force to the creature's movement vector.
+			target.vector += Vector.new(push_force, push_angle)
+		end
 	end
 end
 
@@ -200,14 +210,16 @@ end
 class PullAction < TimedAction
 	#Units/second to accelerate target by.
 	attr_accessor :rate
-	#Accelerate away from the target, but limited by turn rate.
-	def do(actor, target)
-		#Angle from target to actor is also angle of pull force (opposite of that for push).
-		pull_angle = Utility.find_angle(target.location, actor.location)
+	#Pull the targets toward the actor, with force limited by elapsed time.
+	def do(actor, targets)
 		#Acceleration will be limited by elapsed time.
 		pull_force = delta
-		#Apply the force to the creature's movement vector.
-		target.vector += Vector.new(pull_force, pull_angle)
+		targets.each do |target|
+			#Angle from target to actor is also angle of pull force (opposite of that for push).
+			pull_angle = Utility.find_angle(target.location, actor.location)
+			#Apply the force to the creature's movement vector.
+			target.vector += Vector.new(pull_force, pull_angle)
+		end
 	end
 end
 
@@ -223,31 +235,33 @@ class BreedAction < Action
 		@clock = Clock.new
 		@time_since_last_action = 0
 	end
-	def do(actor, target)
-		#Skip action if target is not a Creature.
-		return unless target.is_a?(Creature)
-		#Get time since last action, and skip if it hasn't been long enough.
-		@time_since_last_action += @clock.elapsed_time
-		return unless @time_since_last_action >= @delay
-		#Create a child.
-		child = Creature.new
-		#Combine colors.
-		child.color = actor.color + target.color
-		#Combine behaviors EXCEPT those with BreedActions.
-		behaviors = (actor.behaviors + target.behaviors).find_all do |behavior|
-			! behavior.actions.any?{|action| action.is_a?(BreedAction)}
+	def do(actor, targets)
+		targets.each do |target|
+			#Skip action if target is not a Creature.
+			next unless target.is_a?(Creature)
+			#Get time since last action, and skip if it hasn't been long enough.
+			@time_since_last_action += @clock.elapsed_time
+			return unless @time_since_last_action >= @delay
+			#Create a child.
+			child = Creature.new
+			#Combine colors.
+			child.color = actor.color + target.color
+			#Combine behaviors EXCEPT those with BreedActions.
+			behaviors = (actor.behaviors + target.behaviors).find_all do |behavior|
+				! behavior.actions.any?{|action| action.is_a?(BreedAction)}
+			end
+			behaviors.each {|behavior| child.behaviors << behavior.copy}
+			#Location should equal actor's.
+			child.location = actor.location.copy
+			#Add parents' vectors to get child's vector.
+			child.vector = actor.vector + target.vector
+			#Child's size should be half the average size of the parents'.
+			child.size = ((actor.size + target.size) / 2) / 2
+			#Add child to environment.
+			@environment.objects << child
+			#Reset elapsed time.
+			@time_since_last_action = 0
 		end
-		behaviors.each {|behavior| child.behaviors << behavior.copy}
-		#Location should equal actor's.
-		child.location = actor.location.copy
-		#Add parents' vectors to get child's vector.
-		child.vector = actor.vector + target.vector
-		#Child's size should be half the average size of the parents'.
-		child.size = ((actor.size + target.size) / 2) / 2
-		#Add child to environment.
-		@environment.objects << child
-		#Reset elapsed time.
-		@time_since_last_action = 0
 	end
 end
 

@@ -230,9 +230,8 @@ class Creature < GameObject
 		copy
 	end
 	
-	#Call Behavior.perform(self, environment) on each of the creature's assigned Behaviors.
 	def act(environment)
-		behaviors.each {|behavior| behavior.perform(self, environment)}
+		behaviors.each {|behavior| behavior.perform(self, environment.objects)}
 	end
 	
 end
@@ -265,7 +264,6 @@ class Action
 		@started = true
 	end
 	
-	#Action subclasses must implement a do(actor, target) instance method.
 	def do(actor, target)
 		raise NotImplementedError.new("Action subclasses must implement a do(actor, target) instance method.")
 	end
@@ -275,6 +273,9 @@ class Action
 	def stop(actor, target)
 		@started = false
 	end
+	
+	#Synonym for started
+	def started?; started; end
 	
 end
 
@@ -286,9 +287,8 @@ class Condition
 	#Make a deep copy.
 	def copy; self.clone; end
 	
-	#Condition subclasses must implement a met?(actor, target) instance method.
-	def met?(actor, target)
-		raise NotImplementedError.new("Condition subclasses must implement a met?(actor, target) instance method.")
+	def select(actor, targets)
+		raise NotImplementedError.new("Condition subclasses must implement a select(actor, target) instance method.")
 	end
 	
 end
@@ -300,9 +300,7 @@ end
 #Likewise, the subject can change its own attributes, it can approach or flee from the target, it can spawn new Creatures or GameObjects (like bullets), or anything else.
 class Behavior
 
-	#A list of Condition objects, which are called with the object itself and its target.  A condition can consider the tags on the target, the distance from the subject, or any other criteria.  If any condition returns false, the behavior will not be carried out (or stopped if it has begun).
 	attr_accessor :conditions
-	#A list of Action objects, which are called with the object and its target when all conditions are met.  An action can act on the subject or its target.
 	attr_accessor :actions
 	
 	#Takes a hash with these keys and defaults:
@@ -330,58 +328,25 @@ class Behavior
 		copy
 	end
 	
-	#Test all conditions against each object in the evironment.
-	#For the first object that meets all of them, mark it active (and operate on it first next time).
-	#Then call start() (if applicable) and perform() for all actions against the active target.
-	#If any action or condition returns false, stop all actions, and deselect the active target.
-	def perform(actor, environment)
+	#Finds targets that meet all conditions, then acts on them.
+	#Calls select(actor, targets) on each Condition, each time discarding targets that fail.
+	#Then on each Action, calls Action#start(actor, targets) (if not already started) followed by Action#do(actor, targets).
+	#If no matching targets are found, calls Action#stop(actor, targets) on each Action.
+	def perform(actor, targets)
 		
-		begin
-			#Select a target.
-			target = select_target(actor, environment.objects)
-			#Do the actions on the target.
-			actions.each do |action|
-				action.start(actor, target) unless action.started
-				action.do(actor, target)
+		choices = targets.clone
+		conditions.each {|condition| choices = condition.select(actor, choices)}
+		actions.each do |action|
+			if ! choices.empty?
+choices.each{|choice| puts choice.name}
+				action.start(actor, choices) unless action.started?
+				action.do(actor, choices)
+			else
+				action.stop(actor, targets) #Not choices; that array is empty.
 			end
-		rescue NoMatchException => exception
-			#If the behavior can no longer be performed, halt it.
-			stop(actor, target)
 		end
 		
 	end
-	
-	
-	private
-
-		#Stop all actions and de-select the active target.
-		def stop(actor, target)
-			actions.each do |action|
-				action.stop(actor, target) if action.started
-			end
-			@active_target = nil
-		end
-		
-		#Select a target that matches all conditions.
-		def select_target(actor, targets)
-			#If a target is already active, still present in the environment, and all conditions are true for it, simply re-select it.
-			if @active_target and targets.include?(@active_target) and conditions.all?{|condition| condition.met?(actor, @active_target)}
-				return @active_target 
-			end
-			#For each object in environment:
-			targets.each do |target|
-				#Don't let actor target itself.
-				next if target == actor
-				#If all conditions match (or there are no conditions), select the object.
-				if conditions.all?{|condition| condition.met?(actor, target)}
-					@active_target = target
-					return target
-				end
-			end
-			#If there were no matches, throw an exception.
-			raise NoMatchException, "No matching targets found."
-		end
-	
 	
 end
 
@@ -598,7 +563,5 @@ module Utility
 	
 end
 
-
-class NoMatchException < RuntimeError; end
 
 end #module Zyps

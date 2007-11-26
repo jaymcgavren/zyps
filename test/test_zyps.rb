@@ -167,9 +167,11 @@ class TestEnvironment < Test::Unit::TestCase
 			#Interactions will be logged here.
 			@interactions = []
 		end
-		def do(actor, target)
+		def do(actor, targets)
 			#Log the interaction.
-			@interactions << "#{actor.name} targeting #{target.name}"
+			targets.each do |target|
+				@interactions << "#{actor.name} targeting #{target.name}"
+			end
 		end
 	end
 	
@@ -226,8 +228,11 @@ class TestEnvironment < Test::Unit::TestCase
 	
 	#A condition that is false unless actor and target have specific names.
 	class NameCondition < Condition
-		def met?(actor, target)
-			return true if actor.name == '1' and target.name == '2'
+		def met?(actor, targets)
+			targets.each do |target|
+				choices << target if actor.name == '1' and target.name == '2'
+			end
+			choices
 		end
 	end
 	
@@ -246,30 +251,6 @@ class TestEnvironment < Test::Unit::TestCase
 
 		assert_equal(0, log.interactions.find_all{|i| i == "2 targeting 1"}.length, "Creature '1' should NOT have been acted on.")
 		assert_equal(1, log.interactions.find_all{|i| i == "1 targeting 2"}.length, "Creature '2' SHOULD have been acted on.")
-		
-	end
-	
-	
-	#Test that creatures can switch targets when one is removed from the environment.
-	def test_object_removal
-	
-		#Set up behaviors that will log interactions.
-		log = LogAction.new
-		@environment.objects.each do |creature|
-			behavior = Behavior.new
-			behavior.actions << log
-			creature.behaviors << behavior
-		end
-		
-		#Have environment elements interact.
-		@environment.interact
-		#Remove the original target from the environment.
-		@environment.objects.delete_at(1)
-		#Interact again.
-		@environment.interact
-
-		#Look for expected interactions (each should only occur once).
-		assert_equal(1, log.interactions.find_all{|i| i == "1 targeting 3"}.length)
 		
 	end
 	
@@ -508,13 +489,13 @@ class TestBehavior < Test::Unit::TestCase
 
 	#Always true.
 	class TrueCondition < Condition
-		def met?(actor, target)
+		def met?(actor, targets)
 			true
 		end
 	end
 	#Always false.
 	class FalseCondition < Condition
-		def met?(actor, target)
+		def met?(actor, targets)
 			false
 		end
 	end
@@ -535,14 +516,14 @@ class TestBehavior < Test::Unit::TestCase
 		def initialize
 			@start_count, @stop_count, @do_count = 0, 0, 0
 		end
-		def start(actor, target)
+		def start(actor, targets)
 			super
 			@start_count += 1
 		end
-		def do(actor, target)
+		def do(actor, targets)
 			@do_count += 1
 		end
-		def stop(actor, target)
+		def stop(actor, targets)
 			super
 			@stop_count += 1
 		end
