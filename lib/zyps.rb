@@ -78,7 +78,8 @@ class Environment
 			#Have all creatures interact with the environment.
 			if object.respond_to?(:act)
 				begin
-					object.act(self)
+					#Have creature act on all GameObjects other than itself.
+					object.act(objects.reject{|target| target.equal?(object)})
 				#Remove misbehaving objects.
 				rescue Exception => exception
 					puts exception, exception.backtrace
@@ -230,8 +231,9 @@ class Creature < GameObject
 		copy
 	end
 	
-	def act(environment)
-		behaviors.each {|behavior| behavior.perform(self, environment.objects)}
+	#Performs all assigned behaviors on the targets.
+	def act(targets)
+		behaviors.each {|behavior| behavior.perform(self, targets)}
 	end
 	
 end
