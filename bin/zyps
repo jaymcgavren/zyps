@@ -27,6 +27,7 @@ begin
 	require 'zyps/environmental_factors'
 	require 'zyps/remote'
 	require 'zyps/views/trails'
+	require 'zyps/views/canvas/gtk2'
 rescue LoadError
 	if gems_loaded == false
 		require 'rubygems'
@@ -208,17 +209,18 @@ class Application
 			:height => options[:view_height],
 			:trail_length => 5
 		)
-		interface.pack_start(@view.canvas, options[:expand], options[:fill], options[:padding])
+		@view.canvas = Canvas::GTK2.new
+		interface.pack_start(@view.canvas.drawing_area, options[:expand], options[:fill], options[:padding])
 		
 		#When mouse button pressed, record location for use in release event handler.
-		@view.canvas.add_events(Gdk::Event::BUTTON_PRESS_MASK)
-		@view.canvas.signal_connect("button-press-event") do |canvas, event|
+		@view.canvas.drawing_area.add_events(Gdk::Event::BUTTON_PRESS_MASK)
+		@view.canvas.drawing_area.signal_connect("button-press-event") do |canvas, event|
 			@press_location = Location.new(event.x, event.y)
 		end
 		
 		#Create a creature on button release.
-		@view.canvas.add_events(Gdk::Event::BUTTON_RELEASE_MASK)
-		@view.canvas.signal_connect("button-release-event") do |canvas, event|
+		@view.canvas.drawing_area.add_events(Gdk::Event::BUTTON_RELEASE_MASK)
+		@view.canvas.drawing_area.signal_connect("button-release-event") do |canvas, event|
 			#Ensure the mouse was pressed within the canvas.
 			if @press_location
 				#Create creature at release location.

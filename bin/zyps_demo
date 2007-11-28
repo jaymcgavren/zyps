@@ -25,6 +25,7 @@ begin
 	require 'zyps/conditions'
 	require 'zyps/environmental_factors'
 	require 'zyps/views/trails'
+	require 'zyps/views/canvas/gtk2'
 rescue LoadError
 	if gems_loaded == false
 		require 'rubygems'
@@ -62,7 +63,8 @@ class Demo
 		
 		#Add view to window.
 		@view = TrailsView.new(:width => WIDTH, :height => HEIGHT)
-		window.add(@view.canvas)
+		@view.canvas = Canvas::GTK2.new
+		window.add(@view.canvas.drawing_area)
 		window.show_all
 		
 		#Create environment.
@@ -116,7 +118,7 @@ class Demo
 			multiplier = i / count.to_f
 			environment.objects << Creature.new(
 				:name => i,
-				:location => Location.new(multiplier * @view.width, multiplier * @view.height),
+				:location => Location.new(multiplier * WIDTH, multiplier * HEIGHT),
 				:color => Color.new(multiplier, 1 - multiplier, multiplier / 2 + 0.5),
 				:vector => Vector.new(100 * multiplier, multiplier * 360),
 				:size => DEFAULT_OBJECT_SIZE
@@ -143,7 +145,7 @@ class Demo
 			say("...a size")
 			object.size = DEFAULT_OBJECT_SIZE
 			say("...a Location with x and y coordiates")
-			object.location = Location.new(@view.width/2, @view.height/2)
+			object.location = Location.new(WIDTH/2, HEIGHT/2)
 			say("...a Color with red, green and blue components ranging from 0 to 1")
 			object.color = Color.new(1, 0, 0)
 			say("...and a Vector giving its speed and an angle from 0 to 360.")
@@ -160,26 +162,21 @@ class Demo
 			say("Let's add a couple more objects with different colors and vectors.")
 			@environment.objects << GameObject.new(
 				:name => "Duey",
-				:location => Location.new(@view.width/2, @view.height/2),
+				:location => Location.new(WIDTH/2, HEIGHT/2),
 				:color => Color.new(0, 1, 0),
 				:vector => Vector.new(20, 135),
 				:size => DEFAULT_OBJECT_SIZE * 2
 			)
 			@environment.objects << GameObject.new(
 				:name => "Louie",
-				:location => Location.new(@view.width/2, @view.height/2),
+				:location => Location.new(WIDTH/2, HEIGHT/2),
 				:color => Color.new(0, 0, 1),
 				:vector => Vector.new(30, 225),
 				:size => DEFAULT_OBJECT_SIZE * 3
 			)
 			animate(FRAME_COUNT)
 			
-			say("The viewing area can be resized at any time via its width and height attributes.")
-			@view.width += 100
-			@view.height += 100
-			animate(FRAME_COUNT)
-			
-			say("TrailsView lets you set the length of the trails as well.")
+			say("TrailsView (the current view) lets you set the length of the trails as well.")
 			@view.trail_length = 50
 			animate(FRAME_COUNT)
 			
@@ -238,7 +235,7 @@ class Demo
 			say("Then we'll toss a piece of food (a GameObject with the label 'food') into the environment.")
 			@environment.objects << GameObject.new(
 				:name => "target",
-				:location => Location.new(@view.width / 2, @view.height / 2),
+				:location => Location.new(WIDTH / 2, HEIGHT / 2),
 				:color => Color.new(1, 1, 1),
 				:vector => Vector.new(50, 315),
 				:size => DEFAULT_OBJECT_SIZE * 2, #Size.
@@ -374,7 +371,7 @@ class Demo
 		say("Add a target...")
 		@environment.objects << Creature.new(
 			:name => "target",
-			:location => Location.new(@view.width / 2, @view.height / 3),
+			:location => Location.new(WIDTH / 2, HEIGHT / 3),
 			:vector => Vector.new(3, 0),
 			:size => DEFAULT_OBJECT_SIZE,
 			:tags => ["food"]
@@ -402,7 +399,7 @@ class Demo
 		
 		@environment.objects << Creature.new(
 			:name => "hunter",
-			:location => Location.new(@view.width / 2, @view.height / 2),
+			:location => Location.new(WIDTH / 2, HEIGHT / 2),
 			:vector => Vector.new(3, 0),
 			:size => DEFAULT_OBJECT_SIZE,
 			:tags => ["predator"]
