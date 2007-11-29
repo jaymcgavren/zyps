@@ -19,10 +19,10 @@
 require 'gtk2'
 
 
-module Zyps::Canvas
+module Zyps
 
 
-class GTK2
+class GTK2Canvas
 
 
 	#A Gtk::DrawingArea that will be painted on.
@@ -135,4 +135,4 @@ class GTK2
 end
 
 
-end #module Zyps::Canvas
+end #module Zyps

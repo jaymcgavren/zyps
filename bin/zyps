@@ -20,6 +20,7 @@
 
 gems_loaded = false
 begin
+	require 'gtk2'
 	require 'optparse'
 	require 'zyps'
 	require 'zyps/actions'
@@ -209,7 +210,7 @@ class Application
 			:height => options[:view_height],
 			:trail_length => 5
 		)
-		@view.canvas = Canvas::GTK2.new
+		@view.canvas = GTK2Canvas.new
 		interface.pack_start(@view.canvas.drawing_area, options[:expand], options[:fill], options[:padding])
 		
 		#When mouse button pressed, record location for use in release event handler.
