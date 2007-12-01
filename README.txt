@@ -1,6 +1,6 @@
 == Synopsis
 
-Zyps - A simulation/game with autonomous creatures.
+Zyps - An AI library for building games.
 
 
 == Description
@@ -11,7 +11,7 @@ Zyps are small creatures with minds of their own.  You can create dozens of Zyps
 == Requirements
 
 * Ruby: http://www.ruby-lang.org
-* Ruby-GNOME2 (for the GUI): http://ruby-gnome2.sourceforge.jp
+* wxRuby (for the GUI): http://wxruby.rubyforge.org
 * Rake (to build from source): http://rake.rubyforge.org
 
 
@@ -21,10 +21,12 @@ Make sure you have administrative privileges, then type the following at a comma
 
 	gem install zyps
 
+Ensure wxRuby is installed and working:
+
+	gem install wxruby
+
 
 == Usage
-
-Ensure Ruby-GNOME2 is installed and working.
 
 At a command line, type:
 
@@ -74,6 +76,8 @@ Also see "bin/zyps_demo" and the "test" subfolder in the project directory for s
 == Thanks
 
 Glen Franta, Scott McGinty, and so many other math, science, and computer science teachers whose names I've forgotten.  Nothing I do today would be possible without your efforts so long ago.
+
+Mario Steele for wxRuby advice.
 
 My lovely wife, Diana, for patience and usability testing.
 
