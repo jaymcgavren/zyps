@@ -63,7 +63,7 @@ class Demo
 		
 		#Add view to window.
 		@view = TrailsView.new(:width => WIDTH, :height => HEIGHT)
-		@view.canvas = Canvas::GTK2.new
+		@view.canvas = GTK2Canvas.new
 		window.add(@view.canvas.drawing_area)
 		window.show_all
 		
