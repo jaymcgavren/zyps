@@ -45,22 +45,13 @@ class WxCanvas
 
 		#Create a drawing area.
 		@drawing_area = Wx::Window.new(options[:parent])
+		@drawing_area.evt_close {|event| @drawing_area.destroy}
 		#Set to correct size.
 		resize
 		
 		#Whenever the drawing area needs updating...
 		@drawing_area.evt_paint do |event|
-			@drawing_area.paint do |dc|
-				#Copy the buffer to the viewable window.
-				buffer.draw do |buffer_dc|
-					dc.blit(
-						0, 0, #Copy to upper left of canvas.
-						@width, @height,
-						buffer_dc, #Source.
-						0, 0 #Pull from upper left of source.
-					)
-				end
-			end
+			render
 		end
 		
 	end
@@ -120,8 +111,10 @@ class WxCanvas
 	
 	
 	def render
-		@drawing_area.refresh
-		@drawing_area.update
+		@drawing_area.paint do |dc|
+			#Copy the buffer to the viewable window.
+			dc.draw_bitmap(buffer, 0, 0, false)
+		end
 	end
 				
 	
@@ -146,8 +139,8 @@ class WxCanvas
 		def buffer
 			@buffer ||= Wx::Bitmap.new(@width, @height)
 		end
-	
-	
+		
+		
 end
 
 
