@@ -48,13 +48,13 @@ class TimedAction < Action
 	end
 	
 	#Begin tracking time between actions.
-	def start(actor, target)
+	def start(actor, targets)
 		super
 		@clock.reset_elapsed_time
 	end
 	
 	#Halt tracking time between actions.
-	def stop(actor, target)
+	def stop(actor, targets)
 		super
 		@clock.reset_elapsed_time
 	end
