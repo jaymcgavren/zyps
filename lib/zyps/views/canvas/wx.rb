@@ -54,6 +54,10 @@ class WxCanvas
 			render
 		end
 		
+		#Arrays of shapes that will be painted when render() is called.
+		@rectangle_queue = []
+		@line_queue = []
+		
 	end
 
 	def width= (pixels) #:nodoc:
@@ -71,46 +75,21 @@ class WxCanvas
 		options = {
 			:filled => true
 		}.merge(options)
-		buffer.draw do |surface|
-			color = convert_color(options[:color])
-			surface.pen = Wx::Pen.new(color, 0) #Used for border.
-			if options[:filled]
-				#For now, only black is implemented.
-				#Can't figure out how to make custom brushes with wxRuby.
-				if options[:color] == Color.new(0, 0, 0)
-					surface.brush = Wx::BLACK_BRUSH
-				else
-					raise(NotImplementedError, "Only black brushes implemented for now.")
-				end
-			else
-				surface.brush = Wx::TRANSPARENT_BRUSH
-			end
-			surface.draw_rectangle(
-				options[:x], options[:y],
-				options[:width], options[:height]
-			)
-		end
+		@rectangle_queue << options
 	end
-
-	
 
 	
 	def draw_line(options = {})
-		buffer.draw do |surface|
-			surface.pen = Wx::Pen.new(
-				convert_color(options[:color]),
-				options[:width].ceil
-			)
-			surface.pen.cap = options[:round_ends] ? Wx::CAP_ROUND : Wx::CAP_BUTT
-			surface.draw_line(
-				options[:x1].floor, options[:y1].floor,
-				options[:x2].floor, options[:y2].floor
-			)
-		end
+		@line_queue << options
 	end
-	
+		
 	
 	def render
+		#Draw all queued rectangles.
+		render_rectangles
+		#Draw all queued lines.
+		render_lines
+		#Copy offscreen bitmap to screen.
 		@drawing_area.paint do |dc|
 			#Copy the buffer to the viewable window.
 			dc.draw_bitmap(buffer, 0, 0, false)
@@ -139,7 +118,48 @@ class WxCanvas
 		def buffer
 			@buffer ||= Wx::Bitmap.new(@width, @height)
 		end
-		
+
+		def render_rectangles
+			buffer.draw do |surface|
+				while options = @rectangle_queue.shift do
+					color = convert_color(options[:color])
+					surface.pen = Wx::Pen.new(color, 0) #Used for border.
+					if options[:filled]
+						#For now, only black is implemented.
+						#Can't figure out how to make custom brushes with wxRuby.
+						if options[:color] == Color.new(0, 0, 0)
+							surface.brush = Wx::BLACK_BRUSH
+						else
+							raise(NotImplementedError, "Only black brushes implemented for now.")
+						end
+					else
+						surface.brush = Wx::TRANSPARENT_BRUSH
+					end
+					surface.draw_rectangle(
+						options[:x], options[:y],
+						options[:width], options[:height]
+					)
+				end
+			end
+		end
+
+			
+		def render_lines
+			buffer.draw do |surface|
+				while options = @line_queue.shift do
+					surface.pen = Wx::Pen.new(
+						convert_color(options[:color]),
+						options[:width].ceil
+					)
+					surface.pen.cap = options[:round_ends] ? Wx::CAP_ROUND : Wx::CAP_BUTT
+					surface.draw_line(
+						options[:x1].floor, options[:y1].floor,
+						options[:x2].floor, options[:y2].floor
+					)
+				end
+			end
+		end
+
 		
 end
 
