@@ -42,11 +42,12 @@ end
 include Zyps
 
 
-LOG_LEVEL = Logger::DEBUG
+LOG_LEVEL = Logger::WARN
 LOG_HANDLE = STDOUT
 
 
 class Demo < Wx::App
+
 
 	#The view width.
 	WIDTH = 400
@@ -58,9 +59,70 @@ class Demo < Wx::App
 	FRAMES_PER_SECOND = 30
 	#Default size of game objects.
 	DEFAULT_OBJECT_SIZE = 78.5 #5 units in radius.
-	#WxWidgets ID for the timer.
-	TIMER_ID = 1
 
+	
+	#Initialize an Environment and a View.  Then run the demos.
+	def on_init
+	
+		@log = Logger.new(LOG_HANDLE)
+		@log.level = LOG_LEVEL
+		@log.progname = self
+		
+		say "We're using wxRuby as the GUI framework for this demo."
+		say "First, we need to create a Frame (window) to hold everything."
+		frame = Wx::Frame.new(nil, :size => [WIDTH, HEIGHT], :title => "Zyps Demo")
+		frame.show
+		
+		say "Zyps environments are displayed using Views."
+		say "A TrailsView shows game objects with little light trails behind them."
+		view = TrailsView.new(
+			:width => WIDTH,
+			:height => HEIGHT
+		)
+		say "We also assign the View a Canvas to draw to."
+		say "Since our framework is wxWidgets, we'll use a WxCanvas."
+		view.canvas = WxCanvas.new(
+			:parent => frame, #The parent is the container window.
+			:width => WIDTH,
+			:height => HEIGHT
+		)
+		
+		say "The world is called an Environment in Zyps.  Let's create a new one."
+		@environment = Environment.new
+		say "We tell the View to display our Environment by adding it as an Observer."
+		@environment.add_observer(view)
+		
+		say "We'll create a separate Ruby thread to update the environment."
+		say "This lets us update the GUI and the game world at the same time."
+		say "From within this new thread, we'll call each of the demo routines."
+		Thread.abort_on_exception = true
+		thread = Thread.new do
+			demo {test_render}
+			demo {test_environmental_factors}
+	 		demo {test_behaviors}
+			demo {test_change_color}
+			demo {test_accelerate}
+			demo {test_turn}
+			demo {test_approach}
+			demo {test_flee}
+			demo {test_eat}
+		end
+		Thread.list.each {|t| @log.debug "#{t.to_s} priority: #{t.priority}"}
+
+		say "Control must pass back and forth between the GUI and the animation thread."
+		say "We want to update the environment #{FRAMES_PER_SECOND} times per second."
+		milliseconds_per_frame = (1.0 / FRAMES_PER_SECOND * 1000).to_int
+		say "So, we'll set up a timer to fire every #{milliseconds_per_frame} milliseconds."
+		say "The timer will pass control to the animation thread."
+		timer_id = Wx::ID_HIGHEST + 1
+		timer = Wx::Timer.new(self, timer_id)
+		evt_timer(timer_id) {Thread.pass}
+		timer.start(milliseconds_per_frame)
+		
+	end
+
+	
+	#Run the demo code, then clean up afterwards.
 	def demo
 		@log.debug "Run the given block."
 		yield
@@ -71,24 +133,15 @@ class Demo < Wx::App
 		say("-" * 30)
 	end
 
-
-	#Animate an environment for a given number of frames.
+	
+	#Used by the various demos to update the environment a specified number of times.
 	def animate(frame_count)
-		@log.debug "Create a clock to track frames to draw this second."
-		clock = Clock.new
-		time_per_frame = 1.0 / FRAMES_PER_SECOND
-		@log.debug "Animate for #{frame_count} frames."
-		(1..frame_count).each do |i|
+		@log.debug "Updating #{@environment} for #{frame_count} frames."
+		frame_count.times do
+			#Have all objects in the environment interact, then update any Views.
 			@environment.interact
-			#Determine how much time is left in this frame.
-			time_left_in_frame = (time_per_frame) - clock.elapsed_time
-			#Sleep for the remaining time.
-			if time_left_in_frame > 0
-				sleep time_left_in_frame
-			#Skip a frame if things are going too slow.
-			else
-				sleep time_per_frame
-			end
+			#Pass control to other threads.
+			Thread.pass
 		end
 	end
 
@@ -107,14 +160,8 @@ class Demo < Wx::App
 			)
 		end
 	end
-
 	
-	#Explain what's going on to the user.
-	def say(phrase)
-		puts phrase
-	end
-
-
+	
 	#Demonstrates drawing an environment and changing its size.
 	def test_render
 
@@ -157,8 +204,8 @@ class Demo < Wx::App
 		animate(FRAME_COUNT)
 				
 	end
-
-
+	
+	
 	#Demonstrates environmental factors by adding gravity to the environment.
 	def test_environmental_factors
 
@@ -406,74 +453,22 @@ class Demo < Wx::App
 	end
 
 
-	def on_init
-
-		@log = Logger.new(LOG_HANDLE)
-		@log.level = LOG_LEVEL
-		@log.progname = self
+	private
 	
-		@log.debug "Animate the appropriate number of times per second."
-		timer = Wx::Timer.new(self, TIMER_ID)
-		evt_timer(TIMER_ID) {Thread.pass}
-		milliseconds_per_frame = 1.0 / FRAMES_PER_SECOND * 1000
-		@log.debug "Updating every #{milliseconds_per_frame} milliseconds."
-		timer.start(milliseconds_per_frame.to_int)
-		
-		@log.debug "Create a window."
-		@frame = Wx::Frame.new(nil, :size => [WIDTH, HEIGHT])
-		@frame.show
-		
-		@log.debug "Create an environment view."
-		@view = TrailsView.new(
-			:width => WIDTH,
-			:height => HEIGHT
-		)
-		@log.debug "The area to draw the view to."
-		@view.canvas = WxCanvas.new(
-			:parent => @frame,
-			:width => WIDTH,
-			:height => HEIGHT
-		)
-		
-		@log.debug "Create environment."
-		@environment = Environment.new
-		
-		@log.debug "Point view at environment."
-		@environment.add_observer(@view)
-		
-		@log.debug "Run demos."
-		say "This is a demonstration of the Zyps library."
-		say("-" * 30)
-		thread = Thread.new do
-			begin
-				demo {test_render}
-				demo {test_environmental_factors}
-		 		demo {test_behaviors}
-				demo {test_change_color}
-				demo {test_accelerate}
-				demo {test_turn}
-				demo {test_approach}
-				demo {test_flee}
-				demo {test_eat}
-			rescue Exception => exception
-				puts exception, exception.backtrace
-			end
+	
+		#Explain what's going on to the user.
+		def say(phrase)
+			puts phrase
 		end
-		thread.join
-		say "To learn more about how the library works, you can read the source code in the 'bin/zyps_demo' file in the Zyps distribution."
-		say "And if you want to code your own Actions, Conditions, EnvironmentalFactors, or Views, see the distribution's 'lib' folder for examples."
-		say "Thanks for watching!"
-		
-	end
 
-
+	
 end
 
 
 begin
 	#Run the demos.
 	Demo.new.main_loop
-rescue => exception
+rescue Exception => exception
 	#Print error to STDERR and exit with an abnormal status.
 	abort "Error: " + exception.message
 end
