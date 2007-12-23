@@ -37,6 +37,7 @@ class WxCanvas
 	def initialize (options = {})
 	
 		options = {
+			:parent => nil,
 			:width => 600,
 			:height => 400,
 		}.merge(options)
