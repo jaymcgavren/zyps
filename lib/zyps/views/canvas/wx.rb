@@ -46,7 +46,6 @@ class WxCanvas
 
 		#Create a drawing area.
 		@drawing_area = Wx::Window.new(options[:parent])
-		@drawing_area.evt_close {|event| @drawing_area.destroy}
 		#Set to correct size.
 		resize
 		
@@ -119,6 +118,7 @@ class WxCanvas
 		def buffer
 			@buffer ||= Wx::Bitmap.new(@width, @height)
 		end
+
 
 		def render_rectangles
 			buffer.draw do |surface|
