@@ -20,6 +20,7 @@
 
 gems_loaded = false
 begin
+	require 'logger'
 	require 'wx'
 	require 'zyps'
 	require 'zyps/actions'
@@ -41,6 +42,10 @@ end
 include Zyps
 
 
+LOG_LEVEL = Logger::DEBUG
+LOG_HANDLE = STDOUT
+
+
 class Demo < Wx::App
 
 	#The view width.
@@ -53,64 +58,44 @@ class Demo < Wx::App
 	FRAMES_PER_SECOND = 30
 	#Default size of game objects.
 	DEFAULT_OBJECT_SIZE = 78.5 #5 units in radius.
+	#WxWidgets ID for the timer.
+	TIMER_ID = 1
 
-	#Set up a window, a canvas, and an object environment, then run the given block.
 	def demo
-
-		@view = TrailsView.new(
-			:width => WIDTH,
-			:height => HEIGHT
-		)
-		@view.canvas = WxCanvas.new(
-			:parent => @frame,
-			:width => WIDTH,
-			:height => HEIGHT
-		)
-		
-		#Create environment.
-		@environment = Environment.new
-		
-		#Point view at environment.
-		@environment.add_observer(@view)
-		
-		#Run the given block.
+		@log.debug "Run the given block."
 		yield
-		
-		#A divider for explanation text between demos.
+		@log.debug "Clear the environment."
+		@environment.objects = []
+		@environment.environmental_factors = []
+		@log.debug "A divider for explanation text between demos."
 		say("-" * 30)
-		
 	end
 
 
 	#Animate an environment for a given number of frames.
 	def animate(frame_count)
-	
-		#A clock to track frames to draw this second.
+		@log.debug "Create a clock to track frames to draw this second."
 		clock = Clock.new
 		time_per_frame = 1.0 / FRAMES_PER_SECOND
-		
-		begin
-			(1..frame_count).each do |i|
-				@environment.interact
-				#Determine how much time is left in this frame.
-				time_left_in_frame = (time_per_frame) - clock.elapsed_time
-				#Sleep for the remaining time.
-				if time_left_in_frame > 0
-					sleep time_left_in_frame
-				#Skip a frame if things are going too slow.
-				else
-					sleep time_per_frame
-				end
+		@log.debug "Animate for #{frame_count} frames."
+		(1..frame_count).each do |i|
+			@environment.interact
+			#Determine how much time is left in this frame.
+			time_left_in_frame = (time_per_frame) - clock.elapsed_time
+			#Sleep for the remaining time.
+			if time_left_in_frame > 0
+				sleep time_left_in_frame
+			#Skip a frame if things are going too slow.
+			else
+				sleep time_per_frame
 			end
-		rescue Exception => exception
-			puts exception, exception.backtrace
 		end
-		
 	end
 
 
 	#Populate an environment with the given number of creatures.
 	def populate(environment, count = 50)
+		@log.debug "Add #{count} creatures to #{environment}."
 		count.times do |i|
 			multiplier = i / count.to_f
 			environment.objects << Creature.new(
@@ -132,55 +117,45 @@ class Demo < Wx::App
 
 	#Demonstrates drawing an environment and changing its size.
 	def test_render
+
+		say("The things that populate an environment are called GameObjects.  Each object has:")
+		object = GameObject.new
+		say("...a name")
+		object.name = "Huey"
+		say("...a size")
+		object.size = DEFAULT_OBJECT_SIZE
+		say("...a Location with x and y coordiates")
+		object.location = Location.new(WIDTH/2, HEIGHT/2)
+		say("...a Color with red, green and blue components ranging from 0 to 1")
+		object.color = Color.new(1, 0, 0)
+		say("...and a Vector giving its speed and an angle from 0 to 360.")
+		object.vector = Vector.new(10, 45)
+		
+		say("Once your object is ready, add it to the environment.")
+		@environment.objects << object
+	
+		say("Add a view as an observer of an Environment, and it will draw the objects.")
+		say("Call an environment's interact() method to have the objects in it move around.")
+		say("Our demo's animate() method does this for us.")
+		animate(FRAME_COUNT)
+		
+		say("Let's add a couple more objects with different colors and vectors.")
+		@environment.objects << GameObject.new(
+			:name => "Duey",
+			:location => Location.new(WIDTH/2, HEIGHT/2),
+			:color => Color.new(0, 1, 0),
+			:vector => Vector.new(20, 135),
+			:size => DEFAULT_OBJECT_SIZE * 2
+		)
+		@environment.objects << GameObject.new(
+			:name => "Louie",
+			:location => Location.new(WIDTH/2, HEIGHT/2),
+			:color => Color.new(0, 0, 1),
+			:vector => Vector.new(30, 225),
+			:size => DEFAULT_OBJECT_SIZE * 3
+		)
+		animate(FRAME_COUNT)
 				
-		thread = Thread.new do
-		
-			say("The things that populate an environment are called GameObjects.  Each object has:")
-			object = GameObject.new
-			say("...a name")
-			object.name = "Huey"
-			say("...a size")
-			object.size = DEFAULT_OBJECT_SIZE
-			say("...a Location with x and y coordiates")
-			object.location = Location.new(WIDTH/2, HEIGHT/2)
-			say("...a Color with red, green and blue components ranging from 0 to 1")
-			object.color = Color.new(1, 0, 0)
-			say("...and a Vector giving its speed and an angle from 0 to 360.")
-			object.vector = Vector.new(10, 45)
-			
-			say("Once your object is ready, add it to the environment.")
-			@environment.objects << object
-		
-			say("Add a view as an observer of an Environment, and it will draw the objects.")
-			say("Call an environment's interact() method to have the objects in it move around.")
-			say("Our demo's animate() method does this for us.")
-			animate(FRAME_COUNT)
-			
-			say("Let's add a couple more objects with different colors and vectors.")
-			@environment.objects << GameObject.new(
-				:name => "Duey",
-				:location => Location.new(WIDTH/2, HEIGHT/2),
-				:color => Color.new(0, 1, 0),
-				:vector => Vector.new(20, 135),
-				:size => DEFAULT_OBJECT_SIZE * 2
-			)
-			@environment.objects << GameObject.new(
-				:name => "Louie",
-				:location => Location.new(WIDTH/2, HEIGHT/2),
-				:color => Color.new(0, 0, 1),
-				:vector => Vector.new(30, 225),
-				:size => DEFAULT_OBJECT_SIZE * 3
-			)
-			animate(FRAME_COUNT)
-			
-			say("TrailsView (the current view) lets you set the length of the trails as well.")
-			@view.trail_length = 50
-			animate(FRAME_COUNT)
-			
-		end
-		
-		thread.join
-		
 	end
 
 
@@ -189,23 +164,17 @@ class Demo < Wx::App
 
 		populate(@environment)
 		
-		thread = Thread.new do
+		say("Without gravity, objects just travel on forever.")
+		animate(FRAME_COUNT)
 		
-			say("Without gravity, objects just travel on forever.")
-			animate(FRAME_COUNT)
-			
-			say("Let's add a new EnvironmentalFactor to simulate gravity.")
-			gravity = Gravity.new(200)
-			
-			say("We add gravity to the Environment.")
-			@environment.environmental_factors << gravity
-			
-			say("Everything immediately drops.")
-			animate(FRAME_COUNT)
-			
-		end
+		say("Let's add a new EnvironmentalFactor to simulate gravity.")
+		gravity = Gravity.new(200)
 		
-		thread.join
+		say("We add gravity to the Environment.")
+		@environment.environmental_factors << gravity
+		
+		say("Everything immediately drops.")
+		animate(FRAME_COUNT)
 		
 	end
 
@@ -215,40 +184,34 @@ class Demo < Wx::App
 
 		populate(@environment)
 		
-		thread = Thread.new do
-
-			say("Let's add a Behavior to our creatures.")
-			chase = Behavior.new
-			
-			say("A Behavior has one or more Action objects that define an action to take on the current target.")
-			say("We'll add an Action that makes the creatures head straight toward their target.")
-			chase.actions << FaceAction.new
-			
-			say("A Behavior also has one or more Condition objects.")
-			say("Unless every Condition is true, the action(s) won't be carried out.")
-			say("So that they don't target every creature on the screen, we'll add a condition to the behavior saying the target must have the label 'food'.")
-			chase.conditions << TagCondition.new("food")
-			
-			say("We'll apply this behavior to all creatures currently in the environment.")
-			@environment.objects.each {|creature| creature.behaviors << chase}
-			animate(FRAME_COUNT)
-			
-			say("Then we'll toss a piece of food (a GameObject with the label 'food') into the environment.")
-			@environment.objects << GameObject.new(
-				:name => "target",
-				:location => Location.new(WIDTH / 2, HEIGHT / 2),
-				:color => Color.new(1, 1, 1),
-				:vector => Vector.new(50, 315),
-				:size => DEFAULT_OBJECT_SIZE * 2, #Size.
-				:tags => ["food"]
-			)
-			
-			say("Let's see what the creatures do.")
-			animate(FRAME_COUNT)
-			
-		end
+		say("Let's add a Behavior to our creatures.")
+		chase = Behavior.new
 		
-		thread.join
+		say("A Behavior has one or more Action objects that define an action to take on the current target.")
+		say("We'll add an Action that makes the creatures head straight toward their target.")
+		chase.actions << FaceAction.new
+		
+		say("A Behavior also has one or more Condition objects.")
+		say("Unless every Condition is true, the action(s) won't be carried out.")
+		say("So that they don't target every creature on the screen, we'll add a condition to the behavior saying the target must have the label 'food'.")
+		chase.conditions << TagCondition.new("food")
+		
+		say("We'll apply this behavior to all creatures currently in the environment.")
+		@environment.objects.each {|creature| creature.behaviors << chase}
+		animate(FRAME_COUNT)
+		
+		say("Then we'll toss a piece of food (a GameObject with the label 'food') into the environment.")
+		@environment.objects << GameObject.new(
+			:name => "target",
+			:location => Location.new(WIDTH / 2, HEIGHT / 2),
+			:color => Color.new(1, 1, 1),
+			:vector => Vector.new(50, 315),
+			:size => DEFAULT_OBJECT_SIZE * 2, #Size.
+			:tags => ["food"]
+		)
+		
+		say("Let's see what the creatures do.")
+		animate(FRAME_COUNT)
 		
 	end
 
@@ -299,9 +262,7 @@ class Demo < Wx::App
 		)
 		
 		say("And see what they do.")
-		thread = Thread.new {animate(FRAME_COUNT)}
-		
-		thread.join
+		animate(FRAME_COUNT)
 		
 	end
 
@@ -311,26 +272,20 @@ class Demo < Wx::App
 
 		populate(@environment)
 		
-		thread = Thread.new do
-
-			say("Here are some Creatures, just plodding along.")
-			animate(FRAME_COUNT / 4)
-			say("We're going to have them pick up the pace.")
-			
-			say("We add a Behavior with an AccelerateAction to all the creatures, and specify they should increase their speed by 100 units/second...")
-			@environment.objects.each do |creature|
-				accelerate = Behavior.new
-				accelerate.actions << AccelerateAction.new(100)
-				creature.behaviors << accelerate
-			end
-			
-			say("And watch them rocket away.")
-			animate(FRAME_COUNT)
-			
+		say("Here are some Creatures, just plodding along.")
+		animate(FRAME_COUNT / 4)
+		say("We're going to have them pick up the pace.")
+		
+		say("We add a Behavior with an AccelerateAction to all the creatures, and specify they should increase their speed by 100 units/second...")
+		@environment.objects.each do |creature|
+			accelerate = Behavior.new
+			accelerate.actions << AccelerateAction.new(100)
+			creature.behaviors << accelerate
 		end
 		
-		thread.join
-		
+		say("And watch them rocket away.")
+		animate(FRAME_COUNT)
+			
 	end
 
 
@@ -339,24 +294,18 @@ class Demo < Wx::App
 
 		populate(@environment, 20)
 		
-		thread = Thread.new do
+		say("This time we'll use the TurnAction class.")
+		animate(FRAME_COUNT / 2)
 		
-			say("This time we'll use the TurnAction class.")
-			animate(FRAME_COUNT / 2)
-			
-			say("We tell each creature it should turn 90 degrees...")
-			@environment.objects.each do |creature|
-				turn = Behavior.new
-				turn.actions << TurnAction.new(100, 90)
-				creature.behaviors << turn
-			end
-			
-			say("And watch things spiral out of control.")
-			animate(FRAME_COUNT)
-			
+		say("We tell each creature it should turn 90 degrees...")
+		@environment.objects.each do |creature|
+			turn = Behavior.new
+			turn.actions << TurnAction.new(100, 90)
+			creature.behaviors << turn
 		end
 		
-		thread.join
+		say("And watch things spiral out of control.")
+		animate(FRAME_COUNT)
 		
 	end
 
@@ -387,9 +336,7 @@ class Demo < Wx::App
 		)
 		
 		say("And watch them all TRY to catch it.")
-		thread = Thread.new {animate(FRAME_COUNT)}
-		
-		thread.join
+		animate(FRAME_COUNT)
 		
 	end
 
@@ -416,9 +363,7 @@ class Demo < Wx::App
 			:tags => ["predator"]
 		)
 		
-		thread = Thread.new {animate(FRAME_COUNT)}
-		
-		thread.join
+		animate(FRAME_COUNT)
 		
 	end
 
@@ -456,32 +401,69 @@ class Demo < Wx::App
 		@environment.objects << predator
 		
 		say("And - chomp!")
-		thread = Thread.new {animate(FRAME_COUNT)}
-		
-		thread.join
+		animate(FRAME_COUNT)
 		
 	end
 
 
-	#Run all the demos.
 	def on_init
+
+		@log = Logger.new(LOG_HANDLE)
+		@log.level = LOG_LEVEL
+		@log.progname = self
+	
+		@log.debug "Animate the appropriate number of times per second."
+		timer = Wx::Timer.new(self, TIMER_ID)
+		evt_timer(TIMER_ID) {Thread.pass}
+		milliseconds_per_frame = 1.0 / FRAMES_PER_SECOND * 1000
+		@log.debug "Updating every #{milliseconds_per_frame} milliseconds."
+		timer.start(milliseconds_per_frame.to_int)
+		
+		@log.debug "Create a window."
+		@frame = Wx::Frame.new(nil, :size => [WIDTH, HEIGHT])
+		@frame.show
+		
+		@log.debug "Create an environment view."
+		@view = TrailsView.new(
+			:width => WIDTH,
+			:height => HEIGHT
+		)
+		@log.debug "The area to draw the view to."
+		@view.canvas = WxCanvas.new(
+			:parent => @frame,
+			:width => WIDTH,
+			:height => HEIGHT
+		)
+		
+		@log.debug "Create environment."
+		@environment = Environment.new
+		
+		@log.debug "Point view at environment."
+		@environment.add_observer(@view)
+		
+		@log.debug "Run demos."
 		say "This is a demonstration of the Zyps library."
 		say("-" * 30)
-		@frame = Wx::Frame.new(nil, :size => [WIDTH, HEIGHT])
-		@frame.evt_close {|event| frame.destroy}
-		@frame.show
-		demo {test_render}
-		demo {test_environmental_factors}
- 		demo {test_behaviors}
-		demo {test_change_color}
-		demo {test_accelerate}
-		demo {test_turn}
-		demo {test_approach}
-		demo {test_flee}
-		demo {test_eat}
+		thread = Thread.new do
+			begin
+				demo {test_render}
+				demo {test_environmental_factors}
+		 		demo {test_behaviors}
+				demo {test_change_color}
+				demo {test_accelerate}
+				demo {test_turn}
+				demo {test_approach}
+				demo {test_flee}
+				demo {test_eat}
+			rescue Exception => exception
+				puts exception, exception.backtrace
+			end
+		end
+		thread.join
 		say "To learn more about how the library works, you can read the source code in the 'bin/zyps_demo' file in the Zyps distribution."
 		say "And if you want to code your own Actions, Conditions, EnvironmentalFactors, or Views, see the distribution's 'lib' folder for examples."
 		say "Thanks for watching!"
+		
 	end
 
 
