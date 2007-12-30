@@ -58,6 +58,9 @@ class WxCanvas
 		@rectangle_queue = []
 		@line_queue = []
 		
+		#Hash of Wx::Pens used to draw in various colors and widths.
+		@pens = Hash.new {|h, k| h[k] = Hash.new}
+		
 	end
 
 	def width= (pixels) #:nodoc:
@@ -85,10 +88,12 @@ class WxCanvas
 		
 	
 	def render
-		#Draw all queued rectangles.
-		render_rectangles
-		#Draw all queued lines.
-		render_lines
+		buffer.draw do |surface|
+			#Draw all queued rectangles.
+			render_rectangles(surface)
+			#Draw all queued lines.
+			render_lines(surface)
+		end
 		#Copy offscreen bitmap to screen.
 		@drawing_area.paint do |dc|
 			#Copy the buffer to the viewable window.
@@ -98,6 +103,8 @@ class WxCanvas
 				
 	
 	private
+	
+		BLACK = Color.new(0, 0, 0)
 	
 		#Converts a Zyps Color to the toolkit's color class.
 		def convert_color(color)
@@ -120,45 +127,44 @@ class WxCanvas
 		end
 
 
-		def render_rectangles
-			buffer.draw do |surface|
-				while options = @rectangle_queue.shift do
-					color = convert_color(options[:color])
-					surface.pen = Wx::Pen.new(color, 0) #Used for border.
-					if options[:filled]
-						#For now, only black is implemented.
-						#Can't figure out how to make custom brushes with wxRuby.
-						if options[:color] == Color.new(0, 0, 0)
-							surface.brush = Wx::BLACK_BRUSH
-						else
-							raise(NotImplementedError, "Only black brushes implemented for now.")
-						end
+		def render_rectangles(surface)
+			while options = @rectangle_queue.shift do
+				color = convert_color(options[:color])
+				surface.pen = Wx::Pen.new(color, 0) #Used for border.
+				if options[:filled]
+					#For now, only black is implemented.
+					#Can't figure out how to make custom brushes with wxRuby.
+					if options[:color] == BLACK
+						surface.brush = Wx::BLACK_BRUSH
 					else
-						surface.brush = Wx::TRANSPARENT_BRUSH
+						raise(NotImplementedError, "Only black brushes implemented for now.")
 					end
-					surface.draw_rectangle(
-						options[:x], options[:y],
-						options[:width], options[:height]
-					)
+				else
+					surface.brush = Wx::TRANSPARENT_BRUSH
 				end
+				surface.draw_rectangle(
+					options[:x], options[:y],
+					options[:width], options[:height]
+				)
 			end
 		end
 
 			
-		def render_lines
-			buffer.draw do |surface|
-				while options = @line_queue.shift do
-					surface.pen = Wx::Pen.new(
-						convert_color(options[:color]),
-						options[:width].ceil
-					)
-					surface.pen.cap = options[:round_ends] ? Wx::CAP_ROUND : Wx::CAP_BUTT
-					surface.draw_line(
-						options[:x1].floor, options[:y1].floor,
-						options[:x2].floor, options[:y2].floor
-					)
-				end
+		def render_lines(surface)
+			while options = @line_queue.shift do
+				surface.pen = get_pen(options[:color], options[:width])
+				surface.pen.cap = options[:round_ends] ? Wx::CAP_ROUND : Wx::CAP_BUTT
+				surface.draw_line(
+					options[:x1].floor, options[:y1].floor,
+					options[:x2].floor, options[:y2].floor
+				)
 			end
+		end
+		
+		
+		def get_pen(color, width)
+			@pens[[color.red, color.green, color.blue]][width] ||= Wx::Pen.new(convert_color(color), width.ceil)
+			@pens[[color.red, color.green, color.blue]][width]
 		end
 
 		
