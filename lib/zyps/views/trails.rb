@@ -121,7 +121,6 @@ class TrailsView
 						object.color.blue * multiplier
 					),
 					:width => object_radius * 2 * multiplier,
-					:round_ends => true,
 					:x1 => previous_location[0], :y1 => previous_location[1],
 					:x2 => location[0], :y2 => location[1]
 				)

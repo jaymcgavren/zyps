@@ -151,9 +151,9 @@ class WxCanvas
 
 			
 		def render_lines(surface)
+			surface.pen.cap = Wx::CAP_ROUND
 			while options = @line_queue.shift do
 				surface.pen = get_pen(options[:color], options[:width])
-				surface.pen.cap = options[:round_ends] ? Wx::CAP_ROUND : Wx::CAP_BUTT
 				surface.draw_line(
 					options[:x1].floor, options[:y1].floor,
 					options[:x2].floor, options[:y2].floor
