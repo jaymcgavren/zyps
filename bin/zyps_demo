@@ -80,11 +80,7 @@ class Demo < Wx::App
 		)
 		say "We also assign the View a Canvas to draw to."
 		say "Since our framework is wxWidgets, we'll use a WxCanvas."
-		view.canvas = WxCanvas.new(
-			:parent => frame, #The parent is the container window.
-			:width => WIDTH,
-			:height => HEIGHT
-		)
+		view.canvas = WxCanvas.new(frame)
 		
 		say "The world is called an Environment in Zyps.  Let's create a new one."
 		@environment = Environment.new

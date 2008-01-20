@@ -30,17 +30,11 @@ class GTK2Canvas
 	#Dimensions of the drawing area.
 	attr_reader :width, :height
 
-	#Takes a hash with these keys and defaults:
-	#	:width => 600
-	#	:height => 400
-	def initialize (options = {})
+	def initialize
 	
-		options = {
-			:width => 600,
-			:height => 400,
-		}.merge(options)
-		@width = options[:width]
-		@height = options[:height]
+		#Will be resized later.
+		@width = 1
+		@height = 1
 
 		#Create a drawing area.
 		@drawing_area = Gtk::DrawingArea.new

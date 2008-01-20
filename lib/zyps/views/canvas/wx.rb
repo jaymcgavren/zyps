@@ -30,22 +30,15 @@ class WxCanvas
 	#Dimensions of the drawing area.
 	attr_reader :width, :height
 
-	#Takes a hash with these keys and defaults:
-	#	:parent => nil
-	#	:width => 600
-	#	:height => 400
-	def initialize (options = {})
+	#Takes the wxRuby GUI object that will be its parent.
+	def initialize (parent)
 	
-		options = {
-			:parent => nil,
-			:width => 600,
-			:height => 400,
-		}.merge(options)
-		@width = options[:width]
-		@height = options[:height]
+		#Will be resized later.
+		@width = 1
+		@height = 1
 
 		#Create a drawing area.
-		@drawing_area = Wx::Window.new(options[:parent])
+		@drawing_area = Wx::Window.new(parent)
 		#Set to correct size.
 		resize
 		
