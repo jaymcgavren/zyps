@@ -69,6 +69,7 @@ class Demo < Wx::App
 		say "We're using wxRuby as the GUI framework for this demo."
 		say "First, we need to create a Frame (window) to hold everything."
 		frame = Wx::Frame.new(nil, :size => [WIDTH, HEIGHT], :title => "Zyps Demo")
+		frame.evt_close {|event| exit}
 		frame.show
 		
 		say "Zyps environments are displayed using Views."
@@ -109,9 +110,8 @@ class Demo < Wx::App
 	#Watch for environment updates.
 	#After a certain number, run the next demo.
 	def update(environment)
-		@update_count += 1
 		case @update_count
-			when 1:
+			when 0:
 				say "-" * 30
 				test_render
 			when 100:
@@ -157,6 +157,7 @@ class Demo < Wx::App
 			when 1800:
 				finish
 		end
+		@update_count += 1
 	end
 
 	
