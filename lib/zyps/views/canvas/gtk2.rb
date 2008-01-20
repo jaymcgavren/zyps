@@ -93,7 +93,7 @@ class GTK2Canvas
 		graphics_context.set_line_attributes(
 			options[:width].ceil,
 			Gdk::GC::LINE_SOLID,
-			options[:round_ends] ? Gdk::GC::CAP_ROUND : Gdk::GC::CAP_BUTT,
+			Gdk::GC::CAP_ROUND,
 			Gdk::GC::JOIN_MITER #Only used for polygons.
 		)
 		buffer.draw_line(
