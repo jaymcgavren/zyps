@@ -161,26 +161,6 @@ class Demo < Wx::App
 	end
 
 	
-	#Run the demo code, then clean up afterwards.
-	def demo
-		@log.debug "Run the given block."
-		yield
-		@log.debug "Clear the environment."
-		@environment.objects = []
-		@environment.environmental_factors = []
-		@log.debug "A divider for explanation text between demos."
-		say("-" * 30)
-	end
-	
-	
-	#End the demos.
-	def finish
-		say "To learn more about how the library works, you can read the source code in the 'bin/zyps_demo' file in the Zyps distribution."
-		say "And if you want to code your own Actions, Conditions, EnvironmentalFactors, or Views, see the distribution's 'lib' folder for examples."
-		say "Thanks for watching!"
-	end
-	
-	
 	#Populate an environment with the given number of creatures.
 	def populate(environment, count = 50)
 		@log.debug "Add #{count} creatures to #{environment}."
@@ -476,6 +456,14 @@ class Demo < Wx::App
 	end
 
 
+	#End the demos.
+	def finish
+		say "To learn more about how the library works, you can read the source code in the 'bin/zyps_demo' file in the Zyps distribution."
+		say "And if you want to code your own Actions, Conditions, EnvironmentalFactors, or Views, see the distribution's 'lib' folder for examples."
+		say "Thanks for watching!"
+	end
+	
+	
 	private
 	
 		#Explain what's going on to the user.
