@@ -20,15 +20,15 @@
 
 gems_loaded = false
 begin
-	require 'gtk2'
-	require 'optparse'
+	require 'logger'
+	require 'wx'
 	require 'zyps'
 	require 'zyps/actions'
 	require 'zyps/conditions'
 	require 'zyps/environmental_factors'
 	require 'zyps/remote'
 	require 'zyps/views/trails'
-	require 'zyps/views/canvas/gtk2'
+	require 'zyps/views/canvas/wx'
 rescue LoadError
 	if gems_loaded == false
 		require 'rubygems'
@@ -43,326 +43,271 @@ end
 include Zyps
 
 
-DEFAULT_VIEW_WIDTH = 800
-DEFAULT_VIEW_HEIGHT = 600
-DEFAULT_MAX_SPEED = 200
-DEFAULT_MAX_POPULATION = 100
-DEFAULT_FPS = 60
+LOG_HANDLE = STDOUT
+LOG_LEVEL = Logger::DEBUG
 
 
-class Application
+#The Zyps GUI.
+class Application < Wx::App
 
-	#Port to open service on.
-	attr_accessor :uri
-	#Maximum allowed number of objects.
-	attr_accessor :max_population
-	#View dimensions.
-	attr_accessor :view_width, :view_height
-	
-	#Create app window, game environment, and view.
-	#Set up default values.
+
 	#Takes a hash with these keys and defaults:
-	#	:uri => nil,
-	#	:view_width => DEFAULT_VIEW_WIDTH,
-	#	:view_height => DEFAULT_VIEW_HEIGHT,
-	#	:fps => DEFAULT_FPS,
-	#	:max_population => DEFAULT_MAX_POPULATION,
-	#	:max_speed => DEFAULT_MAX_SPEED,
+	#	:width => 800
+	#	:height => 600
+	#	:max_speed => 200
+	#	:max_population => 100
+	#	:fps => 60
 	#	:enclosure => true
+	#	:uri => nil
 	def initialize(options = {})
-		
-		options = {
+	
+		super()
+	
+		#Set up logger.
+		@log = Logger.new(LOG_HANDLE)
+		@log.level = LOG_LEVEL
+		@log.progname = self
+
+		@log.debug "Load options and merge with defaults."
+		@options = Configuration.load('options')
+		@options = {
+			:width => 800,
+			:height => 600,
+			:max_speed => 200,
+			:max_population => 100,
+			:fps => 60,
+			:enclosure => true,
 			:uri => nil,
-			:view_width => DEFAULT_VIEW_WIDTH,
-			:view_height => DEFAULT_VIEW_HEIGHT,
-			:fps => DEFAULT_FPS,
-			:max_population => DEFAULT_MAX_POPULATION,
-			:max_speed => DEFAULT_MAX_SPEED,
-			:enclosure => true
 		}.merge(options)
-		
-		@uri, @view_width, @view_height, @fps, @max_population, @max_speed, @enclosure =
-		options[:uri], options[:view_width], options[:view_height], options[:fps], options[:max_population], options[:max_speed], options[:enclosure]
-		
+		@log.debug "options: #{@options.inspect}"
+	
 	end
 	
-	
-	def main
-	
-		#Create a window, and set GTK up to quit when it is closed.
-		window = Gtk::Window.new
-		window.resizable = false
-		window.signal_connect("delete_event") {false}
-		window.signal_connect("destroy") {Gtk.main_quit}
+
+	#Create GUI objects.
+	def on_init
 		
-		#Create environment.
-		@environment = Environment.new
-		
-		#Set up controls.
-		#Also initializes @view.
-		window.add(
-			create_controls(
-				:view_width => @view_width,
-				:view_height => @view_height,
-				:spacing => 2
-			)
+		@log.debug "Create the main window."
+		frame = Wx::Frame.new(
+			nil, #No parent.
+			:size => [@options[:width], @options[:height]],
+			:title => "Zyps"
 		)
-	
-		#Show all widgets.
-		window.show_all
-			
-		#Point view at environment.
-		@environment.add_observer(@view)
+		@log.debug "All controls in frame should be resized when frame is."
+		frame.sizer = Wx::BoxSizer.new(Wx::HORIZONTAL)
+		@log.debug "Application should exit when frame is closed."
+		frame.evt_close {on_exit}
 		
-		#Keep objects on screen.
-		if @enclosure
-			enclosure = Enclosure.new(
+		@log.debug "Create a view and canvas."
+		view = TrailsView.new(
+			:width => @options[:width],
+			:height => @options[:height],
+			:canvas => WxCanvas.new(frame)
+		)
+		frame.sizer.add(view.canvas.drawing_area, 1, Wx::GROW)
+		@log.debug "Set up mouse click/drag handlers for canvas."
+		@press_location = nil
+		view.canvas.drawing_area.evt_left_down {|event| on_mouse_press(event)}
+		view.canvas.drawing_area.evt_left_up {|event| on_mouse_release(event)}
+		
+		@log.debug "Create an interface."
+		@controls = ControlPanel.new(frame)
+		frame.sizer.add(@controls)
+		
+		@log.debug "Create an environment, and link it to the view."
+		@environment = Environment.new
+		@environment.add_observer(view)
+		
+		@log.debug "Set up environmental factors."
+		if @options[:enclosure]
+			@enclosure = Enclosure.new(
 				:left => 0,
 				:bottom => 0,
-				:top => @view_height,
-				:right => @view_width
+				:top => view.canvas.drawing_area.size.height,
+				:right => view.canvas.drawing_area.size.width
 			)
-			@environment.environmental_factors << enclosure
-		end
-		
-		#Keep all objects under a certain speed.
-		@environment.environmental_factors << SpeedLimit.new(@max_speed) if @max_speed
-		
-		#Limit population.
-		@environment.environmental_factors << PopulationLimit.new(@max_population) if @max_population
-		
-		#Set up a creature generator.
-		@generator = CreatureGenerator.new(@environment)
-
-		#Create thread to update environment.
-		thread = Thread.new do
-		
-			begin
-			
-				drawing_clock = Clock.new
-				time_per_frame = 1.0 / @fps
-				
-				loop do
-
-					@environment.interact
-					
-					#Determine how much time is left in this frame.
-					time_left_in_frame = (time_per_frame) - drawing_clock.elapsed_time
-					#Sleep for the remaining time.
-					if time_left_in_frame > 0
-						sleep time_left_in_frame
-					#Skip a frame if things are going too slow.
-					else
-						sleep time_per_frame
-					end
-					
-				end
-				
-			rescue Exception => exception
-				puts exception, exception.backtrace
-			end
-			
-		end
-		
-		
-		#Start a network service.
-		if @uri
-			server = EnvironmentServer.new(@environment, @uri)
-			server.start
-			#Disable file system access.
-			$SAFE = 2
-		end
-
-		
-		#Activate the GUI.
-		Gtk.main
-		
-	end
-	
-	
-	#Create a view and controls.
-	#Takes a hash with these defaults:
-	#	:view_width => @view_width
-	#	:view_height => @view_height
-	#	:homogeneous => false
-	#	:spacing => 0
-	#	:expand => false
-	#	:fill => false
-	#	:padding => 0
-	def create_controls(options = {})
-	
-		options = {
-			:view_width => @view_width,
-			:view_height => @view_height,
-			:homogeneous => false,
-			:spacing => 0,
-			:expand => false,
-			:fill => false,
-			:padding => 0,
-		}.merge(options)
-		
-		#Create a container for the view and controls.
-		interface = Gtk::HBox.new(options[:homogeneous], options[:spacing])
-		
-		#Add view to interface.
-		@view = TrailsView.new(
-			:width => options[:view_width],
-			:height => options[:view_height],
-			:trail_length => 5
-		)
-		@view.canvas = GTK2Canvas.new
-		interface.pack_start(@view.canvas.drawing_area, options[:expand], options[:fill], options[:padding])
-		
-		#When mouse button pressed, record location for use in release event handler.
-		@view.canvas.drawing_area.add_events(Gdk::Event::BUTTON_PRESS_MASK)
-		@view.canvas.drawing_area.signal_connect("button-press-event") do |canvas, event|
-			@press_location = Location.new(event.x, event.y)
-		end
-		
-		#Create a creature on button release.
-		@view.canvas.drawing_area.add_events(Gdk::Event::BUTTON_RELEASE_MASK)
-		@view.canvas.drawing_area.signal_connect("button-release-event") do |canvas, event|
-			#Ensure the mouse was pressed within the canvas.
-			if @press_location
-				#Create creature at release location.
-				@release_location = Location.new(event.x, event.y)
-				@generator.create_creature(
-					:x => event.x,
-					:y => event.y,
-					:speed => Utility.find_distance(@press_location, @release_location) * 2, #Use distance dragged as speed.
-					:pitch => Utility.find_angle(@press_location, @release_location), #Move in direction of drag.
-					:turn => @turn_flag.active?,
-					:approach => @approach_flag.active?,
-					:flee => @flee_flag.active?,
-					:push => @push_flag.active?,
-					:pull => @pull_flag.active?,
-					:breed => @breed_flag.active?,
-					:eat => @eat_flag.active?
-				)
-				#Nullify press location, as it is no longer applicable.
-				@press_location = nil
+			@environment.environmental_factors << @enclosure
+			#Resize view and enclosure when canvas changes size.
+			view.canvas.drawing_area.evt_size do |event|
+				view.height = view.canvas.drawing_area.size.height
+				view.width = view.canvas.drawing_area.size.height
+				@enclosure.top = view.canvas.drawing_area.size.height
+				@enclosure.right = view.canvas.drawing_area.size.width
 			end
 		end
+		@environment.environmental_factors << SpeedLimit.new(@options[:max_speed]) if @options[:max_speed]
+		@environment.environmental_factors << PopulationLimit.new(@options[:max_population]) if @options[:max_population]
 		
-		#Create a VBox for all controls.
-		control_panel = Gtk::VBox.new(options[:homogeneous], options[:spacing])
+		@log.debug "Set up a creature generator."
+		@generator = CreatureGenerator.new
 		
-		#Create a group for the actions.
-		action_controls = Gtk::VBox.new(options[:homogeneous], options[:spacing])
-		action_controls.pack_start(Gtk::Label.new("Actions"), options[:expand], options[:fill], options[:padding])
-		@turn_flag = Gtk::CheckButton.new("Turn")
-		action_controls.pack_start(@turn_flag, options[:expand], options[:fill], options[:padding])
-		@approach_flag = Gtk::CheckButton.new("Chase")
-		action_controls.pack_start(@approach_flag, options[:expand], options[:fill], options[:padding])
-		@flee_flag = Gtk::CheckButton.new("Flee")
-		action_controls.pack_start(@flee_flag, options[:expand], options[:fill], options[:padding])
-		@push_flag = Gtk::CheckButton.new("Push")
-		action_controls.pack_start(@push_flag, options[:expand], options[:fill], options[:padding])
-		@pull_flag = Gtk::CheckButton.new("Pull")
-		action_controls.pack_start(@pull_flag, options[:expand], options[:fill], options[:padding])
-		@breed_flag = Gtk::CheckButton.new("Breed")
-		action_controls.pack_start(@breed_flag, options[:expand], options[:fill], options[:padding])
-		@eat_flag = Gtk::CheckButton.new("Eat")
-		action_controls.pack_start(@eat_flag, options[:expand], options[:fill], options[:padding])
-		#Add the action controls to the panel.
-		control_panel.pack_start(action_controls, options[:expand], options[:fill], options[:padding])
+		@log.debug "Set up a timer to update the environment."
+		milliseconds_per_frame = (1.0 / @options[:fps] * 1000).to_int
+		@log.debug "Timer will fire every #{milliseconds_per_frame} milliseconds."
+		timer_id = Wx::ID_HIGHEST + 1
+		timer = Wx::Timer.new(self, timer_id)
+		evt_timer(timer_id) {@environment.interact}
+		timer.start(milliseconds_per_frame)
 		
-		#Create a group for environment controls.
-		environment_controls = Gtk::VBox.new(options[:homogeneous], options[:spacing])
-		environment_controls.pack_start(Gtk::Label.new("Length"), options[:expand], options[:fill], options[:padding])
-		@trail_length_slider = Gtk::HScale.new(2, 100, 1)
-		@trail_length_slider.signal_connect("value-changed") {
-			@view.trail_length = @trail_length_slider.value
-		}
-		@trail_length_slider.value = 5
-		environment_controls.pack_start(@trail_length_slider, options[:expand], options[:fill], options[:padding])
-		@trails_flag = Gtk::CheckButton.new("Trails")
-		@trails_flag.signal_connect("toggled") {
-			@view.erase_flag = ! @trails_flag.active?
-		}
-		@trails_flag.active = false
-		environment_controls.pack_start(@trails_flag, options[:expand], options[:fill], options[:padding])
-		@clear_button = Gtk::Button.new("Clear")
-		@clear_button.signal_connect("clicked") {
-			@environment.objects = []
-		}
-		environment_controls.pack_start(@clear_button, options[:expand], options[:fill], options[:padding])
-		#Add the environment controls to the BOTTOM of the panel.
-		control_panel.pack_end(environment_controls, options[:expand], options[:fill], options[:padding])
-		
-		#Add the control panel to the interface.
-		interface.pack_start(control_panel, options[:expand], options[:fill], options[:padding])
-		
-		interface
-		
-	end
-
-
-	#Set attributes according to command-line arguments.
-	def process_options(arguments)
+		@log.debug "Display GUI."
+		frame.show
 	
-		#Set up option parser.
-		options = OptionParser.new
-		
-		#Define valid options.
-		options.on("-h", "--help", TrueClass, "Display program help.") {
-			puts options.help
-			exit
-		}
-		options.on(
-			"-m",
-			"--max-population [number]",
-			Integer,
-			"The maximum number of allowed game objects.  #{DEFAULT_MAX_POPULATION} by default."
-		) {|value| @max_population = value}
-		options.on(
-			"-s",
-			"--max-speed [number]",
-			Integer,
-			"The fastest an object can go.  #{DEFAULT_MAX_SPEED ? DEFAULT_MAX_SPEED : 'No limit'} by default."
-		) {|value| @max_speed = value}
-		options.on(
-			"-n",
-			"--no-enclosure",
-			"Disables the barrier that normally keeps objects on the screen."
-		) {|value| @enclosure = false}
-		options.on(
-			"-u",
-			"--uri [uri]",
-			String,
-			"URI to serve the environment on via dRuby.  If not specified, no server will be started."
-		) {|value| @uri = value}
-		options.on(
-			"-f",
-			"--fps [frames]",
-			Integer,
-			"Number of frames to draw per second.  #{DEFAULT_FPS} by default."
-		) {|value| @fps = value}
-		options.on(
-			"--view-width [pixels]",
-			Integer,
-			"Window width.  #{DEFAULT_VIEW_WIDTH} by default."
-		) {|value| @view_width = value}
-		options.on(
-			"--view-height [pixels]",
-			Integer,
-			"Window height.  #{DEFAULT_VIEW_HEIGHT} by default."
-		) {|value| @view_height = value}
-		
-		#Parse the options, printing usage if parsing fails.
-		options.parse(arguments) rescue puts "#{$!}\nType '#{$0} --help' for valid options."
-		
 	end
 
-
+	
+	#Save config and shut down.
+	def on_exit
+		Configuration.save('options', @options)
+		exit
+	end
+	
+	
+	#When mouse button pressed, record location for use in release event handler.
+	def on_mouse_press(event)
+		@log.debug "Mouse pressed at #{event.x}, #{event.y}."
+		@press_location = Location.new(event.x, event.y)
+	end
+	
+	
+	#Create a creature on button release.
+	def on_mouse_release(event)
+		@log.debug "Mouse released at #{event.x}, #{event.y}."
+		#Ensure the mouse was pressed within the canvas.
+		if @press_location
+			#Create creature at release location.
+			@release_location = Location.new(event.x, event.y)
+			@log.debug "Release location: #{@release_location.inspect}"
+			@environment.objects << @generator.create_creature(
+				:x => event.x,
+				:y => event.y,
+				:speed => Utility.find_distance(@press_location, @release_location) * 2, #Use distance dragged as speed.
+				:pitch => Utility.find_angle(@press_location, @release_location), #Move in direction of drag.
+				:turn => @controls.turn_flag.is_checked,
+				:approach => @controls.approach_flag.is_checked,
+				:flee => @controls.flee_flag.is_checked,
+				:push => @controls.push_flag.is_checked,
+				:pull => @controls.pull_flag.is_checked,
+				:breed => @controls.breed_flag.is_checked,
+				:eat => @controls.eat_flag.is_checked
+			)
+			#Nullify press location, as it is no longer applicable.
+			@press_location = nil
+		end
+	end
+	
+	
 end
 
 
 
-class CreatureGenerator
+#TODO
+module Configuration
+	def Configuration.load(name)
+		{}
+	end
+	def Configuration.save(name, options)
+	end
+end
+
+
+
+#Controls for manipulating the environment.
+class ControlPanel < Wx::Panel
+
+
+	attr_accessor :turn_flag
+	attr_accessor :approach_flag
+	attr_accessor :flee_flag
+	attr_accessor :push_flag
+	attr_accessor :pull_flag
+	attr_accessor :breed_flag
+	attr_accessor :eat_flag
+
+
+	def initialize(parent)
 	
-	#Environment creatures will be added to.
-	attr_accessor :environment
+		super(parent)
+		self.sizer = Wx::BoxSizer.new(Wx::VERTICAL)
+
+		action_controls = add_panel(self)
+		add_label(action_controls, :label => "Actions")
+		@turn_flag = add_check_box(action_controls, :label => "Turn")
+		@approach_flag = add_check_box(action_controls, :label => "Chase")
+		@flee_flag = add_check_box(action_controls, :label => "Flee")
+		@push_flag = add_check_box(action_controls, :label => "Push")
+		@pull_flag = add_check_box(action_controls, :label => "Pull")
+		@breed_flag = add_check_box(action_controls, :label => "Breed")
+		@eat_flag = add_check_box(action_controls, :label => "Eat")
+		
+		environment_controls = add_panel(self)
+		add_label(environment_controls, :label => "Length")
+		length_slider = add_slider(environment_controls, :min_value => 2, :max_value => 100)
+		length_slider.value = 5
+		@trails_flag = add_check_box(environment_controls, :label => "Trails")
+		@clear_button = add_button(environment_controls, :label => "Clear")
+		
+	end
+
+
+	private
+	
+		#Other methods will call this with their particular type of control to add.
+		#Adds control to parent's sizer if it has one.
+		#Returns the control.
+		def add_control(control)
+			begin
+				control.parent.sizer.add(control)
+			rescue RuntimeError
+				#Parent had no sizer; take no action.
+				#Can't find another way to test for presence of a sizer as of wxRuby 1.9.2.
+			end
+			#Return the object.
+			control
+		end
+	
+		#Create a check box with the given label, and add it to the given container.
+		def add_check_box(parent, options = {})
+			add_control(Wx::CheckBox.new(parent, options))
+		end
+
+		#Create the given label, and add it to the given container.
+		def add_label(parent, options = {})
+			add_control(Wx::StaticText.new(parent, options))
+		end
+		
+		#Create a slider control with the given options, and add it to the given container.
+		def add_slider(parent, options = {})
+			add_control(Wx::Slider.new(parent, options))
+		end
+		
+		#Create a button with the given options, and add it to the given container.
+		def add_button(parent, options = {})
+			add_control(Wx::Button.new(parent, options))
+		end
+		
+		#Create a panel, and add it to the given container.
+		#Takes a hash with the following keys and defaults, in addition to those taken by Wx::Panel.new():
+		#	:sizer => Wx::BoxSizer.new(Wx::VERTICAL)
+		def add_panel(parent, options = {})
+			options = {
+				:sizer => Wx::BoxSizer.new(Wx::VERTICAL),
+			}.merge(options)
+			panel = Wx::Panel.new(parent, options)
+			panel.sizer = options[:sizer]
+			add_control(panel)
+		end
+		
+		
+end
+
+
+
+#Creates Creature objects.
+class CreatureGenerator
+
+
+	#Default size of new creatures.
+	attr_accessor :default_size
 	#Default required proximity for actions.
 	attr_accessor :default_proximity
 	#Rate of new TurnActions.
@@ -375,25 +320,62 @@ class CreatureGenerator
 	attr_accessor :pull_strength
 	#Strength of new PushActions.
 	attr_accessor :push_strength
+
 	
-	def initialize(environment)
+	#Takes a hash with these keys and defaults:
+	#	:default_size => 5
+	#	:default_proximity => 200
+	#	:approach_rate => 200
+	#	:flee_rate => :approach_rate
+	#	:push_strength => :approach_rate * 2
+	#	:pull_strength => :push_strength * 0.75
+	#	:turn_rate => :approach_rate * 1.1
+	#	:turn_angle => 90
+	#	:breed_rate => 10
+	def initialize(options = {})
 	
-		@environment = environment
+		#Set up logger.
+		@log = Logger.new(LOG_HANDLE)
+		@log.level = LOG_LEVEL
+		@log.progname = self
+
+		options = {
+			:default_size => 5,
+			:default_proximity => 200,
+			:approach_rate => 200,
+			:turn_angle => 90,
+			:breed_rate => 10,
+		}.merge(options)
+		@log.debug "options: #{@options.inspect}"
 		
-		#Set up defaults for attributes.
-		@default_proximity = 200
-		@approach_rate = 200
-		@flee_rate = @approach_rate
-		@push_strength = @approach_rate * 2
-		@pull_strength = @push_strength * 0.75
-		@turn_rate = @approach_rate * 1.1
-		@turn_angle = 90
-		@breed_rate = 10
+		@default_size = options[:default_size]
+		@default_proximity = options[:default_proximity]
+		@approach_rate = options[:approach_rate]
+		@turn_angle = options[:turn_angle]
+		@breed_rate = options[:breed_rate]
+		@flee_rate = options[:flee_rate] || @approach_rate * 2
+		@push_strength = options [:push_strength] || @approach_rate * 2
+		@pull_strength = options[:pull_strength] || @push_strength * 0.75
+		@turn_rate = options[:turn_rate] || @approach_rate * 1.1
 		
 	end
-
-
-	#Create a creature and add it to the environment.
+	
+	
+	#Create a creature with the given attributes and behaviors.
+	#Takes a hash with these keys and defaults:
+	#	:x => 0,
+	#	:y => 0,
+	#	:speed => 1,
+	#	:pitch => 0,
+	#	:size => @default_size,
+	#	:action_proximity => @default_proximity,
+	#	:turn => false,
+	#	:approach => false,
+	#	:flee => false,
+	#	:push => false,
+	#	:pull => false,
+	#	:breed => false,
+	#	:eat => false,
 	def create_creature(options = {})
 	
 		options = {
@@ -401,6 +383,7 @@ class CreatureGenerator
 			:y => 0,
 			:speed => 1,
 			:pitch => 0,
+			:size => @default_size,
 			:action_proximity => @default_proximity,
 			:turn => false,
 			:approach => false,
@@ -410,12 +393,13 @@ class CreatureGenerator
 			:breed => false,
 			:eat => false,
 		}.merge(options)
+		@log.debug "options: #{@options.inspect}"
 		
 		#Create a creature.
 		creature = Creature.new(
 			:location => Location.new(options[:x], options[:y]),
 			:vector => Vector.new(options[:speed], options[:pitch]),
-			:size => 5
+			:size => options[:size]
 		)
 		
 		#Set up actions and merge colors according to selected behaviors.
@@ -429,28 +413,28 @@ class CreatureGenerator
 		end
 		if options[:approach]
 			color.red += 1
-			creature.behaviors << create_behavior(
+			creature.behaviors << Behavior.new(
 				:actions => [ApproachAction.new(@approach_rate)],
 				:conditions => [ProximityCondition.new(options[:action_proximity])]
 			)
 		end
 		if options[:flee]
 			color.red += 0.5; color.green += 0.5 #Yellow.
-			creature.behaviors << create_behavior(
+			creature.behaviors << Behavior.new(
 				:actions => [FleeAction.new(@flee_rate)],
 				:conditions => [ProximityCondition.new(options[:action_proximity] * 0.5)]
 			)
 		end
 		if options[:push]
 			color.red += 0.5; color.blue += 0.5 #Purple.
-			creature.behaviors << create_behavior(
+			creature.behaviors << Behavior.new(
 				:actions => [PushAction.new(@push_strength)],
 				:conditions => [ProximityCondition.new(options[:action_proximity] * 0.25)]
 			)
 		end
 		if options[:pull]
 			color.blue += 0.75; color.green += 0.75 #Aqua.
-			creature.behaviors << create_behavior(
+			creature.behaviors << Behavior.new(
 				:actions => [PullAction.new(@pull_strength)],
 				:conditions => [ProximityCondition.new(options[:action_proximity] * 0.75)]
 			)
@@ -458,14 +442,14 @@ class CreatureGenerator
 		if options[:breed]
 			color.green -= 0.1 #Make a bit redder.
 			color.blue -= 0.1
-			creature.behaviors << create_behavior(
+			creature.behaviors << Behavior.new(
 				:actions => [BreedAction.new(@environment, @breed_rate)],
 				:conditions => [CollisionCondition.new] #The default ProximityCondition won't do.
 			)
 		end
 		if options[:eat]
 			color.green += 1
-			creature.behaviors << create_behavior(
+			creature.behaviors << Behavior.new(
 				:actions => [EatAction.new(@environment)],
 				:conditions => [
 					CollisionCondition.new, #The default ProximityCondition won't do.
@@ -476,22 +460,9 @@ class CreatureGenerator
 		
 		creature.color = color
 		
-		@environment.objects << creature
+		@log.debug "Created creature: #{creature.inspect}"
 		
-	end
-	
-	
-	def create_behavior(options = {})
-	
-		options = {
-			:actions => [],
-			:conditions => [ProximityCondition.new(@default_proximity)],
-		}.merge(options)
-		
-		behavior = Behavior.new
-		behavior.actions = options[:actions]
-		behavior.conditions = options[:conditions]
-		behavior
+		creature
 		
 	end
 	
@@ -499,15 +470,4 @@ class CreatureGenerator
 end
 
 
-
-begin
-	#Create a server.
-	application = Application.new
-	#Parse the command line.
-	application.process_options(ARGV)
-	#Start the server.
-	application.main
-rescue => exception
-	#Print error to STDERR and exit with an abnormal status.
-	abort "Error: " + exception.message + exception.backtrace.join("\n")
-end
+Application.new.main_loop
