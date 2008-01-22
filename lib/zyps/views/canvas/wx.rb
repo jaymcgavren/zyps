@@ -53,6 +53,8 @@ class WxCanvas
 		
 		#Hash of Wx::Pens used to draw in various colors and widths.
 		@pens = Hash.new {|h, k| h[k] = Hash.new}
+		#Hash of Wx::Brushes for various colors.
+		@brushes = Hash.new
 		
 	end
 
@@ -96,8 +98,7 @@ class WxCanvas
 				
 	
 	private
-	
-		BLACK = Color.new(0, 0, 0)
+
 	
 		#Converts a Zyps Color to the toolkit's color class.
 		def convert_color(color)
@@ -109,29 +110,25 @@ class WxCanvas
 		end
 	
 	
+		#Resize buffer and drawing area.
 		def resize
 			@drawing_area.set_size(Wx::Size.new(@width, @height))
 			@buffer = nil #Causes buffer to reset its size next time it's accessed.
 		end
 	
 		
+		#The Wx::Bitmap to draw to.
 		def buffer
 			@buffer ||= Wx::Bitmap.new(@width, @height)
 		end
 
-
+		
+		#Draw all queued rectangles to the given GC.
 		def render_rectangles(surface)
 			while options = @rectangle_queue.shift do
-				color = convert_color(options[:color])
-				surface.pen = Wx::Pen.new(color, 0) #Used for border.
+				surface.pen = get_pen(options[:color], 1) #Used for border.
 				if options[:filled]
-					#For now, only black is implemented.
-					#Can't figure out how to make custom brushes with wxRuby.
-					if options[:color] == BLACK
-						surface.brush = Wx::BLACK_BRUSH
-					else
-						raise(NotImplementedError, "Only black brushes implemented for now.")
-					end
+					surface.brush = get_brush(options[:color])
 				else
 					surface.brush = Wx::TRANSPARENT_BRUSH
 				end
@@ -143,6 +140,7 @@ class WxCanvas
 		end
 
 			
+		#Draw all queued lines to the given GC.
 		def render_lines(surface)
 			surface.pen.cap = Wx::CAP_ROUND
 			while options = @line_queue.shift do
@@ -157,7 +155,11 @@ class WxCanvas
 		
 		def get_pen(color, width)
 			@pens[[color.red, color.green, color.blue]][width] ||= Wx::Pen.new(convert_color(color), width.ceil)
-			@pens[[color.red, color.green, color.blue]][width]
+		end
+
+
+		def get_brush(color)
+			@brushes[[color.red, color.green, color.blue]] ||= Wx::Brush.new(convert_color(color), Wx::SOLID)
 		end
 
 		
