@@ -69,19 +69,37 @@ class WxCanvas
 	end
 	
 	
+	#Takes a hash with these keys and defaults:
+	#	:color => nil
+	#	:border_width => 1
+	#	:filled => true
+	#	:x => nil
+	#	:y => nil
+	#	:width => nil
+	#	:height => nil
 	def draw_rectangle(options = {})
 		options = {
-			:filled => true
+			:filled => true,
+			:border_width => 1
 		}.merge(options)
 		@rectangle_queue << options
 	end
 
 	
+	
+	#Takes a hash with these keys and defaults:
+	#	:color => nil
+	#	:width => nil
+	#	:x1 => nil
+	#	:y1 => nil
+	#	:x2 => nil
+	#	:y2 => nil
 	def draw_line(options = {})
 		@line_queue << options
 	end
 		
 	
+	#Draw all objects to the canvas.
 	def render
 		buffer.draw do |surface|
 			#Draw all queued rectangles.
@@ -126,7 +144,7 @@ class WxCanvas
 		#Draw all queued rectangles to the given GC.
 		def render_rectangles(surface)
 			while options = @rectangle_queue.shift do
-				surface.pen = get_pen(options[:color], 1) #Used for border.
+				surface.pen = get_pen(options[:color], options[:border_width]) #Used for border.
 				if options[:filled]
 					surface.brush = get_brush(options[:color])
 				else
