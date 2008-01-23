@@ -74,8 +74,8 @@ class Application < Wx::App
 			:width => 800,
 			:height => 600,
 			:max_speed => 200,
-			:max_population => 100,
-			:fps => 60,
+			:max_population => 50,
+			:fps => 30,
 			:enclosure => true,
 			:uri => nil,
 		}.merge(options)
@@ -112,6 +112,15 @@ class Application < Wx::App
 		
 		@log.debug "Create an interface."
 		@controls = ControlPanel.new(frame)
+		@controls.clear_button.evt_button(@controls.clear_button.get_id) do |event|
+			@environment.objects = []
+		end
+		@controls.length_slider.evt_slider(@controls.length_slider.get_id) do |event|
+			view.trail_length = @controls.length_slider.value
+		end
+		@controls.trails_flag.evt_checkbox(@controls.trails_flag.get_id) do |event|
+			view.erase_flag = ! @controls.trails_flag.is_checked
+		end
 		frame.sizer.add(@controls)
 		
 		@log.debug "Create an environment, and link it to the view."
@@ -139,14 +148,18 @@ class Application < Wx::App
 		@environment.environmental_factors << PopulationLimit.new(@options[:max_population]) if @options[:max_population]
 		
 		@log.debug "Set up a creature generator."
-		@generator = CreatureGenerator.new
+		@generator = CreatureGenerator.new(:environment => @environment)
 		
 		@log.debug "Set up a timer to update the environment."
 		milliseconds_per_frame = (1.0 / @options[:fps] * 1000).to_int
 		@log.debug "Timer will fire every #{milliseconds_per_frame} milliseconds."
 		timer_id = Wx::ID_HIGHEST + 1
 		timer = Wx::Timer.new(self, timer_id)
-		evt_timer(timer_id) {@environment.interact}
+		evt_timer(timer_id) do
+			@environment.interact
+			#Keeps dead objects from accumulating and causing hiccups later.
+			GC.start
+		end
 		timer.start(milliseconds_per_frame)
 		
 		@log.debug "Display GUI."
@@ -222,6 +235,9 @@ class ControlPanel < Wx::Panel
 	attr_accessor :pull_flag
 	attr_accessor :breed_flag
 	attr_accessor :eat_flag
+	attr_accessor :length_slider
+	attr_accessor :trails_flag
+	attr_accessor :clear_button
 
 
 	def initialize(parent)
@@ -241,8 +257,8 @@ class ControlPanel < Wx::Panel
 		
 		environment_controls = add_panel(self)
 		add_label(environment_controls, :label => "Length")
-		length_slider = add_slider(environment_controls, :min_value => 2, :max_value => 100)
-		length_slider.value = 5
+		@length_slider = add_slider(environment_controls, :min_value => 2, :max_value => 100)
+		@length_slider.value = 5
 		@trails_flag = add_check_box(environment_controls, :label => "Trails")
 		@clear_button = add_button(environment_controls, :label => "Clear")
 		
@@ -306,6 +322,8 @@ end
 class CreatureGenerator
 
 
+	#Environment creatures will be placed in.
+	attr_accessor :environment
 	#Default size of new creatures.
 	attr_accessor :default_size
 	#Default required proximity for actions.
@@ -323,6 +341,7 @@ class CreatureGenerator
 
 	
 	#Takes a hash with these keys and defaults:
+	#	:environment => nil
 	#	:default_size => 5
 	#	:default_proximity => 200
 	#	:approach_rate => 200
@@ -348,6 +367,7 @@ class CreatureGenerator
 		}.merge(options)
 		@log.debug "options: #{@options.inspect}"
 		
+		@environment = options[:environment]
 		@default_size = options[:default_size]
 		@default_proximity = options[:default_proximity]
 		@approach_rate = options[:approach_rate]
