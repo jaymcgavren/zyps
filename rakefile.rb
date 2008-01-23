@@ -13,9 +13,6 @@ SUMMARY = "A game library for Ruby"
 AUTHOR = "Jay McGavren"
 AUTHOR_EMAIL = "jay@mcgavren.com"
 WEB_SITE = "http://jay.mcgavren.com/#{PRODUCT_NAME.downcase}/"
-REQUIREMENTS = [
-	"Ruby-GNOME2"
-]
 EXECUTABLES = [
 	PRODUCT_NAME.downcase
 ]
@@ -66,7 +63,7 @@ specification = Gem::Specification.new do |spec|
 	spec.homepage = WEB_SITE
 	spec.platform = Gem::Platform::RUBY
 	spec.summary = SUMMARY
-	spec.requirements << REQUIREMENTS
+	spec.add_dependency("wxruby", ">= 1.9.2")
 	spec.rubyforge_project = PRODUCT_NAME.downcase
 	spec.require_path = "lib"
 	spec.autorequire = PRODUCT_NAME.downcase
