@@ -82,4 +82,18 @@ class StrengthCondition < Condition
 end
 
 
+#True if the actor and target are of the same Ruby class.
+class ClassCondition < Condition
+	#The class of target to look for.
+	attr_accessor :target_class
+	def initialize(target_class)
+		self.target_class = target_class
+	end
+	#Returns an array of targets that are of the selected Ruby class.
+	def select(actor, targets)
+		targets.grep(target_class)
+	end
+end
+
+
 end #module Zyps
