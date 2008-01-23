@@ -32,23 +32,6 @@ At a command line, type:
 
 	zyps
 
-The following options can be specified if desired:
-
-	    -h, --help                       Display program help.
-	    -m, --max-population [number]    The maximum number of allowed game objects.
-	                                     100 by default.
-	    -s, --max-speed [number]         The fastest an object can go.  200 by 
-	                                     default.
-	    -n, --no-enclosure               Disables the barrier that normally keeps
-	                                     objects on the screen.
-	    -u, --uri [uri]                  URI to serve the environment on via dRuby.
-	                                     If not specified, no server will be started.
-	    -f, --fps [frames]               Number of frames to draw per second.
-	                                     60 by default.
-	        --view-width [pixels]        Window width.  800 by default.
-	        --view-height [pixels]       Window height.  600 by default.
-
-
 
 == Development
 
