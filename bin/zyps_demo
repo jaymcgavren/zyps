@@ -96,7 +96,11 @@ class Demo < Wx::App
 		timer_id = Wx::ID_HIGHEST + 1
 		timer = Wx::Timer.new(self, timer_id)
 		say "The timer will trigger the environment update."
-		evt_timer(timer_id) {@environment.interact}
+		evt_timer(timer_id) do
+			@environment.interact
+			#Keeps dead objects from accumulating and causing hiccups later.
+			GC.start
+		end
 		timer.start(milliseconds_per_frame)
 		
 		
