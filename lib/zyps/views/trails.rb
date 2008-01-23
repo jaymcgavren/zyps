@@ -26,6 +26,7 @@ module Zyps
 class TrailsView
 
 	#A GUI toolkit-specific drawing area that will be used to render the view.
+	#See WxCanvas and GTK2Canvas.
 	attr_reader :canvas
 	#Dimensions of the view.
 	attr_reader :width, :height

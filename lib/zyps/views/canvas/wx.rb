@@ -22,12 +22,16 @@ require 'wx'
 module Zyps
 
 
+#Called by View objects for use in wxRuby applications.
+#Assign an instance to a View, then add the drawing_area attribute to a GUI container object.
+#The drawing area will be updated whenever the View is.
 class WxCanvas
 
 
 	#A wxWidgets window that will be painted on.
 	attr_reader :drawing_area
 	#Dimensions of the drawing area.
+	#Control should normally be left to the owner View object.
 	attr_reader :width, :height
 
 	#Takes the wxRuby GUI object that will be its parent.
@@ -99,7 +103,7 @@ class WxCanvas
 	end
 		
 	
-	#Draw all objects to the canvas.
+	#Draw all objects to the drawing area.
 	def render
 		buffer.draw do |surface|
 			#Draw all queued rectangles.

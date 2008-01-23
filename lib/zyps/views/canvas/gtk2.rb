@@ -22,12 +22,16 @@ require 'gtk2'
 module Zyps
 
 
+#Called by View objects for use in Ruby-GNOME2 applications.
+#Assign an instance to a View, then add the drawing_area attribute to a GUI container object.
+#The drawing area will be updated whenever the View is.
 class GTK2Canvas
 
 
 	#A Gtk::DrawingArea that will be painted on.
 	attr_reader :drawing_area
 	#Dimensions of the drawing area.
+	#Control should normally be left to the owner View object.
 	attr_reader :width, :height
 
 	def initialize
@@ -66,6 +70,14 @@ class GTK2Canvas
 	end
 	
 	
+	#Takes a hash with these keys and defaults:
+	#	:color => nil
+	#	:border_width => 1
+	#	:filled => true
+	#	:x => nil
+	#	:y => nil
+	#	:width => nil
+	#	:height => nil
 	def draw_rectangle(options = {})
 		options = {
 			:filled => true
@@ -81,6 +93,13 @@ class GTK2Canvas
 	end
 
 	
+	#Takes a hash with these keys and defaults:
+	#	:color => nil
+	#	:width => nil
+	#	:x1 => nil
+	#	:y1 => nil
+	#	:x2 => nil
+	#	:y2 => nil
 	def draw_line(options = {})
 		graphics_context = Gdk::GC.new(buffer)
 		graphics_context.rgb_fg_color = convert_color(options[:color])
@@ -98,6 +117,7 @@ class GTK2Canvas
 	end
 	
 	
+	#Draw all objects to the drawing area.
 	def render
 		@drawing_area.queue_draw_area(0, 0, @width, @height)
 	end
