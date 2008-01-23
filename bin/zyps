@@ -44,7 +44,7 @@ include Zyps
 
 
 LOG_HANDLE = STDOUT
-LOG_LEVEL = Logger::DEBUG
+LOG_LEVEL = Logger::WARN
 
 
 #The Zyps GUI.
@@ -63,7 +63,6 @@ class Application < Wx::App
 	
 		super()
 	
-		#Set up logger.
 		@log = Logger.new(LOG_HANDLE)
 		@log.level = LOG_LEVEL
 		@log.progname = self
@@ -123,7 +122,7 @@ class Application < Wx::App
 		@controls.trails_flag.evt_checkbox(@controls.trails_flag.get_id) do |event|
 			@view.erase_flag = ! @controls.trails_flag.is_checked
 		end
-		frame.sizer.add(@controls, 0)
+		frame.sizer.add(@controls, 0, Wx::GROW)
 		
 		@log.debug "Create an environment, and link it to the view."
 		@environment = Environment.new
@@ -259,11 +258,14 @@ class ControlPanel < Wx::Panel
 		@breed_flag = add_check_box(action_controls, :label => "Breed")
 		@eat_flag = add_check_box(action_controls, :label => "Eat")
 		
-		environment_controls = add_panel(self)
-		add_label(environment_controls, :label => "Length")
-		@length_slider = add_slider(environment_controls, :min_value => 2, :max_value => 100)
+		display_controls = add_panel(self)
+		add_label(display_controls, :label => "Length")
+		@length_slider = add_slider(display_controls, :min_value => 2, :max_value => 100)
 		@length_slider.value = 5
-		@trails_flag = add_check_box(environment_controls, :label => "Trails")
+		@trails_flag = add_check_box(display_controls, :label => "Trails")
+		
+		environment_controls = add_panel(self)
+		add_label(environment_controls, :label => "Environment")
 		@clear_button = add_button(environment_controls, :label => "Clear")
 		
 	end
@@ -276,7 +278,7 @@ class ControlPanel < Wx::Panel
 		#Returns the control.
 		def add_control(control)
 			begin
-				control.parent.sizer.add(control)
+				control.parent.sizer.add(control, 0, Wx::ALL, 3)
 			rescue RuntimeError
 				#Parent had no sizer; take no action.
 				#Can't find another way to test for presence of a sizer as of wxRuby 1.9.2.
@@ -290,11 +292,6 @@ class ControlPanel < Wx::Panel
 			add_control(Wx::CheckBox.new(parent, options))
 		end
 
-		#Create the given label, and add it to the given container.
-		def add_label(parent, options = {})
-			add_control(Wx::StaticText.new(parent, options))
-		end
-		
 		#Create a slider control with the given options, and add it to the given container.
 		def add_slider(parent, options = {})
 			add_control(Wx::Slider.new(parent, options))
@@ -303,6 +300,13 @@ class ControlPanel < Wx::Panel
 		#Create a button with the given options, and add it to the given container.
 		def add_button(parent, options = {})
 			add_control(Wx::Button.new(parent, options))
+		end
+		
+		#Create the given label, and add it to the given container.
+		def add_label(parent, options = {})
+			control = Wx::StaticText.new(parent, options)
+			control.parent.sizer.add(control, 0, Wx::ALIGN_CENTER_HORIZONTAL|Wx::ALL, 3)
+			control
 		end
 		
 		#Create a panel, and add it to the given container.
@@ -314,7 +318,8 @@ class ControlPanel < Wx::Panel
 			}.merge(options)
 			panel = Wx::Panel.new(parent, options)
 			panel.sizer = options[:sizer]
-			add_control(panel)
+			panel.parent.sizer.add(panel, 1, Wx::GROW|Wx::ALL, 3)
+			panel
 		end
 		
 		
@@ -494,4 +499,11 @@ class CreatureGenerator
 end
 
 
-Application.new.main_loop
+begin
+	Application.new.main_loop
+rescue SystemExit
+	#No action.
+rescue Exception => exception
+	#Print error to STDERR and exit with an abnormal status.
+	abort "Error: " + exception.message
+end
