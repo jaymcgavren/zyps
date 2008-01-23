@@ -86,7 +86,7 @@ class Demo < Wx::App
 		@environment = Environment.new
 		say "We tell the View to display our Environment by adding it as an Observer."
 		@environment.add_observer(view)
-		say "We'll also add this application as an observer, so we can track the number of updates."
+		say "We'll also add this application as an observer, to track the number of updates."
 		@update_count = 0
 		@environment.add_observer(self)
 		
@@ -96,13 +96,13 @@ class Demo < Wx::App
 		timer_id = Wx::ID_HIGHEST + 1
 		timer = Wx::Timer.new(self, timer_id)
 		say "The timer will trigger the environment update."
+		say "We also call the Ruby garbage collector with each update."
+		say "This keeps dead objects from accumulating and causing hiccups later."
 		evt_timer(timer_id) do
 			@environment.interact
-			#Keeps dead objects from accumulating and causing hiccups later.
 			GC.start
 		end
 		timer.start(milliseconds_per_frame)
-		
 		
 	end
 	
@@ -180,7 +180,7 @@ class Demo < Wx::App
 	#Demonstrates drawing an environment and changing its size.
 	def test_render
 
-		say("The things that populate an environment are called GameObjects.  Each object has:")
+		say("The things in an Environment are called GameObjects.  Each object has:")
 		object = GameObject.new
 		say("...a name")
 		object.name = "Huey"
@@ -265,7 +265,8 @@ class Demo < Wx::App
 	
 	def test_behaviors_2
 		
-		say("Then we'll toss a piece of food (a GameObject with the label 'food') into the environment.")
+		say("Then we'll toss a piece of food into the environment.")
+		say("(It's just a GameObject with the tag 'food'.)")
 		@environment.objects << GameObject.new(
 			:name => "target",
 			:location => Location.new(WIDTH / 2, HEIGHT / 2),
@@ -478,6 +479,8 @@ end
 begin
 	#Run the demos.
 	Demo.new.main_loop
+rescue SystemExit
+	#No action.
 rescue Exception => exception
 	#Print error to STDERR and exit with an abnormal status.
 	abort "Error: " + exception.message
