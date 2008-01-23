@@ -77,7 +77,7 @@ Also see "bin/zyps_demo" and the "test" subfolder in the project directory for s
 
 Glen Franta, Scott McGinty, and so many other math, science, and computer science teachers whose names I've forgotten.  Nothing I do today would be possible without your efforts so long ago.
 
-Mario Steele for wxRuby advice.
+Alex Fenton and Mario Steele for wxRuby advice.
 
 My lovely wife, Diana, for patience and usability testing.
 
