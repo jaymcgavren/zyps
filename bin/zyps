@@ -99,16 +99,18 @@ class Application < Wx::App
 		frame.evt_close {on_exit}
 		
 		@log.debug "Create a view and canvas."
-		view = TrailsView.new(
+		@view = TrailsView.new(
 			:width => @options[:width],
 			:height => @options[:height],
 			:canvas => WxCanvas.new(frame)
 		)
-		frame.sizer.add(view.canvas.drawing_area, 1, Wx::GROW)
+		frame.sizer.add(@view.canvas.drawing_area, 1, Wx::GROW)
 		@log.debug "Set up mouse click/drag handlers for canvas."
 		@press_location = nil
-		view.canvas.drawing_area.evt_left_down {|event| on_mouse_press(event)}
-		view.canvas.drawing_area.evt_left_up {|event| on_mouse_release(event)}
+		@view.canvas.drawing_area.evt_left_down {|event| on_mouse_press(event)}
+		@view.canvas.drawing_area.evt_left_up {|event| on_mouse_release(event)}
+		@log.debug "Resize view and enclosure when canvas changes size."
+		@view.canvas.drawing_area.evt_size {|event| on_view_resize(event)}
 		
 		@log.debug "Create an interface."
 		@controls = ControlPanel.new(frame)
@@ -116,33 +118,26 @@ class Application < Wx::App
 			@environment.objects = []
 		end
 		@controls.length_slider.evt_slider(@controls.length_slider.get_id) do |event|
-			view.trail_length = @controls.length_slider.value
+			@view.trail_length = @controls.length_slider.value
 		end
 		@controls.trails_flag.evt_checkbox(@controls.trails_flag.get_id) do |event|
-			view.erase_flag = ! @controls.trails_flag.is_checked
+			@view.erase_flag = ! @controls.trails_flag.is_checked
 		end
-		frame.sizer.add(@controls)
+		frame.sizer.add(@controls, 0)
 		
 		@log.debug "Create an environment, and link it to the view."
 		@environment = Environment.new
-		@environment.add_observer(view)
+		@environment.add_observer(@view)
 		
 		@log.debug "Set up environmental factors."
 		if @options[:enclosure]
 			@enclosure = Enclosure.new(
 				:left => 0,
 				:bottom => 0,
-				:top => view.canvas.drawing_area.size.height,
-				:right => view.canvas.drawing_area.size.width
+				:top => @view.canvas.drawing_area.size.height,
+				:right => @view.canvas.drawing_area.size.width
 			)
 			@environment.environmental_factors << @enclosure
-			#Resize view and enclosure when canvas changes size.
-			view.canvas.drawing_area.evt_size do |event|
-				view.height = view.canvas.drawing_area.size.height
-				view.width = view.canvas.drawing_area.size.height
-				@enclosure.top = view.canvas.drawing_area.size.height
-				@enclosure.right = view.canvas.drawing_area.size.width
-			end
 		end
 		@environment.environmental_factors << SpeedLimit.new(@options[:max_speed]) if @options[:max_speed]
 		@environment.environmental_factors << PopulationLimit.new(@options[:max_population]) if @options[:max_population]
@@ -206,6 +201,15 @@ class Application < Wx::App
 			#Nullify press location, as it is no longer applicable.
 			@press_location = nil
 		end
+	end
+	
+	
+	#Resize objects that are dependent on the view size.
+	def on_view_resize(event)
+		@view.height = @view.canvas.drawing_area.size.height
+		@view.width = @view.canvas.drawing_area.size.width
+		@enclosure.top = @view.canvas.drawing_area.size.height
+		@enclosure.right = @view.canvas.drawing_area.size.width
 	end
 	
 	
