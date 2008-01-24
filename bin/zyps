@@ -209,6 +209,7 @@ class Application < Wx::App
 		@view.width = @view.canvas.drawing_area.size.width
 		@enclosure.top = @view.canvas.drawing_area.size.height
 		@enclosure.right = @view.canvas.drawing_area.size.width
+		event.skip
 	end
 	
 	
