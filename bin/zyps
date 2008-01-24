@@ -248,7 +248,7 @@ class ControlPanel < Wx::Panel
 		super(parent)
 		self.sizer = Wx::BoxSizer.new(Wx::VERTICAL)
 
-		action_controls = add_panel(self)
+		action_controls = add_panel(self, :proportion => 2)
 		add_label(action_controls, :label => "Actions")
 		@turn_flag = add_check_box(action_controls, :label => "Turn")
 		@approach_flag = add_check_box(action_controls, :label => "Chase")
@@ -258,13 +258,13 @@ class ControlPanel < Wx::Panel
 		@breed_flag = add_check_box(action_controls, :label => "Breed")
 		@eat_flag = add_check_box(action_controls, :label => "Eat")
 		
-		display_controls = add_panel(self)
+		display_controls = add_panel(self, :proportion => 1)
 		add_label(display_controls, :label => "Length")
 		@length_slider = add_slider(display_controls, :min_value => 2, :max_value => 100)
 		@length_slider.value = 5
 		@trails_flag = add_check_box(display_controls, :label => "Trails")
 		
-		environment_controls = add_panel(self)
+		environment_controls = add_panel(self, :proportion => 1)
 		add_label(environment_controls, :label => "Environment")
 		@clear_button = add_button(environment_controls, :label => "Clear")
 		
@@ -315,10 +315,11 @@ class ControlPanel < Wx::Panel
 		def add_panel(parent, options = {})
 			options = {
 				:sizer => Wx::BoxSizer.new(Wx::VERTICAL),
+				:proportion => 1,
 			}.merge(options)
 			panel = Wx::Panel.new(parent, options)
 			panel.sizer = options[:sizer]
-			panel.parent.sizer.add(panel, 1, Wx::GROW|Wx::ALL, 3)
+			panel.parent.sizer.add(panel, options[:proportion], Wx::GROW|Wx::ALL, 3)
 			panel
 		end
 		
