@@ -43,6 +43,7 @@ class WxCanvas
 
 		#Create a drawing area.
 		@drawing_area = Wx::Window.new(parent)
+		@drawing_area.min_size = [0, 0]
 		#Set to correct size.
 		resize
 		
