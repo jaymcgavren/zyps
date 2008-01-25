@@ -98,19 +98,21 @@ class Application < Wx::App
 		frame.evt_close {on_exit}
 		
 		@log.debug "Create a view and canvas."
+		drawing_area = Wx::Window.new(frame)
+		drawing_area.min_size = [0, 0]
+		frame.sizer.add(drawing_area, 1, Wx::GROW)
 		@view = TrailsView.new(
 			:width => @options[:width],
 			:height => @options[:height],
-			:canvas => WxCanvas.new(frame)
+			:canvas => WxCanvas.new(drawing_area)
 		)
-		frame.sizer.add(@view.canvas.drawing_area, 1, Wx::GROW)
 		@log.debug "Set up mouse click/drag handlers for canvas."
 		@press_location = nil
-		@view.canvas.drawing_area.evt_left_down {|event| on_mouse_press(event)}
-		@view.canvas.drawing_area.evt_left_up {|event| on_mouse_release(event)}
+		drawing_area.evt_left_down {|event| on_mouse_press(event)}
+		drawing_area.evt_left_up {|event| on_mouse_release(event)}
 		@log.debug "Resize view and enclosure when canvas changes size."
-		@view.canvas.drawing_area.evt_size {|event| on_view_resize(event)}
-		
+		frame.evt_size {|event| on_view_resize(event)}
+
 		@log.debug "Create an interface."
 		@controls = ControlPanel.new(frame)
 		@controls.clear_button.evt_button(@controls.clear_button.get_id) do |event|
@@ -133,8 +135,8 @@ class Application < Wx::App
 			@enclosure = Enclosure.new(
 				:left => 0,
 				:bottom => 0,
-				:top => @view.canvas.drawing_area.size.height,
-				:right => @view.canvas.drawing_area.size.width
+				:top => drawing_area.size.height,
+				:right => drawing_area.size.width
 			)
 			@environment.environmental_factors << @enclosure
 		end
@@ -157,6 +159,7 @@ class Application < Wx::App
 		timer.start(milliseconds_per_frame)
 		
 		@log.debug "Display GUI."
+		frame.send_size_event
 		frame.show
 	
 	end
@@ -205,10 +208,12 @@ class Application < Wx::App
 	
 	#Resize objects that are dependent on the view size.
 	def on_view_resize(event)
+		@log.debug "Resizing to #{@view.canvas.drawing_area.size}."
 		@view.height = @view.canvas.drawing_area.size.height
 		@view.width = @view.canvas.drawing_area.size.width
 		@enclosure.top = @view.canvas.drawing_area.size.height
 		@enclosure.right = @view.canvas.drawing_area.size.width
+		@log.debug "View dimensions: #{@view.height}, #{@view.width}"
 		event.skip
 	end
 	

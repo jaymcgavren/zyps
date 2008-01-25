@@ -35,15 +35,14 @@ class WxCanvas
 	attr_reader :width, :height
 
 	#Takes the wxRuby GUI object that will be its parent.
-	def initialize (parent)
+	def initialize (drawing_area)
+	
+		@drawing_area = drawing_area
 	
 		#Will be resized later.
-		@width = 1
-		@height = 1
+		@width = @drawing_area.size.width
+		@height = @drawing_area.size.height
 
-		#Create a drawing area.
-		@drawing_area = Wx::Window.new(parent)
-		@drawing_area.min_size = [0, 0]
 		#Set to correct size.
 		resize
 		
@@ -135,7 +134,6 @@ class WxCanvas
 	
 		#Resize buffer and drawing area.
 		def resize
-			@drawing_area.set_size(Wx::Size.new(@width, @height))
 			@buffer = nil #Causes buffer to reset its size next time it's accessed.
 		end
 	
