@@ -111,7 +111,6 @@ class Application < Wx::App
 		drawing_area.evt_left_down {|event| on_mouse_press(event)}
 		drawing_area.evt_left_up {|event| on_mouse_release(event)}
 		@log.debug "Resize view and enclosure when canvas changes size."
-		frame.evt_size {|event| on_view_resize(event)}
 
 		@log.debug "Create an interface."
 		@controls = ControlPanel.new(frame)
@@ -151,11 +150,7 @@ class Application < Wx::App
 		@log.debug "Timer will fire every #{milliseconds_per_frame} milliseconds."
 		timer_id = Wx::ID_HIGHEST + 1
 		timer = Wx::Timer.new(self, timer_id)
-		evt_timer(timer_id) do
-			@environment.interact
-			#Keeps dead objects from accumulating and causing hiccups later.
-			GC.start
-		end
+		evt_timer(timer_id) {on_timer}
 		timer.start(milliseconds_per_frame)
 		
 		@log.debug "Display GUI."
@@ -164,6 +159,22 @@ class Application < Wx::App
 	
 	end
 
+
+	#Update environment and view.
+	def on_timer
+		#Resize playfield if window has been resized.
+		if @view.height != @view.canvas.drawing_area.size.height || @view.width != @view.canvas.drawing_area.size.width
+			@view.height = @view.canvas.drawing_area.size.height
+			@view.width = @view.canvas.drawing_area.size.width
+			@enclosure.top = @view.canvas.drawing_area.size.height
+			@enclosure.right = @view.canvas.drawing_area.size.width
+		end
+		#Update environment.
+		@environment.interact
+		#Keeps dead objects from accumulating and causing hiccups later.
+		GC.start
+	end
+	
 	
 	#Save config and shut down.
 	def on_exit
@@ -203,18 +214,6 @@ class Application < Wx::App
 			#Nullify press location, as it is no longer applicable.
 			@press_location = nil
 		end
-	end
-	
-	
-	#Resize objects that are dependent on the view size.
-	def on_view_resize(event)
-		@log.debug "Resizing to #{@view.canvas.drawing_area.size}."
-		@view.height = @view.canvas.drawing_area.size.height
-		@view.width = @view.canvas.drawing_area.size.width
-		@enclosure.top = @view.canvas.drawing_area.size.height
-		@enclosure.right = @view.canvas.drawing_area.size.width
-		@log.debug "View dimensions: #{@view.height}, #{@view.width}"
-		event.skip
 	end
 	
 	
