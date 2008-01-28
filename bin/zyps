@@ -172,23 +172,16 @@ class Application < Wx::App
 		end
 		#Update environment.
 		@environment.interact
+		#If there are no Creatures, show instructions on creating them.
+		if @environment.objects.empty?
+			@view.canvas.buffer.draw do |dc|
+				render_text_centered("Click and drag the mouse here to create creatures.", dc)
+			end
+		end
 		#Update viewing area.
 		@drawing_area.paint do |dc|
 			#Copy from View to drawing area.
 			render(dc)
-			#If there are no Creatures, show instructions on creating them.
-			if @environment.objects.empty?
-				dc.text_foreground = Wx::Colour.new(255, 255, 255)
-				dc.text_background = Wx::Colour.new(0, 0, 0)
-				string = "Click and drag in this area to create creatures."
-				text_size = dc.get_text_extent(string)
-				dc_size = dc.get_size
-				dc.draw_text(
-					string,
-					dc.size[0] / 2 - (text_size[0] / 2),
-					dc.size[1] / 2 - (text_size[1] / 2)
-				)
-			end
 		end
 		#Keeps dead objects from accumulating and causing hiccups later.
 		GC.start
@@ -241,6 +234,19 @@ class Application < Wx::App
 		#Copy the buffer to the device context.
 		dc.draw_bitmap(@view.canvas.buffer, 0, 0, false)
 	end	
+	
+	
+	#Draw the given text in the center of the given Wx::DC.
+	def render_text_centered(string, dc)
+		dc.text_foreground = Wx::Colour.new(255, 255, 255)
+		dc.text_background = Wx::Colour.new(0, 0, 0)
+		text_size = dc.get_text_extent(string)
+		dc.draw_text(
+			string,
+			dc.size.width / 2 - (text_size[0] / 2),
+			dc.size.height / 2 - (text_size[1] / 2)
+		)
+	end
 	
 end
 
