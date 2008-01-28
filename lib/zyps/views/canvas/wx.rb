@@ -23,33 +23,24 @@ module Zyps
 
 
 #Called by View objects for use in wxRuby applications.
-#Assign an instance to a View, then add the drawing_area attribute to a GUI container object.
-#The drawing area will be updated whenever the View is.
+#Assign an instance to a View, and the drawing_area will be updated whenever the View is.
 class WxCanvas
 
 
-	#A wxWidgets window that will be painted on.
-	attr_reader :drawing_area
+	#A Wx::Bitmap that will be painted on.
+	attr_reader :buffer
 	#Dimensions of the drawing area.
 	#Control should normally be left to the owner View object.
 	attr_reader :width, :height
 
-	#Takes the wxRuby GUI object that will be its parent.
-	def initialize (drawing_area)
-	
-		@drawing_area = drawing_area
+
+	def initialize
 	
 		#Will be resized later.
-		@width = @drawing_area.size.width
-		@height = @drawing_area.size.height
+		@width, @height = 1, 1
 
 		#Set to correct size.
 		resize
-		
-		#Whenever the drawing area needs updating...
-		@drawing_area.evt_paint do |event|
-			render
-		end
 		
 		#Arrays of shapes that will be painted when render() is called.
 		@rectangle_queue = []
@@ -111,13 +102,14 @@ class WxCanvas
 			#Draw all queued lines.
 			render_lines(surface)
 		end
-		#Copy offscreen bitmap to screen.
-		@drawing_area.paint do |dc|
-			#Copy the buffer to the viewable window.
-			dc.draw_bitmap(buffer, 0, 0, false)
-		end
 	end
 				
+	
+	#The Wx::Bitmap to draw to.
+	def buffer
+		@buffer ||= Wx::Bitmap.new(@width, @height)
+	end
+
 	
 	private
 
@@ -135,12 +127,6 @@ class WxCanvas
 		#Resize buffer and drawing area.
 		def resize
 			@buffer = nil #Causes buffer to reset its size next time it's accessed.
-		end
-	
-		
-		#The Wx::Bitmap to draw to.
-		def buffer
-			@buffer ||= Wx::Bitmap.new(@width, @height)
 		end
 
 		

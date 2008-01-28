@@ -98,19 +98,20 @@ class Application < Wx::App
 		frame.evt_close {on_exit}
 		
 		@log.debug "Create a view and canvas."
-		drawing_area = Wx::Window.new(frame)
-		drawing_area.min_size = [0, 0]
-		frame.sizer.add(drawing_area, 1, Wx::GROW)
+		@drawing_area = Wx::Window.new(frame)
+		@drawing_area.min_size = [0, 0]
+		frame.sizer.add(@drawing_area, 1, Wx::GROW)
 		@view = TrailsView.new(
 			:width => @options[:width],
 			:height => @options[:height],
-			:canvas => WxCanvas.new(drawing_area)
+			:canvas => WxCanvas.new
 		)
 		@log.debug "Set up mouse click/drag handlers for canvas."
 		@press_location = nil
-		drawing_area.evt_left_down {|event| on_mouse_press(event)}
-		drawing_area.evt_left_up {|event| on_mouse_release(event)}
-		@log.debug "Resize view and enclosure when canvas changes size."
+		@drawing_area.evt_left_down {|event| on_mouse_press(event)}
+		@drawing_area.evt_left_up {|event| on_mouse_release(event)}
+		#Whenever the drawing area needs updating, copy the view's buffer over.
+		@drawing_area.evt_paint {|event| @drawing_area.paint {|dc| render(dc)}}
 
 		@log.debug "Create an interface."
 		@controls = ControlPanel.new(frame)
@@ -134,8 +135,8 @@ class Application < Wx::App
 			@enclosure = Enclosure.new(
 				:left => 0,
 				:bottom => 0,
-				:top => drawing_area.size.height,
-				:right => drawing_area.size.width
+				:top => @drawing_area.size.height,
+				:right => @drawing_area.size.width
 			)
 			@environment.environmental_factors << @enclosure
 		end
@@ -163,14 +164,32 @@ class Application < Wx::App
 	#Update environment and view.
 	def on_timer
 		#Resize playfield if window has been resized.
-		if @view.height != @view.canvas.drawing_area.size.height || @view.width != @view.canvas.drawing_area.size.width
-			@view.height = @view.canvas.drawing_area.size.height
-			@view.width = @view.canvas.drawing_area.size.width
-			@enclosure.top = @view.canvas.drawing_area.size.height
-			@enclosure.right = @view.canvas.drawing_area.size.width
+		if @view.height != @drawing_area.size.height || @view.width != @drawing_area.size.width
+			@view.height = @drawing_area.size.height
+			@view.width = @drawing_area.size.width
+			@enclosure.top = @drawing_area.size.height
+			@enclosure.right = @drawing_area.size.width
 		end
 		#Update environment.
 		@environment.interact
+		#Update viewing area.
+		@drawing_area.paint do |dc|
+			#Copy from View to drawing area.
+			render(dc)
+			#If there are no Creatures, show instructions on creating them.
+			if @environment.objects.empty?
+				dc.text_foreground = Wx::Colour.new(255, 255, 255)
+				dc.text_background = Wx::Colour.new(0, 0, 0)
+				string = "Click and drag in this area to create creatures."
+				text_size = dc.get_text_extent(string)
+				dc_size = dc.get_size
+				dc.draw_text(
+					string,
+					dc.size[0] / 2 - (text_size[0] / 2),
+					dc.size[1] / 2 - (text_size[1] / 2)
+				)
+			end
+		end
 		#Keeps dead objects from accumulating and causing hiccups later.
 		GC.start
 	end
@@ -216,6 +235,12 @@ class Application < Wx::App
 		end
 	end
 	
+	
+	#Takes a Wx::DC to copy the view to.
+	def render(dc)
+		#Copy the buffer to the device context.
+		dc.draw_bitmap(@view.canvas.buffer, 0, 0, false)
+	end	
 	
 end
 

@@ -70,7 +70,6 @@ class Demo < Wx::App
 		say "First, we need to create a Frame (window) to hold everything."
 		frame = Wx::Frame.new(nil, :size => [WIDTH, HEIGHT], :title => "Zyps Demo")
 		frame.evt_close {|event| exit}
-		frame.show
 		
 		say "Zyps environments are displayed using Views."
 		say "A TrailsView shows game objects with little light trails behind them."
@@ -80,7 +79,11 @@ class Demo < Wx::App
 		)
 		say "We also assign the View a Canvas to draw to."
 		say "Since our framework is wxWidgets, we'll use a WxCanvas."
-		view.canvas = WxCanvas.new(frame)
+		view.canvas = WxCanvas.new
+		
+		say "We need a place to draw our View to."
+		say "We'll add a Wx::Window to the Frame."
+		window = Wx::Window.new(frame)
 		
 		say "The world is called an Environment in Zyps.  Let's create a new one."
 		@environment = Environment.new
@@ -96,13 +99,20 @@ class Demo < Wx::App
 		timer_id = Wx::ID_HIGHEST + 1
 		timer = Wx::Timer.new(self, timer_id)
 		say "The timer will trigger the environment update."
+		say "Then it copies the updated view's buffer to our window."
 		say "We also call the Ruby garbage collector with each update."
 		say "This keeps dead objects from accumulating and causing hiccups later."
 		evt_timer(timer_id) do
 			@environment.interact
+			window.paint do |surface|
+				surface.draw_bitmap(view.canvas.buffer, 0, 0, false)
+			end
 			GC.start
 		end
 		timer.start(milliseconds_per_frame)
+		
+		say "Our final setup step is to show the window that will display it all."
+		frame.show
 		
 	end
 	
