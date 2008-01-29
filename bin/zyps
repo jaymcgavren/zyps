@@ -278,7 +278,7 @@ end
 				@environment.objects = YAML.load_file(dialog.path)
 				@object_file = dialog.path
 			rescue Exception => exception
-				show_message(exception.message)
+				show_alert(exception.message)
 			end
 		end
 	end
@@ -290,7 +290,7 @@ end
 			begin
 				save_objects(@object_file)
 			rescue Exception => exception
-				show_message(exception.message)
+				show_alert(exception.message)
 				on_save_as_menu(event)
 			end
 		else
@@ -315,7 +315,7 @@ end
 				save_objects(dialog.path)
 				@object_file = dialog.path
 			rescue Exception => exception
-				show_message(exception.message)
+				show_alert(exception.message)
 			end
 		end
 	end
@@ -323,35 +323,34 @@ end
 	
 	#Display program info.
 	def on_about_menu(event)
-		message = <<-EOD.gsub(/^\s+/, '')
-			Zyps
-			http://jay.mcgavren.com/zyps
-			
-			Copyright Jay McGavren, jay@mcgavren.com
-			
-			Zyps is free software; you can redistribute it and/or modify
-			it under the terms of the GNU Lesser General Public License as published by
-			the Free Software Foundation; either version 3 of the License, or
-			(at your option) any later version.
+		show_message(<<EOD)
+Zyps
 
-			This program is distributed in the hope that it will be useful,
-			but WITHOUT ANY WARRANTY; without even the implied warranty of
-			MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-			GNU General Public License for more details.
+http://jay.mcgavren.com/zyps
 
-			You should have received a copy of the GNU Lesser General Public License
-			along with this program.  If not, see <http://www.gnu.org/licenses/>.
-		EOD
-		show_message(message)
+Copyright Jay McGavren, jay@mcgavren.com
+
+Zyps is free software; you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+EOD
 	end
 	
 	
 	#Display program info.
 	def on_using_zyps_menu(event)
-		message = <<-EOD.gsub(/^\s+/, '')
-			TODO
-		EOD
-		show_message(message)
+		show_message(<<EOD)
+TODO
+EOD
 	end
 	
 	
@@ -361,14 +360,32 @@ end
 	end
 	
 	
-	#Display a message to the user.
-	def show_message(message)
+	#Display an alert to the user.
+	def show_alert(message)
 		Wx::MessageDialog.new(
 			@frame,
 			:message => message,
 			:caption => "Alert",
 			:style => Wx::OK
 		).show_modal
+	end
+
+	
+	#Display a message to the user.
+	def show_message(message)
+		dialog = Wx::Dialog.new(@frame)
+		dialog.sizer = Wx::BoxSizer.new(Wx::VERTICAL)
+		text = Wx::TextCtrl.new(
+			dialog,
+			:style => Wx::TE_READONLY | Wx::TE_MULTILINE,
+			:value => message
+		)
+		dialog.sizer.add(text, 1, Wx::EXPAND)
+		ok_button = Wx::Button.new(dialog, Wx::ID_OK, "OK")
+		dialog.sizer.add(ok_button, 0, Wx::ALIGN_CENTER_HORIZONTAL)
+		ok_button.set_default
+		ok_button.set_focus
+		dialog.show_modal
 	end
 	
 	
