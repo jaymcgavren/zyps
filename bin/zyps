@@ -22,6 +22,7 @@ gems_loaded = false
 begin
 	require 'logger'
 	require 'wx'
+	require 'yaml'
 	require 'zyps'
 	require 'zyps/actions'
 	require 'zyps/conditions'
@@ -116,6 +117,12 @@ class Application < Wx::App
 		@log.debug "Create menus."
 begin
 		@menus = MenuSet.new(frame)
+		evt_menu(@menus.open_menu) {|event| on_open_menu(event)}
+		evt_menu(@menus.save_menu) {|event| on_save_menu(event)}
+		evt_menu(@menus.save_as_menu) {|event| on_save_as_menu(event)}
+		evt_menu(@menus.exit_menu) {|event| on_exit}
+		evt_menu(@menus.using_zyps_menu) {|event| on_using_zyps_menu(event)}
+		evt_menu(@menus.about_menu) {|event| on_about_menu(event)}
 rescue Exception => exception
 	puts exception.message, exception.backtrace.join("\n")
 	exit
@@ -256,6 +263,115 @@ end
 		)
 	end
 	
+	
+	#Let user choose an environment save file.
+	def on_open_menu(event)
+		@log.debug "Set up a dialog to open a .zyp file.  Retain the directory the user moves to."
+		dialog = Wx::FileDialog.new(
+			@frame,
+			:wildcard => "*.zyp",
+			:style => Wx::FD_OPEN | Wx::FD_CHANGE_DIR
+		)
+		@log.debug "Act only if user presses OK."
+		if dialog.show_modal == Wx::ID_OK
+			begin
+				@environment.objects = YAML.load_file(dialog.path)
+				@object_file = dialog.path
+			rescue Exception => exception
+				show_message(exception.message)
+			end
+		end
+	end
+	
+	
+	#Save environment to file, or choose a file if none is selected.
+	def on_save_menu(event)
+		if @object_file
+			begin
+				save_objects(@object_file)
+			rescue Exception => exception
+				show_message(exception.message)
+				on_save_as_menu(event)
+			end
+		else
+			on_save_as_menu(event)
+		end
+	end
+	
+	
+	#Let user provide a file name to save the environment to.
+	def on_save_as_menu(event)
+		@log.debug "Set up a dialog to save a .zyp file."
+		@log.debug "Retain the directory the user moves to."
+		@log.debug "Prompt before overwriting a file."
+		dialog = Wx::FileDialog.new(
+			@frame,
+			:wildcard => "*.zyp",
+			:style => Wx::FD_SAVE | Wx::FD_CHANGE_DIR | Wx::FD_OVERWRITE_PROMPT
+		)
+		@log.debug "Act only if user presses OK."
+		if dialog.show_modal == Wx::ID_OK
+			begin
+				save_objects(dialog.path)
+				@object_file = dialog.path
+			rescue Exception => exception
+				show_message(exception.message)
+			end
+		end
+	end
+	
+	
+	#Display program info.
+	def on_about_menu(event)
+		message = <<-EOD.gsub(/^\s+/, '')
+			Zyps
+			http://jay.mcgavren.com/zyps
+			
+			Copyright Jay McGavren, jay@mcgavren.com
+			
+			Zyps is free software; you can redistribute it and/or modify
+			it under the terms of the GNU Lesser General Public License as published by
+			the Free Software Foundation; either version 3 of the License, or
+			(at your option) any later version.
+
+			This program is distributed in the hope that it will be useful,
+			but WITHOUT ANY WARRANTY; without even the implied warranty of
+			MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+			GNU General Public License for more details.
+
+			You should have received a copy of the GNU Lesser General Public License
+			along with this program.  If not, see <http://www.gnu.org/licenses/>.
+		EOD
+		show_message(message)
+	end
+	
+	
+	#Display program info.
+	def on_using_zyps_menu(event)
+		message = <<-EOD.gsub(/^\s+/, '')
+			TODO
+		EOD
+		show_message(message)
+	end
+	
+	
+	#Save environment objects to the given path.
+	def save_objects(path)
+		File.open(path, "w") {|file| YAML.dump(@environment.objects, file)}
+	end
+	
+	
+	#Display a message to the user.
+	def show_message(message)
+		Wx::MessageDialog.new(
+			@frame,
+			:message => message,
+			:caption => "Alert",
+			:style => Wx::OK
+		).show_modal
+	end
+	
+	
 end
 
 
@@ -301,7 +417,7 @@ class MenuSet
 		)
 		@save_as_menu = add_item(
 			file_menu,
-			:label => "&Save As...\tCtrl+Shift+S",
+			:label => "Save &As...\tCtrl+Shift+S",
 			:id => Wx::ID_SAVEAS
 		)
 		file_menu.append_separator
