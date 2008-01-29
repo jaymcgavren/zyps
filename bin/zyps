@@ -112,6 +112,14 @@ class Application < Wx::App
 		@drawing_area.evt_left_up {|event| on_mouse_release(event)}
 		#Whenever the drawing area needs updating, copy the view's buffer over.
 		@drawing_area.evt_paint {|event| @drawing_area.paint {|dc| render(dc)}}
+		
+		@log.debug "Create menus."
+begin
+		@menus = MenuSet.new(frame)
+rescue Exception => exception
+	puts exception.message, exception.backtrace.join("\n")
+	exit
+end
 
 		@log.debug "Create an interface."
 		@controls = ControlPanel.new(frame)
@@ -263,6 +271,93 @@ end
 
 
 
+#Application menu system.
+class MenuSet
+
+
+	attr_accessor :open_menu
+	attr_accessor :save_menu
+	attr_accessor :save_as_menu
+	attr_accessor :exit_menu
+	attr_accessor :using_zyps_menu
+	attr_accessor :about_menu
+
+
+	#Takes the frame that will be its parent.
+	def initialize(parent)
+	
+		menu_bar = Wx::MenuBar.new
+		
+		file_menu = Wx::Menu.new
+		@open_menu = add_item(
+			file_menu,
+			:label => "&Open...\tCtrl+O",
+			:id => Wx::ID_OPEN
+		)
+		@save_menu = add_item(
+			file_menu,
+			:label => "&Save\tCtrl+S",
+			:id => Wx::ID_SAVE
+		)
+		@save_as_menu = add_item(
+			file_menu,
+			:label => "&Save As...\tCtrl+Shift+S",
+			:id => Wx::ID_SAVEAS
+		)
+		file_menu.append_separator
+		@exit_menu = add_item(
+			file_menu,
+			:label => "E&xit",
+			:id => Wx::ID_EXIT
+		)
+		menu_bar.append(file_menu, "&File")
+		
+		help_menu = Wx::Menu.new
+		@using_zyps_menu = add_item(
+			help_menu,
+			:label => "&Using Zyps",
+			:id => Wx::ID_HELP_CONTENTS
+		)
+		help_menu.append_separator
+		@about_menu = add_item(
+			help_menu,
+			:label => "&About",
+			:id => Wx::ID_ABOUT
+		)
+		menu_bar.append(help_menu, "&Help")
+		
+		parent.set_menu_bar(menu_bar)
+		
+	end
+
+	
+	private
+	
+	
+		def add_item(parent, options = {})
+			options = {
+				:id => Wx::ID_ANY,
+				:label => "",
+				:help_string => "",
+				:kind => Wx::ITEM_NORMAL,
+				:sub_menu => nil,
+			}.merge(options)
+			item = Wx::MenuItem.new(
+				parent,
+				options[:id],
+				options[:label],
+				options[:help_string],
+				options[:kind],
+				options[:sub_menu]
+			)
+			parent.append_item(item)
+			item
+		end
+	
+end
+
+
+
 #Controls for manipulating the environment.
 class ControlPanel < Wx::Panel
 
@@ -279,6 +374,7 @@ class ControlPanel < Wx::Panel
 	attr_accessor :clear_button
 
 
+	#Takes the frame/control that will be its parent.
 	def initialize(parent)
 	
 		super(parent)
