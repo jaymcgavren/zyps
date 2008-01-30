@@ -80,7 +80,7 @@ class Application < Wx::App
 			:uri => nil,
 		}.merge(options)
 		@log.debug "options: #{@options.inspect}"
-	
+		
 	end
 	
 
@@ -115,7 +115,6 @@ class Application < Wx::App
 		@drawing_area.evt_paint {|event| @drawing_area.paint {|dc| render(dc)}}
 		
 		@log.debug "Create menus."
-begin
 		@menus = MenuSet.new(frame)
 		evt_menu(@menus.open_menu) {|event| on_open_menu(event)}
 		evt_menu(@menus.save_menu) {|event| on_save_menu(event)}
@@ -123,10 +122,6 @@ begin
 		evt_menu(@menus.exit_menu) {|event| on_exit}
 		evt_menu(@menus.using_zyps_menu) {|event| on_using_zyps_menu(event)}
 		evt_menu(@menus.about_menu) {|event| on_about_menu(event)}
-rescue Exception => exception
-	puts exception.message, exception.backtrace.join("\n")
-	exit
-end
 
 		@log.debug "Create an interface."
 		@controls = ControlPanel.new(frame)
@@ -187,12 +182,6 @@ end
 		end
 		#Update environment.
 		@environment.interact
-		#If there are no Creatures, show instructions on creating them.
-		if @environment.objects.empty?
-			@view.canvas.buffer.draw do |dc|
-				render_text_centered("Click and drag the mouse here to create creatures.", dc)
-			end
-		end
 		#Update viewing area.
 		@drawing_area.paint do |dc|
 			#Copy from View to drawing area.
@@ -249,20 +238,7 @@ end
 		#Copy the buffer to the device context.
 		dc.draw_bitmap(@view.canvas.buffer, 0, 0, false)
 	end	
-	
-	
-	#Draw the given text in the center of the given Wx::DC.
-	def render_text_centered(string, dc)
-		dc.text_foreground = Wx::Colour.new(255, 255, 255)
-		dc.text_background = Wx::Colour.new(0, 0, 0)
-		text_size = dc.get_text_extent(string)
-		dc.draw_text(
-			string,
-			dc.size.width / 2 - (text_size[0] / 2),
-			dc.size.height / 2 - (text_size[1] / 2)
-		)
-	end
-	
+		
 	
 	#Let user choose an environment save file.
 	def on_open_menu(event)
@@ -349,7 +325,19 @@ EOD
 	#Display program info.
 	def on_using_zyps_menu(event)
 		show_message(<<EOD)
-TODO
+Creating Creatures
+Use the check boxes at the right to select the actions you want new creatures to perform.  Then click inside the playfield at the left to create a creature.
+You can "launch" a creature by clicking and dragging the mouse in the playfield, then releasing.  The new creature will travel in the direction you drag the mouse cursor.
+
+Controlling the View
+The "Length" slider controls the length of the tail behind each creature.
+Check the "Trails" checkbox to have creatures leave a winding trail behind them as they travel.  Uncheck it to make all trails disappear.
+
+Controlling the Environment
+Click the "Clear" button to clear all creatures from the environment (any trails will still be left behind).
+
+Saving and Loading
+Use the "Save As..." and "Save" menus under the File menu to save the environment to a ".zyp" file.  When you later reopen the file via the "Load" menu, all your creatures will be brought back.
 EOD
 	end
 	
@@ -564,7 +552,9 @@ class ControlPanel < Wx::Panel
 		
 		#Create a button with the given options, and add it to the given container.
 		def add_button(parent, options = {})
-			add_control(Wx::Button.new(parent, options))
+			control = Wx::Button.new(parent, options)
+			control.parent.sizer.add(control, 0, Wx::ALIGN_CENTER_HORIZONTAL|Wx::ALL, 3)
+			control
 		end
 		
 		#Create the given label, and add it to the given container.
