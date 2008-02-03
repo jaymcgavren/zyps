@@ -67,7 +67,7 @@ My lovely wife, Diana, for patience and usability testing.
 
 == Author
 
-Copyright 2007 Jay McGavren, jay@mcgavren.com
+Copyright 2007-2008 Jay McGavren, jay@mcgavren.com
 
 
 == License

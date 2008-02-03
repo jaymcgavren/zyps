@@ -1,4 +1,4 @@
-# Copyright 2007 Jay McGavren, jay@mcgavren.com.
+# Copyright 2007-2008 Jay McGavren, jay@mcgavren.com.
 # 
 # This file is part of Zyps.
 # 
