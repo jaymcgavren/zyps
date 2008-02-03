@@ -688,7 +688,7 @@ class CreatureGenerator
 		)
 		
 		#Set up actions and merge colors according to selected behaviors.
-		color = Color.new(0.25, 0.25, 0.25)
+		color = Color.new(0.5, 0.5, 0.5)
 		if options[:turn]
 			color.blue += 1
 			creature.behaviors << Behavior.new(
