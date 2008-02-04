@@ -67,7 +67,16 @@ end
 class CollisionCondition < Condition
 	#Returns an array of targets that have collided with the actor.
 	def select(actor, targets)
-		targets.find_all {|target| Utility.collided?(actor, target)}
+		return [] unless targets.length > 0
+		#The size of the largest other object
+		max_size = targets.map{|t| t.size}.max
+		#The maximum distance on a straight line the largest object and self could be and still be touching.
+		max_diff = Math.sqrt(actor.size / Math::PI) + Math.sqrt(max_size / Math::PI)
+		x_range = (actor.location.x - max_diff .. actor.location.x + max_diff)
+		y_range = (actor.location.y - max_diff .. actor.location.y + max_diff)
+		targets.select do | target |
+			x_range.include?(target.location.x) and y_range.include?(target.location.y) and Utility.collided?(actor, target)
+		end
 	end
 end
 
