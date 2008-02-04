@@ -499,8 +499,31 @@ module Utility
 	
 	PI2 = Math::PI * 2.0 #:nodoc:
 	
+	#Empty cached return values.
+	def Utility.clear_caches
+		@@angles = {}
+		@@distances = {}
+		@@radians = {}
+		@@degrees = {}
+	end
+	
+	#Initialize caches for return values.
+	Utility.clear_caches
+	
+	#Turn caching of return values on or off.
+	@@caching_enabled = false
+	def Utility.caching_enabled= (value)
+		@@caching_enabled = value
+		Utility.clear_caches if ! @@caching_enabled
+	end
+	
 	#Get the angle (in degrees) from one Location to another.
 	def Utility.find_angle(origin, target)
+		if @@caching_enabled
+			#Return cached angle if there is one.
+			key = [origin.x, origin.y, target.x, target.y]
+			return @@angles[key] if @@angles[key]
+		end
 		#Get vector from origin to target.
 		x_difference = target.x - origin.x
 		y_difference = target.y - origin.y
@@ -509,16 +532,41 @@ module Utility
 		#Result will range from negative Pi to Pi, so correct it.
 		radians += PI2 if radians < 0
 		#Convert to degrees.
-		to_degrees(radians)
+		angle = to_degrees(radians)
+		#Cache angle if caching enabled.
+		if @@caching_enabled
+			@@angles[key] = angle
+			#angle + 180 = angle from target to origin.
+			@@angles[[target.x, target.y, origin.x, origin.y]] = (angle + 180 % 360)
+		end
+		#Return result.
+		angle
 	end
 	
 	#Get the distance from one Location to another.
 	def Utility.find_distance(origin, target)
+		if @@caching_enabled
+			#Distance from origin to target is same as that from target to origin.
+			#Index cache such that either will be found.
+			if origin.x <= target.x
+				key = [origin.x, origin.y, target.x, target.y]
+			else
+				key = [target.x, target.y, origin.x, origin.y]
+			end
+			#Return cached distance if there is one.
+			return @@distances[key] if @@distances[key]
+		end
 		#Get vector from origin to target.
 		x_difference = origin.x - target.x
 		y_difference = origin.y - target.y
 		#Get distance.
-		Math.sqrt(x_difference ** 2 + y_difference ** 2)
+		distance = Math.sqrt(x_difference ** 2 + y_difference ** 2)
+		#Cache distance if caching enabled.
+		if @@caching_enabled
+			@@distances[key] = distance
+		end
+		#Return result.
+		distance
 	end
 	
 	#Convert radians to degrees.
