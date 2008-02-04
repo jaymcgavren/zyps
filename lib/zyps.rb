@@ -503,8 +503,6 @@ module Utility
 	def Utility.clear_caches
 		@@angles = {}
 		@@distances = {}
-		@@radians = {}
-		@@degrees = {}
 	end
 	
 	#Initialize caches for return values.
