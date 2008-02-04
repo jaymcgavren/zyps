@@ -497,10 +497,6 @@ end
 #Various methods for working with Vectors, etc.
 module Utility
 	
-	#Used to cache return values.
-	@@distances = {}
-	@@angles = {}
-	
 	PI2 = Math::PI * 2.0 #:nodoc:
 	
 	#Get the angle (in degrees) from one Location to another.
@@ -518,14 +514,11 @@ module Utility
 	
 	#Get the distance from one Location to another.
 	def Utility.find_distance(origin, target)
-		#Return cached distance if there is one.
-		key = [origin.x, origin.y, target.x, target.y]
-		return @@distances[key] if @@distances[key]
 		#Get vector from origin to target.
 		x_difference = origin.x - target.x
 		y_difference = origin.y - target.y
-		#Get distance and cache it.
-		@@distances[key] = Math.sqrt(x_difference ** 2 + y_difference ** 2)
+		#Get distance.
+		Math.sqrt(x_difference ** 2 + y_difference ** 2)
 	end
 	
 	#Convert radians to degrees.
