@@ -40,19 +40,16 @@ class TrailsView
 	#	:width => 600
 	#	:height => 400
 	#	:trail_length => 5
-	#	:erase_flag => true
 	def initialize (options = {})
 	
 		options = {
 			:width => 600,
 			:height => 400,
 			:trail_length => 5,
-			:erase_flag => true
 		}.merge(options)
 		@width = options[:width]
 		@height = options[:height]
 		@trail_length = options[:trail_length]
-		@erase_flag = options[:erase_flag]
 		@canvas = options[:canvas]
 		
 		#Set canvas's size to match view's.
@@ -83,15 +80,13 @@ class TrailsView
 	#GameObject.size will be used as the line thickness at the object's head, diminishing to 1 at the tail.
 	def update(environment)
 	
-		#Clear the background on the buffer.
-		if @erase_flag
-			@canvas.draw_rectangle(
-				:color => Color.new(0, 0, 0),
-				:filled => true,
-				:x => 0, :y => 0,
-				:width => @width, :height => @height
-			)
-		end
+		#Clear view.
+		@canvas.draw_rectangle(
+			:color => Color.new(0, 0, 0),
+			:filled => true,
+			:x => 0, :y => 0,
+			:width => @width, :height => @height
+		)
 		
 		#For each GameObject in the environment:
 		environment.objects.each do |object|
