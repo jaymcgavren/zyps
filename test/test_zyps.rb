@@ -402,6 +402,11 @@ end
 
 
 class TestUtility < Test::Unit::TestCase
+
+	
+	def setup
+		Utility.caching_enabled = true
+	end
 	
 	
 	def test_to_radians

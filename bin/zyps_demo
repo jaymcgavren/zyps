@@ -93,6 +93,12 @@ class Demo < Wx::App
 		@update_count = 0
 		@environment.add_observer(self)
 		
+		say "The Utility module calculates distances and angles between objects."
+		say "Utility is sometimes asked to compute the same distance or angle over and over."
+		say "We can speed this by returning a cached result instead of re-calculating it."
+		say "Let's turn this feature on."
+		Utility.caching_enabled = true
+		
 		say "We want to update the environment #{FRAMES_PER_SECOND} times per second."
 		milliseconds_per_frame = (1.0 / FRAMES_PER_SECOND * 1000).to_int
 		say "So, we'll set up a timer to fire every #{milliseconds_per_frame} milliseconds."
@@ -100,6 +106,7 @@ class Demo < Wx::App
 		timer = Wx::Timer.new(self, timer_id)
 		say "The timer will trigger the environment update."
 		say "Then it copies the updated view's buffer to our window."
+		say "We'll clear the cached values from the Utility module to save memory."
 		say "We also call the Ruby garbage collector with each update."
 		say "This keeps dead objects from accumulating and causing hiccups later."
 		evt_timer(timer_id) do
@@ -107,6 +114,7 @@ class Demo < Wx::App
 			window.paint do |surface|
 				surface.draw_bitmap(view.canvas.buffer, 0, 0, false)
 			end
+			Utility.clear_caches
 			GC.start
 		end
 		timer.start(milliseconds_per_frame)

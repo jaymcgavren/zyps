@@ -153,6 +153,9 @@ class Application < Wx::App
 		@log.debug "Set up a creature generator."
 		@generator = CreatureGenerator.new(:environment => @environment)
 		
+		@log.debug "Set the Utility module to cache distances and angles."
+		Utility.caching_enabled = true
+		
 		@log.debug "Set up a timer to update the environment."
 		milliseconds_per_frame = (1.0 / @options[:fps] * 1000).to_int
 		@log.debug "Timer will fire every #{milliseconds_per_frame} milliseconds."
@@ -190,6 +193,8 @@ class Application < Wx::App
 			#Copy from View to drawing area.
 			render(dc)
 		end
+		#Almost all distances and angles will be different next update, so clear the cache.
+		Utility.clear_caches
 		#Keeps dead objects from accumulating and causing hiccups later.
 		GC.start
 	end
