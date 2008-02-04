@@ -131,9 +131,6 @@ class Application < Wx::App
 		@controls.length_slider.evt_slider(@controls.length_slider.get_id) do |event|
 			@view.trail_length = @controls.length_slider.value
 		end
-		@controls.trails_flag.evt_checkbox(@controls.trails_flag.get_id) do |event|
-			@view.erase_flag = ! @controls.trails_flag.is_checked
-		end
 		frame.sizer.add(@controls, 0, Wx::GROW)
 		
 		@log.debug "Create an environment, and link it to the view."
@@ -182,6 +179,12 @@ class Application < Wx::App
 		end
 		#Update environment.
 		@environment.interact
+		#If there are no Creatures, show instructions on creating them.
+		if @environment.objects.empty?
+			@view.canvas.buffer.draw do |dc|
+				render_text_centered("Click and drag the mouse here to create creatures.", dc)
+			end
+		end
 		#Update viewing area.
 		@drawing_area.paint do |dc|
 			#Copy from View to drawing area.
@@ -377,6 +380,19 @@ EOD
 	end
 	
 	
+	#Draw the given text in the center of the given Wx::DC.
+	def render_text_centered(string, dc)
+		dc.text_foreground = Wx::Colour.new(255, 255, 255)
+		dc.text_background = Wx::Colour.new(0, 0, 0)
+		text_size = dc.get_text_extent(string)
+		dc.draw_text(
+			string,
+			dc.size.width / 2 - (text_size[0] / 2),
+			dc.size.height / 2 - (text_size[1] / 2)
+		)
+	end
+	
+	
 end
 
 
@@ -491,7 +507,6 @@ class ControlPanel < Wx::Panel
 	attr_accessor :breed_flag
 	attr_accessor :eat_flag
 	attr_accessor :length_slider
-	attr_accessor :trails_flag
 	attr_accessor :clear_button
 
 
@@ -515,7 +530,6 @@ class ControlPanel < Wx::Panel
 		add_label(display_controls, :label => "Length")
 		@length_slider = add_slider(display_controls, :min_value => 2, :max_value => 100)
 		@length_slider.value = 5
-		@trails_flag = add_check_box(display_controls, :label => "Trails")
 		
 		environment_controls = add_panel(self, :proportion => 1)
 		add_label(environment_controls, :label => "Environment")
