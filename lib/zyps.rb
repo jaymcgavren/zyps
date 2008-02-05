@@ -501,8 +501,8 @@ module Utility
 	
 	#Empty cached return values.
 	def Utility.clear_caches
-		@@angles = {}
-		@@distances = {}
+		@@angles = Hash.new {|h, k| h[k] = {}}
+		@@distances = Hash.new {|h, k| h[k] = {}}
 	end
 	
 	#Initialize caches for return values.
@@ -519,8 +519,8 @@ module Utility
 	def Utility.find_angle(origin, target)
 		if @@caching_enabled
 			#Return cached angle if there is one.
-			key = [origin, target]
-			return @@angles[key] if @@angles[key]
+			return @@angles[origin][target] if @@angles[origin][target]
+			return @@angles[target][origin] if @@angles[target][origin]
 		end
 		#Get vector from origin to target.
 		x_difference = target.x - origin.x
@@ -533,9 +533,9 @@ module Utility
 		angle = to_degrees(radians)
 		#Cache angle if caching enabled.
 		if @@caching_enabled
-			@@angles[key] = angle
+			@@angles[origin][target] = angle
 			#angle + 180 = angle from target to origin.
-			@@angles[[target, origin]] = (angle + 180 % 360)
+			@@angles[target][origin] = (angle + 180 % 360)
 		end
 		#Return result.
 		angle
@@ -544,15 +544,8 @@ module Utility
 	#Get the distance from one Location to another.
 	def Utility.find_distance(origin, target)
 		if @@caching_enabled
-			#Distance from origin to target is same as that from target to origin.
-			#Index cache such that either will be found.
-			if origin.x <= target.x
-				key = [origin, target]
-			else
-				key = [target, origin]
-			end
 			#Return cached distance if there is one.
-			return @@distances[key] if @@distances[key]
+			return @@distances[origin][target] if @@distances[origin][target]
 		end
 		#Get vector from origin to target.
 		x_difference = origin.x - target.x
@@ -561,7 +554,10 @@ module Utility
 		distance = Math.sqrt(x_difference ** 2 + y_difference ** 2)
 		#Cache distance if caching enabled.
 		if @@caching_enabled
-			@@distances[key] = distance
+			#Origin to target distance = target to origin distance.
+			#Cache such that either will be found.
+			@@distances[origin][target] = distance
+			@@distances[target][origin] = distance
 		end
 		#Return result.
 		distance
