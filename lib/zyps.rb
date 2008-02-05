@@ -302,20 +302,44 @@ end
 #Likewise, the subject can change its own attributes, it can approach or flee from the target, it can spawn new Creatures or GameObjects (like bullets), or anything else.
 class Behavior
 
+	#An array of Condition subclasses.
+	#Condition#select(actor, targets) will be called on each.
 	attr_accessor :conditions
+	#An array of Action subclasses.
+	#Action#start(actor, targets) and action.do(actor, targets) will be called on each when all conditions are true.
+	#Action#stop(actor, targets) will be called when any condition is false.
 	attr_accessor :actions
+	#Number of updates before behavior is allowed to select a new group of targets to act on.
+	attr_accessor :condition_frequency
+	
+	#Will be used to distribute condition processing time between all Behaviors with the same condition_frequency.
+	@@condition_order = Hash.new {|h, k| h[k] = 0}
 	
 	#Takes a hash with these keys and defaults:
 	#	:actions => []
 	#	:conditions => []
+	#	:condition_frequency => 1
 	def initialize (options = {})
 		options = {
 			:actions => [],
-			:conditions => []
+			:conditions => [],
+			:condition_frequency => 1
 		}.merge(options)
-		self.actions, self.conditions = options[:actions], options[:conditions]
-		#Tracks current target.
-		@active_target = nil
+		self.actions = options[:actions]
+		self.conditions = options[:conditions]
+		self.condition_frequency = options[:condition_frequency]
+		#Tracks number of calls to perform() so conditions can be evaluated with appropriate frequency.
+		@condition_evaluation_count = 0
+		#Targets currently selected to act upon.
+		@current_targets = []
+	end
+	
+	def condition_frequency= (value)
+		#Condition frequency must be 1 or more.
+		@condition_frequency = (value >= 1 ? value : 1)
+		#This will be used to distribute condition evaluation time among all behaviors with this frequency.
+		@condition_order = @@condition_order[@condition_frequency]
+		@@condition_order[@condition_frequency] += 1
 	end
 	
 	#Make a deep copy.
@@ -336,18 +360,32 @@ class Behavior
 	#If no matching targets are found, calls Action#stop(actor, targets) on each Action.
 	def perform(actor, targets)
 		
-		choices = targets.clone
-		conditions.each {|condition| choices = condition.select(actor, choices)}
+		if condition_evaluation_turn?
+			@current_targets = targets.clone
+			conditions.each {|condition| @current_targets = condition.select(actor, @current_targets)}
+		end
 		actions.each do |action|
-			if ! choices.empty?
-				action.start(actor, choices) unless action.started?
-				action.do(actor, choices)
+			if ! @current_targets.empty?
+				action.start(actor, @current_targets) unless action.started?
+				action.do(actor, @current_targets)
 			else
-				action.stop(actor, targets) #Not choices; that array is empty.
+				action.stop(actor, targets) #Not @current_targets; that array is empty.
 			end
 		end
 		
+		
 	end
+	
+	private
+		
+		#Return true if it's our turn to choose targets, false otherwise.
+		def condition_evaluation_turn?
+			#Every condition_frequency turns (plus our turn order within the group), return true.
+			our_turn = ((@condition_evaluation_count + @condition_order) % @condition_frequency == 0) ? true : false
+			#Track number of calls to perform() for staggering condition evaluation.
+			@condition_evaluation_count += 1
+			our_turn
+		end
 	
 end
 

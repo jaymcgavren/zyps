@@ -649,7 +649,7 @@ class CreatureGenerator
 			:turn_angle => 90,
 			:breed_rate => 10,
 		}.merge(options)
-		@log.debug "options: #{@options.inspect}"
+		@log.debug "options: #{options.inspect}"
 		
 		@environment = options[:environment]
 		@default_size = options[:default_size]
@@ -697,7 +697,7 @@ class CreatureGenerator
 			:breed => false,
 			:eat => false,
 		}.merge(options)
-		@log.debug "options: #{@options.inspect}"
+		@log.debug "options: #{options.inspect}"
 		
 		#Create a creature.
 		creature = Creature.new(
@@ -712,35 +712,40 @@ class CreatureGenerator
 			color.blue += 1
 			creature.behaviors << Behavior.new(
 				:actions => [TurnAction.new(@turn_rate, @turn_angle)],
-				:conditions => [ProximityCondition.new(options[:action_proximity] * 2)]
+				:conditions => [ProximityCondition.new(options[:action_proximity] * 2)],
+				:condition_frequency => 20
 			)
 		end
 		if options[:approach]
 			color.red += 1
 			creature.behaviors << Behavior.new(
 				:actions => [ApproachAction.new(@approach_rate)],
-				:conditions => [ProximityCondition.new(options[:action_proximity])]
+				:conditions => [ProximityCondition.new(options[:action_proximity])],
+				:condition_frequency => 10
 			)
 		end
 		if options[:flee]
 			color.red += 0.5; color.green += 0.5 #Yellow.
 			creature.behaviors << Behavior.new(
 				:actions => [FleeAction.new(@flee_rate)],
-				:conditions => [ProximityCondition.new(options[:action_proximity] * 0.5)]
+				:conditions => [ProximityCondition.new(options[:action_proximity] * 0.5)],
+				:condition_frequency => 5
 			)
 		end
 		if options[:push]
 			color.red += 0.5; color.blue += 0.5 #Purple.
 			creature.behaviors << Behavior.new(
 				:actions => [PushAction.new(@push_strength)],
-				:conditions => [ProximityCondition.new(options[:action_proximity] * 0.25)]
+				:conditions => [ProximityCondition.new(options[:action_proximity] * 0.25)],
+				:condition_frequency => 2
 			)
 		end
 		if options[:pull]
 			color.blue += 0.75; color.green += 0.75 #Aqua.
 			creature.behaviors << Behavior.new(
 				:actions => [PullAction.new(@pull_strength)],
-				:conditions => [ProximityCondition.new(options[:action_proximity] * 0.75)]
+				:conditions => [ProximityCondition.new(options[:action_proximity] * 0.75)],
+				:condition_frequency => 7
 			)
 		end
 		if options[:breed]
@@ -748,7 +753,8 @@ class CreatureGenerator
 			color.blue -= 0.1
 			creature.behaviors << Behavior.new(
 				:actions => [BreedAction.new(@environment, @breed_rate)],
-				:conditions => [CollisionCondition.new] #The default ProximityCondition won't do.
+				:conditions => [CollisionCondition.new], #The default ProximityCondition won't do.
+				:condition_frequency => 1
 			)
 		end
 		if options[:eat]
@@ -756,15 +762,16 @@ class CreatureGenerator
 			creature.behaviors << Behavior.new(
 				:actions => [EatAction.new(@environment)],
 				:conditions => [
-					CollisionCondition.new, #The default ProximityCondition won't do.
-					StrengthCondition.new #The eater should be as strong or stronger than its dinner.
-				] 
+					StrengthCondition.new, #The eater should be as strong or stronger than its dinner.
+					CollisionCondition.new #The default ProximityCondition won't do.
+				],
+				:condition_frequency => 1
 			)
 		end
 		
 		creature.color = color
 		
-		@log.debug "Created creature: #{creature.inspect}"
+		@log.debug "Created creature: #{creature.to_s}"
 		
 		creature
 		
