@@ -519,7 +519,7 @@ module Utility
 	def Utility.find_angle(origin, target)
 		if @@caching_enabled
 			#Return cached angle if there is one.
-			key = [origin.x, origin.y, target.x, target.y]
+			key = [origin, target]
 			return @@angles[key] if @@angles[key]
 		end
 		#Get vector from origin to target.
@@ -535,7 +535,7 @@ module Utility
 		if @@caching_enabled
 			@@angles[key] = angle
 			#angle + 180 = angle from target to origin.
-			@@angles[[target.x, target.y, origin.x, origin.y]] = (angle + 180 % 360)
+			@@angles[[target, origin]] = (angle + 180 % 360)
 		end
 		#Return result.
 		angle
@@ -547,9 +547,9 @@ module Utility
 			#Distance from origin to target is same as that from target to origin.
 			#Index cache such that either will be found.
 			if origin.x <= target.x
-				key = [origin.x, origin.y, target.x, target.y]
+				key = [origin, target]
 			else
-				key = [target.x, target.y, origin.x, origin.y]
+				key = [target, origin]
 			end
 			#Return cached distance if there is one.
 			return @@distances[key] if @@distances[key]
