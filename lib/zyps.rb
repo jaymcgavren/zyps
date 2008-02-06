@@ -358,6 +358,7 @@ class Behavior
 	#Calls select(actor, targets) on each Condition, each time discarding targets that fail.
 	#Then on each Action, calls Action#start(actor, targets) (if not already started) followed by Action#do(actor, targets).
 	#If no matching targets are found, calls Action#stop(actor, targets) on each Action.
+	#If there are no conditions, actions will occur regardless of targets.
 	def perform(actor, targets)
 		
 		if condition_evaluation_turn?
@@ -365,11 +366,11 @@ class Behavior
 			conditions.each {|condition| @current_targets = condition.select(actor, @current_targets)}
 		end
 		actions.each do |action|
-			if ! @current_targets.empty?
+			if @current_targets.empty? and ! @conditions.empty?
+				action.stop(actor, targets) #Not @current_targets; that array is empty.
+			else
 				action.start(actor, @current_targets) unless action.started?
 				action.do(actor, @current_targets)
-			else
-				action.stop(actor, targets) #Not @current_targets; that array is empty.
 			end
 		end
 		

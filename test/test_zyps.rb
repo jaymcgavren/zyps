@@ -574,5 +574,26 @@ class TestBehavior < Test::Unit::TestCase
 		assert_not_same(original.conditions[0], copy.conditions[0], "Conditions in list should not be same objects.")
 	end
 	
+	def test_no_conditions
+		#Set up a behavior with no conditions.
+		action = MockAction.new
+		behavior = Behavior.new(:conditions => [], :actions => [action])
+		#Perform the behavior with no targets.
+		behavior.perform(@actor, [])
+		assert_equal(1, action.start_count, "start() should have been called on the mock action.")
+		assert_equal(1, action.do_count, "do() should have been called.")
+		assert_equal(0, action.stop_count, "stop() should NOT have been called.")
+		#Add a true condition.
+		behavior.conditions << TrueCondition.new
+		#Perform the behavior with no targets.
+		behavior.perform(@actor, [])
+		assert_equal(1, action.stop_count, "stop() should have been called.")
+		#Perform the behavior WITH targets.
+		behavior.perform(@actor, @targets)
+		assert_equal(2, action.start_count, "start() should have been called.")
+		assert_equal(2, action.do_count, "do() should have been called.")
+		assert_equal(1, action.stop_count, "stop() should NOT have been called.")
+	end
+	
 	
 end

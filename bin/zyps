@@ -711,9 +711,7 @@ class CreatureGenerator
 		if options[:turn]
 			color.blue += 1
 			creature.behaviors << Behavior.new(
-				:actions => [TurnAction.new(@turn_rate, @turn_angle)],
-				:conditions => [ProximityCondition.new(options[:action_proximity] * 2)],
-				:condition_frequency => 20
+				:actions => [TurnAction.new(@turn_rate, @turn_angle)]
 			)
 		end
 		if options[:approach]
