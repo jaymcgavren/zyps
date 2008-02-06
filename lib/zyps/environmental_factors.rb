@@ -71,6 +71,52 @@ class Enclosure < EnvironmentalFactor
 end
 
 
+#When an object crosses its boundary, warps object to opposite boundary.
+class WrapAround < EnvironmentalFactor
+	
+	#X coordinate of left boundary.
+	attr_accessor :left
+	#Y coordinate of top boundary.
+	attr_accessor :top
+	#X coordinate of right boundary.
+	attr_accessor :right
+	#Y coordinate of bottom boundary.
+	attr_accessor :bottom
+	
+	#Takes a hash with these keys and defaults:
+	#	:left => 0
+	#	:top => 0
+	#	:right => 0
+	#	:bottom => 0
+	def initialize(options = {})
+		options = {
+			:left => 0,
+			:top => 0,
+			:right => 0,
+			:bottom => 0
+		}.merge(options)
+		self.left, self.top, self.right, self.bottom = options[:left], options[:top], options[:right], options[:bottom]
+	end
+	
+	#If object is beyond a boundary, set its position to that of opposite boundary.
+	def act(environment)
+		environment.objects.each do |object|
+			if (object.location.x < @left) then
+				object.location.x = @right
+			elsif (object.location.x > @right) then
+				object.location.x = @left
+			end
+			if (object.location.y > @top) then
+				object.location.y = @bottom
+			elsif (object.location.y < @bottom) then
+				object.location.y = @top
+			end
+		end
+	end
+	
+end
+
+
 #Keeps all objects at/under the assigned speed.
 class SpeedLimit < EnvironmentalFactor
 	

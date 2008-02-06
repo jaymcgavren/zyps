@@ -89,6 +89,55 @@ end
 
 
 
+class TestWrapAround < Test::Unit::TestCase
+
+	def test_wrap_around
+	
+		creature = Creature.new
+		environment = Environment.new(:objects => [creature])
+		
+		#Create an enclosure.
+		wrapper = WrapAround.new(
+			:left => 1,
+			:top => 3,
+			:right => 3,
+			:bottom => 1
+		)
+		
+		#Place creature outside the walls, and act on it.
+		#Ensure it's moved inside on opposite side.
+		creature.location = Location.new(0, 2) #Too far left.
+		enclosure.act(environment)
+		assert_equal(3, creature.location.x)
+		assert_equal(2, creature.location.y)
+		
+		creature.location = Location.new(4, 2) #Too far right.
+		enclosure.act(environment)
+		assert_equal(1, creature.location.x)
+		assert_equal(2, creature.location.y)
+		
+		creature.location = Location.new(2, 0) #Too far down.
+		enclosure.act(environment)
+		assert_equal(2, creature.location.x)
+		assert_equal(3, creature.location.y)
+		
+		creature.location = Location.new(2, 4) #Too far up.
+		enclosure.act(environment)
+		assert_equal(2, creature.location.x)
+		assert_equal(1, creature.location.y)
+		
+		#Place creature inside the walls, and ensure it's unaffected.
+		creature.location = Location.new(2, 2) #Inside.
+		enclosure.act(environment)
+		assert_equal(2, creature.location.x)
+		assert_equal(2, creature.location.y)
+		
+	end
+	
+end
+
+
+
 class TestSpeedLimit < Test::Unit::TestCase
 
 	def test_speed_limit
