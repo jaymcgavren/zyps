@@ -164,6 +164,14 @@ class Application < Wx::App
 		evt_timer(timer_id) {on_timer}
 		timer.start(milliseconds_per_frame)
 		
+		
+		if @options[:uri]
+			@log.debug "Start a network service at #{@options[:uri]}."
+			server = EnvironmentServer.new(@environment, @options[:uri])
+			server.start
+			$SAFE = 1
+		end
+		
 		@log.debug "Display GUI."
 		frame.send_size_event
 		frame.show
@@ -181,7 +189,12 @@ class Application < Wx::App
 			@enclosure.right = @drawing_area.size.width
 		end
 		#Update environment.
-		@environment.interact
+		begin
+			@environment.interact
+		rescue Exception => exception
+			puts exception, exception.backtrace
+			raise
+		end
 		#If there are no Creatures, show instructions on creating them.
 		if @environment.objects.empty?
 			@view.canvas.buffer.draw do |dc|
