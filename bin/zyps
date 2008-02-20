@@ -126,7 +126,7 @@ class Application < Wx::App
 		@log.debug "Create an interface."
 		@controls = ControlPanel.new(frame)
 		@controls.clear_button.evt_button(@controls.clear_button.get_id) do |event|
-			@environment.objects = []
+			@environment.objects.clear
 		end
 		@controls.length_slider.evt_slider(@controls.length_slider.get_id) do |event|
 			@view.trail_length = @controls.length_slider.value
