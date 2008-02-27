@@ -506,6 +506,9 @@ class Location
 	#Make a deep copy.
 	def copy; self.clone; end
 	
+	#True if x and y coordinates are the same.
+	def ==(other); self.x == other.x and self.y == other.y; end
+	
 end
 
 
@@ -557,6 +560,9 @@ class Vector
 		#Calculate speed and angle of new vector with components.
 		Vector.new(new_length, new_angle)
 	end
+	
+	#True if x and y coordinates are the same.
+	def ==(other); self.speed == other.speed and self.pitch == other.pitch; end
 	
 end
 
