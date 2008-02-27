@@ -595,5 +595,56 @@ class TestBehavior < Test::Unit::TestCase
 		assert_equal(1, action.stop_count, "stop() should NOT have been called.")
 	end
 	
+end
+
+
+class TestAdditions < Test::Unit::TestCase
+
+	#Add a new behavior to a creature with the given action.
+	def add_action(action, creature)
+		behavior = Behavior.new
+		behavior.actions << action
+		creature.behaviors << behavior
+	end
+	
+	def setup
+		@environment = Environment.new
+		@actor = Creature.new(:name => 'target1', :location => Location.new(1, 1))
+		@env_fact = gravity = Gravity.new(200)
+	end
+	
+	def test_environment_double_arrow_objects
+		assert_equal(0, @environment.objects.size)
+		@environment << @actor
+		assert_equal(1, @environment.objects.size)
+		assert_equal(0, @environment.environmental_factors.size)
+	end
+	
+	def test_environment_double_arrow_factors
+		assert_equal(0, @environment.environmental_factors.size)
+		@environment << @env_fact
+		assert_equal(1, @environment.environmental_factors.size)
+		assert_equal(0, @environment.objects.size)
+	end
+
+	def test_game_object_double_arrow
+		#test color
+		@actor << Color.new(1,1,1)
+		assert_equal(Color.new(1,1,1), @actor.color)
+		#test vector
+		vect =Vector.new(23,13)
+		@actor << vect
+		assert_equal(vect, @actor.vector)
+		#test location
+		@actor << Location.new(13,13)
+		assert_equal(13, @actor.location.x)
+		assert_equal(13, @actor.location.y)
+		#test behavior
+		behavior = Behavior.new
+		behavior.actions << TagAction.new("1")
+		@actor << behavior
+		assert_equal(1, @actor.behaviors.size)
+		assert_equal("1", @actor.behaviors.first.actions.first.tag)
+	end
 	
 end

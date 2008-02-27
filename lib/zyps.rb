@@ -111,6 +111,19 @@ class Environment
 		
 	end
 	
+	#Overloads the << operator to put the new item into the correct list.
+	#This allows one to simply call env << <valid_object> instead of 
+	#having to choose a specific list, such as objects or environmental factors.
+	def <<(item)
+		if(item.kind_of? Zyps::GameObject)
+			self.objects << item
+		elsif(item.kind_of? Zyps::EnvironmentalFactor)
+			self.environmental_factors << item
+		else
+			raise "Invalid item: #{item.class}" 
+		end
+	end
+	
 end
 
 
@@ -187,6 +200,21 @@ class GameObject
 		@identifier = value
 	end
 	
+	#Overloads the << operator to put the new item into the correct
+	#list or assign it to the correct attribute.
+	#Assignment is done based on item's class or a parent class of item.
+	def <<(item)
+		if item.kind_of? Zyps::Location:
+			self.location = item
+		elsif item.kind_of? Zyps::Color:
+			self.color = item
+		elsif item.kind_of? Zyps::Vector:
+			self.vector = item
+		else
+			raise "Invalid item: #{item.class}"
+		end
+	end
+	
 	private
 	
 		#Make a unique GameObject identifier.
@@ -234,6 +262,20 @@ class Creature < GameObject
 	#Performs all assigned behaviors on the targets.
 	def act(targets)
 		behaviors.each {|behavior| behavior.perform(self, targets)}
+	end
+	
+	#See GameObject#<<.
+	#Adds ability to stream in behaviors as well.
+	def <<(item)
+		begin
+			super
+		rescue 
+			if(item.kind_of? Zyps::Behavior)
+				self.behaviors << item
+			else
+				raise "invalid item: #{item.class}"
+			end
+		end
 	end
 	
 end
@@ -434,6 +476,19 @@ class Color
 		)
 	end
 	
+	#Pre-defined color value.
+	def self.red; Color.new(1, 0, 0); end
+	def self.orange; Color.new(1, 0.63, 0); end
+	def self.yellow; Color.new(1, 1, 0); end
+	def self.green; Color.new(0, 1, 0); end
+	def self.blue; Color.new(0, 0, 1); end
+	def self.indigo; Color.new(0.4, 0, 1); end
+	def self.violet; Color.new(0.9, 0.5, 0.9); end
+	def self.white; Color.new(1, 1, 1); end
+	def self.black; Color.new(0, 0, 0); end
+	def self.grey; Color.new(0.5, 0.5, 0.5); end
+
+		
 end
 
 
