@@ -288,7 +288,7 @@ class Demo < Wx::App
 		@environment.objects << GameObject.new(
 			:name => "target",
 			:location => Location.new(WIDTH / 2, HEIGHT / 2),
-			:color => Color.new(1, 1, 1),
+			:color => Color.white,
 			:vector => Vector.new(30, 315),
 			:size => DEFAULT_OBJECT_SIZE * 2, #Size.
 			:tags => ["food"]
@@ -326,21 +326,21 @@ class Demo < Wx::App
 		say("Let's place a red Morpher...")
 		@environment.objects << Morpher.new(
 			:location => Location.new(0, 100),
-			:color => Color.new(1, 0, 0),
+			:color => Color.red,
 			:vector => Vector.new(100, 0),
 			:size => DEFAULT_OBJECT_SIZE
 		)
 		say("a green one...")
 		@environment.objects << Morpher.new(
 			:location => Location.new(0, 150),
-			:color => Color.new(0, 1, 0),
+			:color => Color.green,
 			:vector => Vector.new(200, 0),
 			:size => DEFAULT_OBJECT_SIZE
 		)
 		say("and a blue one...")
 		@environment.objects << Morpher.new(
 			:location => Location.new(0, 200),
-			:color => Color.new(0, 0, 1),
+			:color => Color.blue,
 			:vector => Vector.new(300, 0),
 			:size => DEFAULT_OBJECT_SIZE
 		)
@@ -448,7 +448,7 @@ class Demo < Wx::App
 		say("Let's create a creature that causes some havoc.")
 		predator = Creature.new(
 			:location => Location.new(0, 150),
-			:color => Color.new(0, 1, 0),
+			:color => Color.green,
 			:vector => Vector.new(200, 0), 
 			:size => DEFAULT_OBJECT_SIZE * 5
 		)
