@@ -720,15 +720,14 @@ class CreatureGenerator
 		)
 		
 		#Set up actions and merge colors according to selected behaviors.
-		color = Color.new(0.5, 0.5, 0.5)
 		if options[:turn]
-			color.blue += 1
+			color = color ? color + Color.blue : Color.blue
 			creature.behaviors << Behavior.new(
 				:actions => [TurnAction.new(@turn_rate, @turn_angle)]
 			)
 		end
 		if options[:approach]
-			color.red += 1
+			color = color ? color + Color.red : Color.red
 			creature.behaviors << Behavior.new(
 				:actions => [ApproachAction.new(@approach_rate)],
 				:conditions => [ProximityCondition.new(options[:action_proximity])],
@@ -736,7 +735,7 @@ class CreatureGenerator
 			)
 		end
 		if options[:flee]
-			color.red += 0.5; color.green += 0.5 #Yellow.
+			color = color ? color + Color.yellow : Color.yellow
 			creature.behaviors << Behavior.new(
 				:actions => [FleeAction.new(@flee_rate)],
 				:conditions => [ProximityCondition.new(options[:action_proximity] * 0.5)],
@@ -744,7 +743,7 @@ class CreatureGenerator
 			)
 		end
 		if options[:push]
-			color.red += 0.5; color.blue += 0.5 #Purple.
+			color = color ? color + Color.violet : Color.violet
 			creature.behaviors << Behavior.new(
 				:actions => [PushAction.new(@push_strength)],
 				:conditions => [ProximityCondition.new(options[:action_proximity] * 0.25)],
@@ -752,7 +751,7 @@ class CreatureGenerator
 			)
 		end
 		if options[:pull]
-			color.blue += 0.75; color.green += 0.75 #Aqua.
+			color = color ? color + Color.indigo : Color.indigo
 			creature.behaviors << Behavior.new(
 				:actions => [PullAction.new(@pull_strength)],
 				:conditions => [ProximityCondition.new(options[:action_proximity] * 0.75)],
@@ -760,8 +759,7 @@ class CreatureGenerator
 			)
 		end
 		if options[:breed]
-			color.green -= 0.1 #Make a bit redder.
-			color.blue -= 0.1
+			color = color ? color + Color.orange : Color.orange
 			creature.behaviors << Behavior.new(
 				:actions => [BreedAction.new(@environment, @breed_rate)],
 				:conditions => [CollisionCondition.new], #The default ProximityCondition won't do.
@@ -769,7 +767,7 @@ class CreatureGenerator
 			)
 		end
 		if options[:eat]
-			color.green += 1
+			color = color ? color + Color.green : Color.green
 			creature.behaviors << Behavior.new(
 				:actions => [EatAction.new(@environment)],
 				:conditions => [
