@@ -269,4 +269,53 @@ class BreedAction < Action
 end
 
 
+#Copies the given GameObject prototypes into the environment.
+class SpawnAction < Action
+	#Environment to place children into.
+	attr_accessor :environment
+	#GameObjects to copy into environment
+	attr_accessor :prototypes
+	def initialize(environment, prototypes = [])
+		self.environment = environment
+		self.prototypes = prototypes
+	end
+	#Add children to environment at same location as actor.
+	def do(actor, targets)
+		prototypes.each do |prototype|
+			environment.objects << generate_child(actor, prototype)
+		end
+	end
+	#Copy prototype to actor's location.
+	def generate_child(actor, prototype)
+		#Copy prototype so it can be spawned repeatedly if need be.
+		child = prototype.copy
+		child.location = actor.location.copy
+		child
+	end
+end
+
+
+#Copies the given GameObject prototypes into the environment and destroys actor.
+#Shrapnel's original vector will be added to actor's vector.
+#Shrapnel's size will be actor's size divided by number of shrapnel pieces.
+class ExplodeAction < SpawnAction
+	#Calls super method.
+	#Also removes actor from environment.
+	def do(actor, targets)
+		super
+		environment.objects.delete(actor)
+	end
+	#Calls super method.
+	#Also adds actor's vector to child's.
+	#Finally, reduces child's size to actor's size divided by number of shrapnel pieces.
+	def generate_child(actor, prototype)
+		child = super
+		child.vector += actor.vector
+		child.size = actor.size / prototypes.length
+		child
+	end
+end
+
+
+
 end #module Zyps

@@ -231,4 +231,40 @@ class TestActions < Test::Unit::TestCase
 		assert_equal(@actor.location.y, child.location.y)
 	end
 	
+	def test_spawn_action
+		#Set up prototypes.
+		prototypes = [Creature.new, GameObject.new]
+		prototypes[0].vector = Vector.new(1, 45)
+		#Add prototypes to new SpawnAction.
+		add_action(SpawnAction.new(@environment, prototypes), @actor)
+		#Interact.
+		@environment.interact
+		#All children should be spawned.
+		assert_equal(5, @environment.objects.length)
+		#Childrens' starting location should match actor's.
+		assert_equal(@environment.objects[-1].location, @actor.location)
+		#Spawned objects should be copy of originals.
+		assert_not_same(prototypes[0], @environment.objects[-2])
+		#Spawned objects' vectors should be same as originals'.
+		assert_equal(prototypes[0].vector, @environment.objects[-2].vector)
+	end
+	
+	def test_explode_action
+		#Set up prototypes.
+		prototypes = [Creature.new, GameObject.new]
+		prototypes[0].vector = Vector.new(1, 45)
+		#Add prototypes to new ExplodeAction.
+		add_action(ExplodeAction.new(@environment, prototypes), @actor)
+		#Interact.
+		@environment.interact
+		#Actor should be removed from environment.
+		assert(! @environment.objects.include?(@actor))
+		#All children should be spawned.
+		assert_equal(4, @environment.objects.length)
+		children = @environment.objects[-2, 2]
+		#Spawned objects' vectors should be sum of originals' plus actor's.
+		assert_equal(prototypes[0].vector + @actor.vector, children[0].vector)
+		assert_equal(prototypes[1].vector + @actor.vector, children[1].vector)
+	end
+	
 end
