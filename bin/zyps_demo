@@ -150,29 +150,29 @@ class Demo < Wx::App
 				say "-" * 30
 			when 600:
 				@environment.objects = []
-				test_change_color
+				test_accelerate
 				say "-" * 30
 			when 800:
 				@environment.objects = []
-				test_accelerate
+				test_turn
 				say "-" * 30
 			when 1000:
 				@environment.objects = []
-				test_turn
+				test_approach
 				say "-" * 30
 			when 1200:
 				@environment.objects = []
-				test_approach
+				test_flee
 				say "-" * 30
 			when 1400:
 				@environment.objects = []
-				test_flee
-				say "-" * 30
-			when 1600:
-				@environment.objects = []
 				test_eat
 				say "-" * 30
-			when 1800:
+			when 1500:
+				@environment.objects = []
+				test_explode
+				say "-" * 30
+			when 1600:
 				finish
 		end
 		@update_count += 1
@@ -180,11 +180,12 @@ class Demo < Wx::App
 
 	
 	#Populate an environment with the given number of creatures.
-	def populate(environment, count = 50)
-		@log.debug "Add #{count} creatures to #{environment}."
+	def generate_creatures(count = 50)
+		@log.debug "Generating #{count} creatures."
+		objects = []
 		count.times do |i|
 			multiplier = i / count.to_f
-			environment.objects << Creature.new(
+			objects << Creature.new(
 				:name => i,
 				:location => Location.new(multiplier * WIDTH, multiplier * HEIGHT),
 				:color => Color.new(multiplier, 1 - multiplier, multiplier / 2 + 0.5),
@@ -192,6 +193,7 @@ class Demo < Wx::App
 				:size => DEFAULT_OBJECT_SIZE
 			)
 		end
+		objects
 	end
 	
 	
@@ -240,7 +242,7 @@ class Demo < Wx::App
 	#Demonstrates environmental factors by adding gravity to the environment.
 	def test_environmental_factors
 
-		populate(@environment)
+		@environment.objects = generate_creatures
 		
 		say("Without gravity, objects just travel on forever.")
 	
@@ -262,7 +264,7 @@ class Demo < Wx::App
 	#Demonstrates creature behaviors.
 	def test_behaviors
 
-		populate(@environment)
+		@environment.objects = generate_creatures
 		
 		say("Let's add a Behavior to our creatures.")
 		chase = Behavior.new
@@ -300,61 +302,11 @@ class Demo < Wx::App
 	end
 
 
-	#A Creature that changes the colors of other objects.
-	class Morpher < Creature
-		#Changes an object's color.
-		def initialize(*arguments)
-			super
-			morph = Behavior.new
-			#Shift the target's color to match the creature's.
-			morph.actions << BlendAction.new(self.color)
-			#Act only on nearby targets.
-			morph.conditions << ProximityCondition.new(50)
-			@behaviors << morph
-		end
-	end
-
-	#Demonstrates changing object colors.
-	def test_change_color
-
-		populate(@environment)
-		
-		say("Creatures can influence any attribute of their target, such as its color.")
-		say("This demo includes a Morpher class, which is a type of Creature.")
-		say("Morphers are created with a single behavior, which shifts the color of any nearby target to match the Morpher's color.")
-		
-		say("Let's place a red Morpher...")
-		@environment.objects << Morpher.new(
-			:location => Location.new(0, 100),
-			:color => Color.red,
-			:vector => Vector.new(100, 0),
-			:size => DEFAULT_OBJECT_SIZE
-		)
-		say("a green one...")
-		@environment.objects << Morpher.new(
-			:location => Location.new(0, 150),
-			:color => Color.green,
-			:vector => Vector.new(200, 0),
-			:size => DEFAULT_OBJECT_SIZE
-		)
-		say("and a blue one...")
-		@environment.objects << Morpher.new(
-			:location => Location.new(0, 200),
-			:color => Color.blue,
-			:vector => Vector.new(300, 0),
-			:size => DEFAULT_OBJECT_SIZE
-		)
-		
-		say("...and see what they do.")
-		
-	end
-
-
 	#Demonstrates altering object speed.
 	def test_accelerate
 
 		say("Here are some Creatures, just plodding along.")
-		populate(@environment)
+		@environment.objects = generate_creatures
 		
 		say("We're going to have them pick up the pace.")
 		say("We add a Behavior with an AccelerateAction to all the creatures.")
@@ -371,7 +323,7 @@ class Demo < Wx::App
 	#Demonstrates altering object vectors.
 	def test_turn
 
-		populate(@environment)
+		@environment.objects = generate_creatures
 		
 		say("This time we'll use the TurnAction class.")
 		say("We tell each creature it should turn 90 degrees.")
@@ -387,7 +339,7 @@ class Demo < Wx::App
 	#Demonstrates adding vectors.
 	def test_approach
 
-		populate(@environment, 50)
+		@environment.objects = generate_creatures
 		
 		say("When your car skids on ice, you might steer in a different direction, but you're going to keep following your original vector for a while.")
 		say("Our ApproachAction adds the vector the creature WANTS to follow to the vector it's ACTUALLY following.")
@@ -418,7 +370,7 @@ class Demo < Wx::App
 	#Demonstrates adding vectors.
 	def test_flee
 
-		populate(@environment, 50)
+		@environment.objects = generate_creatures
 		
 		say("A FleeAction is just like an ApproachAction, but we head in the OPPOSITE direction.")
 		@environment.objects.each do |creature|
@@ -442,7 +394,7 @@ class Demo < Wx::App
 	#Demonstrates keeping a reference to an Environment so a Creature can alter it.
 	def test_eat
 	
-		populate(@environment)
+		@environment.objects = generate_creatures
 		
 		say("Most games are all about destruction, but there hasn't been much so far.")
 		say("Let's create a creature that causes some havoc.")
@@ -472,6 +424,48 @@ class Demo < Wx::App
 		
 		say("And - chomp!")
 		
+	end
+	
+	
+	#Demonstrates ElapsedTimeCondition.
+	def test_explode
+	
+		say("Let's have some fireworks.")
+		say("First we'll create 'stars' to load into the rocket.")
+		star = Creature.new(:color => Color.red)
+		say("A BlendAction will make them fade to black over time.")
+		star.behaviors << Behavior.new(:actions => [BlendAction.new(0.5, Color.black)])
+		say("An ExplodeAction copies prototype objects into the environment.")
+		action = ExplodeAction.new(@environment)
+		say("We'll make copies of our star with random vectors.")
+		say("We'll load these copies into our ExplodeAction.")
+		25.times do |i|
+			copy = star.copy
+			copy.vector = Vector.new(rand(50), rand(360))
+			action.prototypes << copy
+		end
+		
+		say("It's just not smart to build fireworks without a fuse.")
+		say("An ElapsedTimeCondition should do nicely.")
+		condition = ElapsedTimeCondition.new
+		say("This will be a short fuse, though, say 2 seconds.")
+		condition.interval = 2
+		
+		say("We set up a Behavior with the Action and Condition...")
+		explode = Behavior.new(:actions => [action], :conditions => [condition])
+		say("Add the behavior to rockets aimed at the sky...")
+		rocket = Creature.new(
+			:behaviors => [explode],
+			:vector => Vector.new(100, 260),
+			:location => Location.new(WIDTH / 2, HEIGHT),
+			:size => 50
+		)
+		rocket2 = rocket.copy
+		rocket2.vector = Vector.new(130, 275)
+		say("And light those suckers.")
+		@environment.objects << rocket << rocket2
+		@environment << Gravity.new(30)
+	
 	end
 
 
