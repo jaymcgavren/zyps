@@ -175,18 +175,19 @@ class TagAction < Action
 end
 
 
-#Blend the target's color with another color.
-class BlendAction < Action
-	#Color to apply to targets.
+#Blend the actor's color with another color.
+class BlendAction < TimedAction
+	#Color to apply to actor.
 	attr_accessor :color
-	def initialize(color)
-		self.color = color
+	def initialize(rate, color)
+		super
+		@color = color
 	end
-	#Blend the targets' color with the assigned color.
+	#Blend the actor's color with the assigned color.
 	def do(actor, targets)
-		targets.each do |target|
-			target.color += @color
-		end
+		actor.color.red += (@color.red - actor.color.red) * delta
+		actor.color.green += (@color.green - actor.color.green) * delta
+		actor.color.blue += (@color.blue - actor.color.blue) * delta
 	end
 end
 

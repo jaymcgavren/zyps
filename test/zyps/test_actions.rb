@@ -154,32 +154,32 @@ class TestActions < Test::Unit::TestCase
 	end
 	
 	
-	#A BlendAction shifts the target's color toward the given color.
+	#A BlendAction shifts the actor's color toward the given color.
 	def test_blend_action_black
 		#Create a BlendAction that blends to black.
-		add_action(BlendAction.new(Color.new(0, 0, 0)), @actor)
-		#Set the target's color.
-		@target1.color = Color.new(0.5, 0.5, 0.5)
-		#Act.
+		add_action(BlendAction.new(1, Color.new(0, 0, 0)), @actor)
+		#Set the actor's color.
+		@actor.color = Color.new(0.5, 0.5, 0.5)
+		#Act (time difference is 0.1 seconds).
 		@environment.interact
-		#Verify the target's new color.
-		assert_in_delta(0.25, @target1.color.red, REQUIRED_ACCURACY)
-		assert_in_delta(0.25, @target1.color.green, REQUIRED_ACCURACY)
-		assert_in_delta(0.25, @target1.color.blue, REQUIRED_ACCURACY)
+		#Verify the actor's new color.
+		assert_in_delta(0.45, @actor.color.red, REQUIRED_ACCURACY)
+		assert_in_delta(0.45, @actor.color.green, REQUIRED_ACCURACY)
+		assert_in_delta(0.45, @actor.color.blue, REQUIRED_ACCURACY)
 	end
 		
 	#Test shifting colors toward white.
 	def test_blend_action_white
 		#Create a BlendAction that blends to white.
-		add_action(BlendAction.new(Color.new(1, 1, 1)), @actor)
-		#Set the target's color.
-		@target1.color = Color.new(0.5, 0.5, 0.5)
-		#Act.
+		add_action(BlendAction.new(1, Color.new(1, 1, 1)), @actor)
+		#Set the actor's color.
+		@actor.color = Color.new(0.5, 0.5, 0.5)
+		#Act (time difference is 0.1 seconds).
 		@environment.interact
-		#Verify the target's new color.
-		assert_in_delta(0.75, @target1.color.red, REQUIRED_ACCURACY)
-		assert_in_delta(0.75, @target1.color.green, REQUIRED_ACCURACY)
-		assert_in_delta(0.75, @target1.color.blue, REQUIRED_ACCURACY)
+		#Verify the actor's new color.
+		assert_in_delta(0.55, @actor.color.red, REQUIRED_ACCURACY)
+		assert_in_delta(0.55, @actor.color.green, REQUIRED_ACCURACY)
+		assert_in_delta(0.55, @actor.color.blue, REQUIRED_ACCURACY)
 	end
 	
 	
