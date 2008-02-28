@@ -177,7 +177,7 @@ class GameObject
 		copy.location = @location.copy
 		copy.tags = @tags.clone
 		copy.identifier = generate_identifier
-		copy.name = @name ? "Copy of " + @name : nil
+		copy.name = @name ? "Copy of " + @name.to_s : nil
 		copy
 	end
 	
