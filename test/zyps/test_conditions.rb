@@ -96,4 +96,16 @@ class TestConditions < Test::Unit::TestCase
 	end
 	
 	
+	def test_elapsed_time_condition
+		condition = ElapsedTimeCondition.new
+		condition.interval = 0.2
+		#Test for falsehood.
+		#On first pass, its clock will only be at 0.1 seconds.
+		assert(! condition.select(@actor, [@target]).include?(@target))
+		#Test for truth.
+		#On first pass, its clock will be at 0.2 seconds, the assigned interval.
+		assert(condition.select(@actor, [@target]).include?(@target))
+	end
+	
+	
 end
