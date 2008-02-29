@@ -778,7 +778,7 @@ class CreatureGenerator
 			)
 		end
 		
-		creature.color = color
+		creature.color = color || Color.white
 		
 		@log.debug "Created creature: #{creature.to_s}"
 		
