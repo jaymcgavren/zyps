@@ -274,13 +274,13 @@ end
 class SpawnAction < Action
 	#Environment to place children into.
 	attr_accessor :environment
-	#GameObjects to copy into environment
+	#Array of GameObjects to copy into environment.
 	attr_accessor :prototypes
 	def initialize(environment, prototypes = [])
 		self.environment = environment
 		self.prototypes = prototypes
 	end
-	#Add children to environment at same location as actor.
+	#Add children to environment.
 	def do(actor, targets)
 		prototypes.each do |prototype|
 			environment.objects << generate_child(actor, prototype)
@@ -320,24 +320,35 @@ end
 
 
 #Copies the given GameObject prototypes into the environment.
-#Bullet's vector angle will be added to angle to target
-#Shrapnel's size will be actor's size divided by number of shrapnel pieces.
+#Bullet's vector angle will be added to angle to target.
 class ShootAction < SpawnAction
-	#Calls super method.
-	#Also removes actor from environment.
+	#Collection of GameObjects to copy into environment.
+	#First element will be copied on first call, subsequent elements on subsequent calls, wrapping back to start once end is reached.
+	#If an element is a collection, all its members will be copied in at once.
+	attr_accessor :prototypes
+	def initialize(*arguments)
+		super
+		@prototype_index = 0
+		@target_index = 0
+	end
+	#Copies next prototype into environment.
 	def do(actor, targets)
 		return if targets.empty?
-		target_index = 0
-		prototypes.each do |prototype|
-			environment.objects << generate_child(actor, prototype, targets[target_index])
-			#Move to next target, wrapping to start of array if need be.
-			target_index += 1
-			target_index = target_index % targets.length
+		#If next item is a collection of prototypes, copy them all in at once.
+		if prototypes[@prototype_index].respond_to?(:each)
+			prototypes[@prototype_index].each do |prototype|
+				environment.objects << generate_child(actor, prototype, targets[@target_index])
+			end
+		#Otherwise copy the single prototype.
+		else
+			environment.objects << generate_child(actor, prototypes[@prototype_index], targets[@target_index])
 		end
+		#Move to next target and prototype group, wrapping to start of array if need be.
+		@target_index = (@target_index + 1) % targets.length
+		@prototype_index = (@prototype_index + 1) % prototypes.length
 	end
 	#Calls super method.
-	#Also adds actor's vector to child's.
-	#Finally, reduces child's size to actor's size divided by number of shrapnel pieces.
+	#Also adds angle to target to child's vector angle.
 	def generate_child(actor, prototype, target)
 		child = super(actor, prototype)
 		child.vector.pitch = Utility.find_angle(actor.location, target.location) + child.vector.pitch

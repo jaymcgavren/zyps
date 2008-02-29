@@ -269,17 +269,27 @@ class TestActions < Test::Unit::TestCase
 	
 	def test_shoot_action
 		#Set up prototypes.
-		prototypes = [Creature.new, GameObject.new]
-		prototypes[0].vector.pitch = 5
+		prototypes = [[Creature.new, GameObject.new], Creature.new(:name => '2')]
+		prototypes[0][0].vector.pitch = 5
 		#Add prototypes to new ShootAction.
 		add_action(ShootAction.new(@environment, prototypes), @actor)
 		#Interact with both targets.
 		@environment.interact
+		#Both objects in first group should have been spawned.
+		assert_equal(5, @environment.objects.length)
 		#First spawned object's vector should match angle to first target plus prototype's vector angle.
 		children = @environment.objects[-2, 2]
 		assert_equal(45 + 5, children[0].vector.pitch)
-		#Second spawned object's vector should match angle to second target.
-		assert_equal(225, children[1].vector.pitch)
+		#Second spawned object's vector should match angle to first target.
+		assert_equal(45, children[1].vector.pitch)
+		#Fire second set of bullets.
+		@environment.interact
+		#Only second set should have been spawned.
+		assert_equal(6, @environment.objects.length)
+		children = @environment.objects[-1, 1]
+		assert_equal('Copy of 2', children[0].name)
+		#Spawned object should be aimed at second target.
+		assert_equal(225, children[0].vector.pitch)
 	end
 	
 end
