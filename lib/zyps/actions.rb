@@ -319,4 +319,32 @@ end
 
 
 
+#Copies the given GameObject prototypes into the environment.
+#Bullet's vector angle will be added to angle to target
+#Shrapnel's size will be actor's size divided by number of shrapnel pieces.
+class ShootAction < SpawnAction
+	#Calls super method.
+	#Also removes actor from environment.
+	def do(actor, targets)
+		return if targets.empty?
+		target_index = 0
+		prototypes.each do |prototype|
+			environment.objects << generate_child(actor, prototype, targets[target_index])
+			#Move to next target, wrapping to start of array if need be.
+			target_index += 1
+			target_index = target_index % targets.length
+		end
+	end
+	#Calls super method.
+	#Also adds actor's vector to child's.
+	#Finally, reduces child's size to actor's size divided by number of shrapnel pieces.
+	def generate_child(actor, prototype, target)
+		child = super(actor, prototype)
+		child.vector.pitch = Utility.find_angle(actor.location, target.location) + child.vector.pitch
+		child
+	end
+end
+
+
+
 end #module Zyps

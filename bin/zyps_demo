@@ -152,25 +152,30 @@ class Demo < Wx::App
 				@environment.objects = []
 				test_accelerate
 				say "-" * 30
-			when 800:
+			when 700:
 				@environment.objects = []
 				test_turn
 				say "-" * 30
-			when 1000:
+			when 900:
 				@environment.objects = []
 				test_approach
 				say "-" * 30
-			when 1200:
+			when 1100:
 				@environment.objects = []
 				test_flee
 				say "-" * 30
-			when 1400:
+			when 1300:
 				@environment.objects = []
 				test_eat
 				say "-" * 30
-			when 1500:
+			when 1400:
 				@environment.objects = []
 				test_explode
+				say "-" * 30
+			when 1500:
+				@environment.objects = []
+				@environment.environmental_factors = []
+				test_shoot
 				say "-" * 30
 			when 1600:
 				finish
@@ -375,7 +380,7 @@ class Demo < Wx::App
 		say("A FleeAction is just like an ApproachAction, but we head in the OPPOSITE direction.")
 		@environment.objects.each do |creature|
 			flee = Behavior.new
-			flee.actions << FleeAction.new(360, creature.vector)
+			flee.actions << FleeAction.new(300)
 			flee.conditions << TagCondition.new("predator")
 			creature.behaviors << flee
 		end
@@ -465,6 +470,74 @@ class Demo < Wx::App
 		say("And light those suckers.")
 		@environment.objects << rocket << rocket2
 		@environment << Gravity.new(30)
+	
+	end
+
+
+	#Demonstrates ShootAction.
+	def test_shoot
+	
+		say("I'm a big fan of shoot-em-up games.")
+		say("The ability to make them easily is a major goal of Zyps.")
+		
+		say("Every shooter needs someone to play it, so let's make a player.")
+		say("We give him a 'player' tag so enemies can target him.")
+		player = Creature.new(
+			:location => Location.new(WIDTH / 2, HEIGHT / 2),
+			:behaviors => [
+				Behavior.new(
+					:actions => [FleeAction.new(100)],
+					:conditions => [ProximityCondition.new(30)]
+				)
+			],
+			:size => DEFAULT_OBJECT_SIZE,
+			:vector => Vector.new(10, 0),
+			:tags => ['player']
+		)
+		
+		say("Shooters need lots of bullets, of course.")
+		say("A bullet doesn't need to be smart, but it should destroy the player when he gets too close.")
+		bullet = Creature.new(
+			:behaviors => [
+				Behavior.new(
+					:actions => [DestroyAction.new(@environment)],
+					:conditions => [
+						ProximityCondition.new(7),
+						TagCondition.new('player')
+					]
+				)
+			],
+			:vector => Vector.new(100, 0)
+		)
+		
+		say("We're going to fire groups of 3 bullets at once.")
+		bullets = [bullet, bullet.copy, bullet.copy]
+		say("There's no point firing all 3 at the same spot...")
+		say("We'll vary their angles a bit.")
+		bullets.first.vector.pitch -= 10
+		bullets.last.vector.pitch += 10
+		
+		say("And lastly, we need an enemy to fire the bullets at the player.")
+		say("We'll give him a ShootAction, and assign it our group of bullets.")
+		say("The action copies the bullets into the Environment and aims them at its target.")
+		say("An ElapsedTimeCondition makes it fire every 0.5 seconds.")
+		enemy = Creature.new(
+			:vector => Vector.new(30, 45),
+			:behaviors => [
+				Behavior.new(
+					:actions => [ShootAction.new(@environment, bullets)],
+					:conditions => [
+						ElapsedTimeCondition.new(0.5),
+						TagCondition.new('player'),
+					]
+				)
+			],
+			:color => Color.green,
+			:size => DEFAULT_OBJECT_SIZE
+		)
+		
+		say("Game on!")
+		@environment.objects << player << enemy
 	
 	end
 
