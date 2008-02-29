@@ -536,7 +536,7 @@ class Vector
 		#Store as radians internally.
 		@pitch = Utility.to_radians(value)
 	end
-	
+ 	
 	#The X component.
 	def x; @speed.to_f * Math.cos(@pitch); end
 	def x=(value)
@@ -572,6 +572,7 @@ end
 class Clock
 
 	def initialize
+		@@speed = 1
 		reset_elapsed_time
 	end
 	
@@ -583,13 +584,19 @@ class Clock
 		time = Time.new.to_f
 		elapsed_time = time - @last_check_time
 		@last_check_time = time
-		elapsed_time
+		elapsed_time * @@speed
 	end
 	
 	def reset_elapsed_time
 		@last_check_time = Time.new.to_f
 	end
 	
+	#Speed at which all Clocks are operating.
+	def Clock.speed; @@speed; end
+	#Set speed at which all Clocks will operate.
+	#1 is real-time, 2 is double speed, 0 is paused.
+	def Clock.speed=(value); @@speed = value; end
+
 end
 
 

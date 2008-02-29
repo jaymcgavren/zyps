@@ -131,6 +131,9 @@ class Application < Wx::App
 		@controls.length_slider.evt_slider(@controls.length_slider.get_id) do |event|
 			@view.trail_length = @controls.length_slider.value
 		end
+		@controls.speed_slider.evt_slider(@controls.speed_slider.get_id) do |event|
+			Clock.speed = @controls.speed_slider.value
+		end
 		frame.sizer.add(@controls, 0, Wx::GROW)
 		
 		@log.debug "Create an environment, and link it to the view."
@@ -525,6 +528,7 @@ class ControlPanel < Wx::Panel
 	attr_accessor :breed_flag
 	attr_accessor :eat_flag
 	attr_accessor :length_slider
+	attr_accessor :speed_slider
 	attr_accessor :clear_button
 
 
@@ -551,6 +555,9 @@ class ControlPanel < Wx::Panel
 		
 		environment_controls = add_panel(self, :proportion => 1)
 		add_label(environment_controls, :label => "Environment")
+		add_label(environment_controls, :label => "Speed")
+		@speed_slider = add_slider(environment_controls, :min_value => -10, :max_value => 10)
+		@speed_slider.value = 1
 		@clear_button = add_button(environment_controls, :label => "Clear")
 		
 	end
