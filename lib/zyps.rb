@@ -572,7 +572,6 @@ end
 class Clock
 
 	def initialize
-		@@speed = 1
 		reset_elapsed_time
 	end
 	
@@ -592,6 +591,7 @@ class Clock
 	end
 	
 	#Speed at which all Clocks are operating.
+	@@speed = 1.0
 	def Clock.speed; @@speed; end
 	#Set speed at which all Clocks will operate.
 	#1 is real-time, 2 is double speed, 0 is paused.
