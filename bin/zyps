@@ -131,8 +131,8 @@ class Application < Wx::App
 		@controls.length_slider.evt_slider(@controls.length_slider.get_id) do |event|
 			@view.trail_length = @controls.length_slider.value
 		end
-		@controls.speed_slider.evt_slider(@controls.speed_slider.get_id) do |event|
-			Clock.speed = @controls.speed_slider.value
+		@controls.speed_slider.evt_slider(@controls.speed_slider) do |event|
+			Clock.speed = @controls.speed_slider.value.to_f / 5.0
 		end
 		frame.sizer.add(@controls, 0, Wx::GROW)
 		
@@ -556,8 +556,8 @@ class ControlPanel < Wx::Panel
 		environment_controls = add_panel(self, :proportion => 1)
 		add_label(environment_controls, :label => "Environment")
 		add_label(environment_controls, :label => "Speed")
-		@speed_slider = add_slider(environment_controls, :min_value => -10, :max_value => 10)
-		@speed_slider.value = 1
+		@speed_slider = add_slider(environment_controls, :min_value => 0, :max_value => 15)
+		@speed_slider.value = 5
 		@clear_button = add_button(environment_controls, :label => "Clear")
 		
 	end
