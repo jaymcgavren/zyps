@@ -550,7 +550,7 @@ class ControlPanel < Wx::Panel
 		
 		display_controls = add_panel(self, :proportion => 1)
 		add_label(display_controls, :label => "Length")
-		@length_slider = add_slider(display_controls, :min_value => 2, :max_value => 100)
+		@length_slider = add_slider(display_controls, :min_value => 2, :max_value => 20)
 		@length_slider.value = 5
 		
 		environment_controls = add_panel(self, :proportion => 1)
