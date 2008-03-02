@@ -131,15 +131,10 @@ end
 
 #Destroy the targets.
 class DestroyAction < Action
-	#The environment to remove objects from.
-	attr_accessor :environment
-	def initialize(environment)
-		self.environment = environment
-	end
 	#Remove the target from the environment.
 	def do(actor, targets)
 		targets.each do |target|
-			@environment.objects.delete(target)
+			target.environment.remove_object(target)
 		end
 	end
 end
@@ -230,12 +225,10 @@ end
 
 class BreedAction < Action
 	DEFAULT_DELAY = 60
-	#Environment to place children into.
-	attr_accessor :environment
 	#Delay between actions.
 	attr_accessor :delay
-	def initialize(environment, delay = DEFAULT_DELAY)
-		self.environment, self.delay = environment, delay
+	def initialize(delay = DEFAULT_DELAY)
+		self.delay = delay
 		@clock = Clock.new
 		@time_since_last_action = 0
 	end
@@ -262,7 +255,7 @@ class BreedAction < Action
 			#Child's size should be half the average size of the parents'.
 			child.size = ((actor.size + target.size) / 2) / 2
 			#Add child to environment.
-			@environment.objects << child
+			actor.environment.add_object(child)
 			#Reset elapsed time.
 			@time_since_last_action = 0
 		end
@@ -272,18 +265,15 @@ end
 
 #Copies the given GameObject prototypes into the environment.
 class SpawnAction < Action
-	#Environment to place children into.
-	attr_accessor :environment
 	#Array of GameObjects to copy into environment.
 	attr_accessor :prototypes
-	def initialize(environment, prototypes = [])
-		self.environment = environment
+	def initialize(prototypes = [])
 		self.prototypes = prototypes
 	end
 	#Add children to environment.
 	def do(actor, targets)
 		prototypes.each do |prototype|
-			environment.objects << generate_child(actor, prototype)
+			actor.environment.add_object(generate_child(actor, prototype))
 		end
 	end
 	#Copy prototype to actor's location.
@@ -304,7 +294,7 @@ class ExplodeAction < SpawnAction
 	#Also removes actor from environment.
 	def do(actor, targets)
 		super
-		environment.objects.delete(actor)
+		actor.environment.remove_object(actor)
 	end
 	#Calls super method.
 	#Also adds actor's vector to child's.
@@ -337,11 +327,11 @@ class ShootAction < SpawnAction
 		#If next item is a collection of prototypes, copy them all in at once.
 		if prototypes[@prototype_index].respond_to?(:each)
 			prototypes[@prototype_index].each do |prototype|
-				environment.objects << generate_child(actor, prototype, targets[@target_index])
+				actor.environment.add_object(generate_child(actor, prototype, targets[@target_index]))
 			end
 		#Otherwise copy the single prototype.
 		else
-			environment.objects << generate_child(actor, prototypes[@prototype_index], targets[@target_index])
+			actor.environment.add_object(generate_child(actor, prototypes[@prototype_index], targets[@target_index]))
 		end
 		#Move to next target and prototype group, wrapping to start of array if need be.
 		@target_index = (@target_index + 1) % targets.length

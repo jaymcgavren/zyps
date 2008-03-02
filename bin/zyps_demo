@@ -90,7 +90,7 @@ class Demo < Wx::App
 		say "We tell the View to display our Environment by adding it as an Observer."
 		@environment.add_observer(view)
 		say "We'll also add this application as an observer, to track the number of updates."
-		@update_count = 0
+		@update_count = 1300
 		@environment.add_observer(self)
 		
 		say "The Utility module calculates distances and angles between objects."
@@ -136,45 +136,45 @@ class Demo < Wx::App
 				test_render_2
 				say "-" * 30
 			when 200:
-				@environment.objects = []
+				@environment.clear_objects
 				test_environmental_factors
 			when 300:
 				test_environmental_factors_2
 				say "-" * 30
 			when 400:
-				@environment.objects = []
-				@environment.environmental_factors = []
+				@environment.clear_objects
+				@environment.clear_environmental_factors
 				test_behaviors
 			when 500:
 				test_behaviors_2
 				say "-" * 30
 			when 600:
-				@environment.objects = []
+				@environment.clear_objects
 				test_accelerate
 				say "-" * 30
 			when 700:
-				@environment.objects = []
+				@environment.clear_objects
 				test_turn
 				say "-" * 30
 			when 900:
-				@environment.objects = []
+				@environment.clear_objects
 				test_approach
 				say "-" * 30
 			when 1100:
-				@environment.objects = []
+				@environment.clear_objects
 				test_flee
 				say "-" * 30
 			when 1300:
-				@environment.objects = []
+				@environment.clear_objects
 				test_eat
 				say "-" * 30
 			when 1400:
-				@environment.objects = []
+				@environment.clear_objects
 				test_explode
 				say "-" * 30
 			when 1500:
-				@environment.objects = []
-				@environment.environmental_factors = []
+				@environment.clear_objects
+				@environment.clear_environmental_factors
 				test_shoot
 				say "-" * 30
 			when 1600:
@@ -219,21 +219,21 @@ class Demo < Wx::App
 		object.vector = Vector.new(10, 45)
 		
 		say("Once your object is ready, add it to the environment.")
-		@environment.objects << object
+		@environment.add_object(object)
 
 	end
 	
 	def test_render_2
 	
 		say("Let's add a couple more objects with different colors and vectors.")
-		@environment.objects << GameObject.new(
+		@environment.add_object GameObject.new(
 			:name => "Duey",
 			:location => Location.new(WIDTH/2, HEIGHT/2),
 			:color => Color.new(0, 1, 0),
 			:vector => Vector.new(20, 135),
 			:size => DEFAULT_OBJECT_SIZE * 2
 		)
-		@environment.objects << GameObject.new(
+		@environment.add_object GameObject.new(
 			:name => "Louie",
 			:location => Location.new(WIDTH/2, HEIGHT/2),
 			:color => Color.new(0, 0, 1),
@@ -247,7 +247,7 @@ class Demo < Wx::App
 	#Demonstrates environmental factors by adding gravity to the environment.
 	def test_environmental_factors
 
-		@environment.objects = generate_creatures
+		generate_creatures.each {|creature| @environment.add_object(creature)}
 		
 		say("Without gravity, objects just travel on forever.")
 	
@@ -259,7 +259,7 @@ class Demo < Wx::App
 		gravity = Gravity.new(200)
 		
 		say("We add gravity to the Environment.")
-		@environment.environmental_factors << gravity
+		@environment.add_environmental_factor gravity
 		
 		say("Everything immediately drops.")
 		
@@ -269,7 +269,7 @@ class Demo < Wx::App
 	#Demonstrates creature behaviors.
 	def test_behaviors
 
-		@environment.objects = generate_creatures
+		generate_creatures.each {|creature| @environment.add_object(creature)}
 		
 		say("Let's add a Behavior to our creatures.")
 		chase = Behavior.new
@@ -284,7 +284,7 @@ class Demo < Wx::App
 		chase.conditions << TagCondition.new("food")
 		
 		say("We'll apply this behavior to all creatures currently in the environment.")
-		@environment.objects.each {|creature| creature.behaviors << chase}
+		@environment.each_object {|creature| creature.behaviors << chase}
 		
 	end
 	
@@ -292,7 +292,7 @@ class Demo < Wx::App
 		
 		say("Then we'll toss a piece of food into the environment.")
 		say("(It's just a GameObject with the tag 'food'.)")
-		@environment.objects << GameObject.new(
+		@environment.add_object GameObject.new(
 			:name => "target",
 			:location => Location.new(WIDTH / 2, HEIGHT / 2),
 			:color => Color.white,
@@ -311,12 +311,12 @@ class Demo < Wx::App
 	def test_accelerate
 
 		say("Here are some Creatures, just plodding along.")
-		@environment.objects = generate_creatures
+		generate_creatures.each {|creature| @environment.add_object(creature)}
 		
 		say("We're going to have them pick up the pace.")
 		say("We add a Behavior with an AccelerateAction to all the creatures.")
 		say("This AccelerateAction specifies they should increase their speed by 50 units/second.")
-		@environment.objects.each do |creature|
+		@environment.each_object do |creature|
 			accelerate = Behavior.new
 			accelerate.actions << AccelerateAction.new(50)
 			creature.behaviors << accelerate
@@ -328,11 +328,11 @@ class Demo < Wx::App
 	#Demonstrates altering object vectors.
 	def test_turn
 
-		@environment.objects = generate_creatures
+		generate_creatures.each {|creature| @environment.add_object(creature)}
 		
 		say("This time we'll use the TurnAction class.")
 		say("We tell each creature it should turn 90 degrees.")
-		@environment.objects.each do |creature|
+		@environment.each_object do |creature|
 			turn = Behavior.new
 			turn.actions << TurnAction.new(100, 90)
 			creature.behaviors << turn
@@ -344,13 +344,13 @@ class Demo < Wx::App
 	#Demonstrates adding vectors.
 	def test_approach
 
-		@environment.objects = generate_creatures
+		generate_creatures.each {|creature| @environment.add_object(creature)}
 		
 		say("When your car skids on ice, you might steer in a different direction, but you're going to keep following your original vector for a while.")
 		say("Our ApproachAction adds the vector the creature WANTS to follow to the vector it's ACTUALLY following.")
 		say("We add a behavior with an ApproachAction to all creatures...")
 		say("We also add a condition that it should only target food.")
-		@environment.objects.each do |creature|
+		@environment.each_object do |creature|
 			approach = Behavior.new
 			approach.actions << ApproachAction.new(360, creature.vector)
 			approach.conditions << TagCondition.new("food")
@@ -358,7 +358,7 @@ class Demo < Wx::App
 		end
 		
 		say("Add a target...")
-		@environment.objects << Creature.new(
+		@environment.add_object Creature.new(
 			:name => "target",
 			:location => Location.new(WIDTH / 2, HEIGHT / 3),
 			:vector => Vector.new(10, 0),
@@ -375,17 +375,17 @@ class Demo < Wx::App
 	#Demonstrates adding vectors.
 	def test_flee
 
-		@environment.objects = generate_creatures
+		generate_creatures.each {|creature| @environment.add_object(creature)}
 		
 		say("A FleeAction is just like an ApproachAction, but we head in the OPPOSITE direction.")
-		@environment.objects.each do |creature|
+		@environment.each_object do |creature|
 			flee = Behavior.new
 			flee.actions << FleeAction.new(300)
 			flee.conditions << TagCondition.new("predator")
 			creature.behaviors << flee
 		end
 		
-		@environment.objects << Creature.new(
+		@environment.add_object Creature.new(
 			:name => "hunter",
 			:location => Location.new(WIDTH / 2, HEIGHT / 2),
 			:vector => Vector.new(10, 0),
@@ -399,7 +399,7 @@ class Demo < Wx::App
 	#Demonstrates keeping a reference to an Environment so a Creature can alter it.
 	def test_eat
 	
-		@environment.objects = generate_creatures
+		generate_creatures.each {|creature| @environment.add_object(creature)}
 		
 		say("Most games are all about destruction, but there hasn't been much so far.")
 		say("Let's create a creature that causes some havoc.")
@@ -411,9 +411,7 @@ class Demo < Wx::App
 		)
 		
 		say("The EatAction eats targets by removing them from their environment.")
-		say("Creatures and their Actions normally know nothing about the Environment they belong to, so EatAction takes an Environment in its constructor.")
-		say("EatAction finds the target in Environment.objects and removes it.")
-		action = EatAction.new(@environment)
+		action = EatAction.new
 		
 		say("Create a behavior...")
 		behavior = Behavior.new
@@ -425,7 +423,7 @@ class Demo < Wx::App
 		predator.behaviors << behavior
 		
 		say("Drop the creature into the actual environment...")
-		@environment.objects << predator
+		@environment.add_object(predator)
 		
 		say("And - chomp!")
 		
@@ -441,7 +439,7 @@ class Demo < Wx::App
 		say("A BlendAction will make them fade to black over time.")
 		star.behaviors << Behavior.new(:actions => [BlendAction.new(0.5, Color.black)])
 		say("An ExplodeAction copies prototype objects into the environment.")
-		action = ExplodeAction.new(@environment)
+		action = ExplodeAction.new
 		say("We'll make copies of our star with random vectors.")
 		say("We'll load these copies into our ExplodeAction.")
 		25.times do |i|
@@ -468,7 +466,7 @@ class Demo < Wx::App
 		rocket2 = rocket.copy
 		rocket2.vector = Vector.new(130, 275)
 		say("And light those suckers.")
-		@environment.objects << rocket << rocket2
+		@environment << rocket << rocket2
 		@environment << Gravity.new(30)
 	
 	end
@@ -500,7 +498,7 @@ class Demo < Wx::App
 		bullet = Creature.new(
 			:behaviors => [
 				Behavior.new(
-					:actions => [DestroyAction.new(@environment)],
+					:actions => [DestroyAction.new],
 					:conditions => [
 						ProximityCondition.new(7),
 						TagCondition.new('player')
@@ -525,7 +523,7 @@ class Demo < Wx::App
 			:vector => Vector.new(30, 45),
 			:behaviors => [
 				Behavior.new(
-					:actions => [ShootAction.new(@environment, [bullets])],
+					:actions => [ShootAction.new([bullets])],
 					:conditions => [
 						ElapsedTimeCondition.new(0.5),
 						TagCondition.new('player'),
@@ -537,7 +535,7 @@ class Demo < Wx::App
 		)
 		
 		say("Game on!")
-		@environment.objects << player << enemy
+		@environment << player << enemy
 	
 	end
 

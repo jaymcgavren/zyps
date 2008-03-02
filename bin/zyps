@@ -126,7 +126,7 @@ class Application < Wx::App
 		@log.debug "Create an interface."
 		@controls = ControlPanel.new(frame)
 		@controls.clear_button.evt_button(@controls.clear_button.get_id) do |event|
-			@environment.objects.clear
+			@environment.clear_objects
 		end
 		@controls.length_slider.evt_slider(@controls.length_slider.get_id) do |event|
 			@view.trail_length = @controls.length_slider.value
@@ -148,10 +148,10 @@ class Application < Wx::App
 				:top => @drawing_area.size.height,
 				:right => @drawing_area.size.width
 			)
-			@environment.environmental_factors << @enclosure
+			@environment.add_environmental_factor @enclosure
 		end
-		@environment.environmental_factors << SpeedLimit.new(@options[:max_speed]) if @options[:max_speed]
-		@environment.environmental_factors << PopulationLimit.new(@options[:max_population]) if @options[:max_population]
+		@environment.add_environmental_factor SpeedLimit.new(@options[:max_speed]) if @options[:max_speed]
+		@environment.add_environmental_factor PopulationLimit.new(@options[:max_population]) if @options[:max_population]
 		
 		@log.debug "Set up a creature generator."
 		@generator = CreatureGenerator.new(:environment => @environment)
@@ -195,11 +195,12 @@ class Application < Wx::App
 		begin
 			@environment.interact
 		rescue Exception => exception
-			puts exception, exception.backtrace
+			@log.warn exception.message
+			@log.debug exception.backtrace
 			raise
 		end
 		#If there are no Creatures, show instructions on creating them.
-		if @environment.objects.empty?
+		if @environment.object_count == 0
 			@view.canvas.buffer.draw do |dc|
 				render_text_centered("Click and drag the mouse here to create creatures.", dc)
 			end
@@ -238,7 +239,7 @@ class Application < Wx::App
 			#Create creature at release location.
 			@release_location = Location.new(event.x, event.y)
 			@log.debug "Release location: #{@release_location.inspect}"
-			@environment.objects << @generator.create_creature(
+			@environment.add_object @generator.create_creature(
 				:x => event.x,
 				:y => event.y,
 				:speed => Utility.find_distance(@press_location, @release_location) * 2, #Use distance dragged as speed.
@@ -275,7 +276,7 @@ class Application < Wx::App
 		@log.debug "Act only if user presses OK."
 		if dialog.show_modal == Wx::ID_OK
 			begin
-				@environment.objects = YAML.load_file(dialog.path)
+				@environment.instance_eval {@objects = YAML.load_file(dialog.path)}
 				@object_file = dialog.path
 			rescue Exception => exception
 				show_alert(exception.message)
@@ -368,7 +369,9 @@ EOD
 	
 	#Save environment objects to the given path.
 	def save_objects(path)
-		File.open(path, "w") {|file| YAML.dump(@environment.objects, file)}
+		File.open(path, "w") do |file|
+			@environment.instance_eval {YAML.dump(@objects, file)}
+		end
 	end
 	
 	
@@ -768,7 +771,7 @@ class CreatureGenerator
 		if options[:breed]
 			color = color ? color + Color.orange : Color.orange
 			creature.behaviors << Behavior.new(
-				:actions => [BreedAction.new(@environment, @breed_rate)],
+				:actions => [BreedAction.new(@breed_rate)],
 				:conditions => [CollisionCondition.new], #The default ProximityCondition won't do.
 				:condition_frequency => 1
 			)
@@ -776,7 +779,7 @@ class CreatureGenerator
 		if options[:eat]
 			color = color ? color + Color.green : Color.green
 			creature.behaviors << Behavior.new(
-				:actions => [EatAction.new(@environment)],
+				:actions => [EatAction.new],
 				:conditions => [
 					StrengthCondition.new, #The eater should be as strong or stronger than its dinner.
 					CollisionCondition.new #The default ProximityCondition won't do.

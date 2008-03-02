@@ -89,7 +89,7 @@ class TrailsView
 		)
 		
 		#For each GameObject in the environment:
-		environment.objects.each do |object|
+		environment.each_object do |object|
 
 			object_radius = Math.sqrt(object.size / Math::PI)
 

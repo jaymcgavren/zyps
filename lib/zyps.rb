@@ -20,15 +20,11 @@ require 'observer'
 
 module Zyps
 
+
 #A virtual environment.
 class Environment
 
 	include Observable
-	
-	#An array of GameObject objects that reside in the Environment.
-	attr_accessor :objects
-	#An array of EnvironmentalFactor objects that act on any GameObject in the Environment.
-	attr_accessor :environmental_factors
 	
 	#Takes a hash with these keys and defaults:
 	#	:objects => [], 
@@ -38,21 +34,73 @@ class Environment
 			:objects => [], 
 			:environmental_factors => []
 		}.merge(options)
-		self.objects, self.environmental_factors = options[:objects], options[:environmental_factors]
+		@objects = []
+		@environmental_factors = []
+		options[:objects].each {|object| self.add_object(object)}
+		options[:environmental_factors].each {|environmental_factor| self.add_environmental_factor(environmental_factor)}
 		@clock = Clock.new
 	end
+
+	
+	#Add a GameObject to this environment.
+	def add_object(object)
+		object.environment = self
+		@objects << object
+	end
+	#Remove a GameObject from this environment.
+	def remove_object(object)
+		object.environment = nil
+		@objects.delete(object)
+	end
+	#Run a block with each GameObject in environment.
+	def each_object
+		@objects.each {|object| yield object} if block_given?
+	end
+	#Remove all GameObjects from this environment.
+	def clear_objects
+		@objects.clone.each {|object| self.remove_object(object)}
+	end
+	#Number of GameObjects in this environment.
+	def object_count; @objects.length; end
+	def objects_include?(*arguments, &block); @objects.include?(*arguments, &block); end
+	def find_object(*arguments, &block); @objects.find(*arguments, &block); end
+	def find_all_objects(*arguments, &block); @objects.find_all(*arguments, &block); end
+	
+	
+	#Add an EnvironmentalFactor to this environment.
+	def add_environmental_factor(environmental_factor)
+		environmental_factor.environment = self
+		@environmental_factors << environmental_factor
+	end
+	#Remove an EnvironmentalFactor from this environment.
+	def remove_environmental_factor(environmental_factor)
+		environmental_factor.environment = nil
+		@environmental_factors.delete(environmental_factor)
+	end
+	#Run a block with each GameObject in environment.
+	def each_environmental_factor
+		@environmental_factors.each {|environmental_factor| yield environmental_factor} if block_given?
+	end
+	#Remove all EnvironmentalFactors from this environment.
+	def clear_environmental_factors
+		@environmental_factors.clone.each {|environmental_factor| self.remove_environmental_factor(environmental_factor)}
+	end
+	#Number of EnvironmentalFactors in this environment.
+	def environmental_factor_count; @environmental_factors.length; end
+	
 	
 	#Make a deep copy.
 	def copy
 		copy = self.clone #Currently, we overwrite everything anyway, but we may add some clonable attributes later.
 		#Make a deep copy of all objects.
-		copy.objects = []
-		@objects.each {|object| copy.objects << object.copy}
+		copy.clear_objects
+		self.each_object {|object| copy.add_object(object)}
 		#Make a deep copy of all environmental_factors.
-		copy.environmental_factors = []
-		@environmental_factors.each {|environmental_factor| copy.environmental_factors << environmental_factor.copy}
+		copy.clear_environmental_factors
+		self.each_environmental_factor {|environmental_factor| copy.add_environmental_factor(environmental_factor)}
 		copy
 	end
+
 	
 	#Allow everything in the environment to interact with each other.
 	#Objects are first moved according to their preexisting vectors and the amount of time since the last call.
@@ -63,7 +111,7 @@ class Environment
 		#Get time since last interaction.
 		elapsed_time = @clock.elapsed_time
 		
-		objects.each do |object|
+		self.each_object do |object|
 		
 			#Move each object according to its vector.
 			begin
@@ -71,7 +119,7 @@ class Environment
 			#Remove misbehaving objects.
 			rescue Exception => exception
 				puts exception, exception.backtrace
-				objects.delete(object)
+				self.remove_object(object)
 				next
 			end
 			
@@ -79,11 +127,11 @@ class Environment
 			if object.respond_to?(:act)
 				begin
 					#Have creature act on all GameObjects other than itself.
-					object.act(objects.reject{|target| target.equal?(object)})
+					object.act(@objects.reject{|target| target.equal?(object)})
 				#Remove misbehaving objects.
 				rescue Exception => exception
 					puts exception, exception.backtrace
-					objects.delete(object)
+					self.remove_object(object)
 					next
 				end
 			end
@@ -92,7 +140,7 @@ class Environment
 		end
 		
 		#Have all environmental factors interact with environment.
-		environmental_factors.each do |factor|
+		self.each_environmental_factor do |factor|
 			begin
 				factor.act(self)
 			#Remove misbehaving environmental factors.
@@ -111,18 +159,21 @@ class Environment
 		
 	end
 	
+	
 	#Overloads the << operator to put the new item into the correct list.
 	#This allows one to simply call env << <valid_object> instead of 
 	#having to choose a specific list, such as objects or environmental factors.
 	def <<(item)
 		if(item.kind_of? Zyps::GameObject)
-			self.objects << item
+			self.add_object(item)
 		elsif(item.kind_of? Zyps::EnvironmentalFactor)
-			self.environmental_factors << item
+			self.add_environmental_factor(item)
 		else
 			raise "Invalid item: #{item.class}" 
 		end
+		self
 	end
+	
 	
 end
 
@@ -134,6 +185,8 @@ class GameObject
 	#A universal identifier for the object.
 	#Needed for DRb transmission, etc.
 	attr_reader :identifier
+	#The Environment this object is part of.
+	attr_accessor :environment
 	#The object's Location in space.
 	attr_accessor :location
 	#A Color that will be used to draw the object.
@@ -267,14 +320,10 @@ class Creature < GameObject
 	#See GameObject#<<.
 	#Adds ability to stream in behaviors as well.
 	def <<(item)
-		begin
+		if(item.kind_of? Zyps::Behavior)
+			self.behaviors << item
+		else
 			super
-		rescue 
-			if(item.kind_of? Zyps::Behavior)
-				self.behaviors << item
-			else
-				raise "invalid item: #{item.class}"
-			end
 		end
 	end
 	
@@ -285,6 +334,8 @@ end
 #Something in the environment that acts on creatures.
 #EnvironmentalFactors must implement an act(target) instance method.
 class EnvironmentalFactor
+	#Environment this EnvironmentalFactor belongs to.
+	attr_accessor :environment
 end
 
 

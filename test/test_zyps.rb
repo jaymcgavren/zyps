@@ -19,6 +19,7 @@
 require 'zyps'
 require 'zyps/actions'
 require 'zyps/conditions'
+require 'zyps/environmental_factors'
 require 'test/unit'
 
 
@@ -153,9 +154,9 @@ class TestEnvironment < Test::Unit::TestCase
 	
 		#Create an environment and add creatures.
 		@environment = Environment.new
-		@environment.objects << Creature.new(:name => '1')
-		@environment.objects << Creature.new(:name => '2')
-		@environment.objects << Creature.new(:name => '3')
+		@environment.add_object(Creature.new(:name => '1'))
+		@environment.add_object(Creature.new(:name => '2'))
+		@environment.add_object(Creature.new(:name => '3'))
 		
 	end
 	
@@ -179,7 +180,7 @@ class TestEnvironment < Test::Unit::TestCase
 	
 		#Set up behaviors that will log interactions.
 		log = LogAction.new
-		@environment.objects.each do |creature|
+		@environment.each_object do |creature|
 			behavior = Behavior.new
 			behavior.actions << log
 			creature.behaviors << behavior
@@ -206,7 +207,7 @@ class TestEnvironment < Test::Unit::TestCase
 		end
 		def act(environment)
 			#Log the interaction.
-			environment.objects.each {|target| @interactions << "Environment targeting #{target.name}"}
+			environment.each_object {|target| @interactions << "Environment targeting #{target.name}"}
 		end
 	end
 	
@@ -214,7 +215,7 @@ class TestEnvironment < Test::Unit::TestCase
 	
 		#Create an environmental factor.
 		logger = LogFactor.new
-		@environment.environmental_factors << logger
+		@environment.add_environmental_factor(logger)
 		
 		#Have environment elements interact.
 		@environment.interact
@@ -241,7 +242,7 @@ class TestEnvironment < Test::Unit::TestCase
 		behavior.actions << log
 		name_checker = NameCondition.new
 		behavior.conditions << name_checker
-		@environment.objects.each {|creature| creature.behaviors << behavior}
+		@environment.each_object {|creature| creature.behaviors << behavior}
 				
 		#Have environment elements interact.
 		@environment.interact
@@ -614,17 +615,17 @@ class TestAdditions < Test::Unit::TestCase
 	end
 	
 	def test_environment_double_arrow_objects
-		assert_equal(0, @environment.objects.size)
+		assert_equal(0, @environment.object_count)
 		@environment << @actor
-		assert_equal(1, @environment.objects.size)
-		assert_equal(0, @environment.environmental_factors.size)
+		assert_equal(1, @environment.object_count)
+		assert_equal(0, @environment.environmental_factor_count)
 	end
 	
 	def test_environment_double_arrow_factors
-		assert_equal(0, @environment.environmental_factors.size)
+		assert_equal(0, @environment.environmental_factor_count)
 		@environment << @env_fact
-		assert_equal(1, @environment.environmental_factors.size)
-		assert_equal(0, @environment.objects.size)
+		assert_equal(1, @environment.environmental_factor_count)
+		assert_equal(0, @environment.object_count)
 	end
 
 	def test_game_object_double_arrow

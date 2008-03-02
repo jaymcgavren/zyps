@@ -50,7 +50,7 @@ class Enclosure < EnvironmentalFactor
 	
 	#If object is beyond a boundary, set its position equal to the boundary and reflect it.
 	def act(environment)
-		environment.objects.each do |object|
+		environment.each_object do |object|
 			if (object.location.x < @left) then
 				object.location.x = @left
 				object.vector.pitch = Utility.find_reflection_angle(90, object.vector.pitch)
@@ -100,7 +100,7 @@ class WrapAround < EnvironmentalFactor
 	
 	#If object is beyond a boundary, set its position to that of opposite boundary.
 	def act(environment)
-		environment.objects.each do |object|
+		environment.each_object do |object|
 			if (object.location.x < @left) then
 				object.location.x = @right
 			elsif (object.location.x > @right) then
@@ -129,7 +129,7 @@ class SpeedLimit < EnvironmentalFactor
 	
 	#If object is over the speed, reduce its speed.
 	def act(environment)
-		environment.objects.each do |object|
+		environment.each_object do |object|
 			object.vector.speed = Utility.constrain_value(object.vector.speed, @maximum)
 		end
 	end
@@ -148,10 +148,10 @@ class Accelerator < EnvironmentalFactor
 		@clock = Clock.new
 	end
 
-	#Accelerate the target away from the actor, but limited by elapsed time.
+	#Add the given vector to each object, but limited by elapsed time.
 	def act(environment)
 		elapsed_time = @clock.elapsed_time
-		environment.objects.each do |object|
+		environment.each_object do |object|
 			#Push on object.
 			object.vector += Vector.new(@vector.speed * elapsed_time, @vector.pitch)
 		end
@@ -189,10 +189,10 @@ class Friction < EnvironmentalFactor
 		@clock = Clock.new
 	end
 	
-	#Reduce the target's speed at the given rate.
+	#Reduce each object's speed at the given rate.
 	def act(environment)
 		elapsed_time = @clock.elapsed_time
-		environment.objects.each do |object|
+		environment.each_object do |object|
 			#Slow object.
 			acceleration = @force * elapsed_time
 			speed = object.vector.speed
@@ -219,10 +219,17 @@ class PopulationLimit < EnvironmentalFactor
 		self.count = count
 	end
 	
-	#Remove target if there are too many objects in environment.
+	#Remove objects if there are too many objects in environment.
 	def act(environment)
-		excess = environment.objects.length - @count
-		environment.objects.slice!(0, excess) if excess > 0
+		excess = environment.object_count - @count
+		if excess > 0
+			objects_for_removal = []
+			environment.each_object do |object|
+				objects_for_removal << object
+				break if objects_for_removal.length >= excess
+			end
+			objects_for_removal.each {|object| environment.remove_object(object)}
+		end
 	end
 	
 end

@@ -43,24 +43,8 @@ class EnvironmentServer
 	#Offer the given environment for remote connections.
 	def start
 	
-		#Ensure GameObject and EnvironmentalFactor lists stay on server side.
-		@environment.objects.extend DRbUndumped
-		@environment.environmental_factors.extend DRbUndumped
-		
 		#Ensure Environment stays on server side.
-		class <<@environment
-			include DRbUndumped
-			alias old_objects= objects=
-			def objects=(value)
-				old_objects=(value)
-				@objects.extend DRbUndumped
-			end
-			alias old_environmental_factors= environmental_factors=
-			def environmental_factors=(value)
-				old_environmental_factors=(value)
-				@environmental_factors.extend DRbUndumped
-			end
-		end
+		@environment.extend DRbUndumped
 		
 		#Start a network service.
 		@server = DRb::DRbServer.new(
