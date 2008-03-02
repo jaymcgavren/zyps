@@ -99,7 +99,7 @@ class TestCreature < Test::Unit::TestCase
 		assert_equal(nil, creature.name)
 		assert_equal(1, creature.size)
 		assert_equal([], creature.tags)
-		assert_equal([], creature.behaviors)
+		assert_equal(0, creature.behavior_count)
 		#Identifiers should be unique.
 		assert_not_equal(creature.identifier, Creature.new.identifier)
 	end
@@ -136,10 +136,11 @@ class TestCreature < Test::Unit::TestCase
 		creature = Creature.new
 		behavior1 = Behavior.new
 		behavior2 = Behavior.new
-		creature.behaviors << behavior1 << behavior2
+		creature << behavior1 << behavior2
 		copy = creature.copy
-		assert_not_same(creature.behaviors, copy.behaviors, "Copy's behavior list should not be same object.")
-		assert_not_same(creature.behaviors[0], copy.behaviors[0], "Behaviors in list should not be same objects.")
+		creature.behaviors.each do |behavior|
+			assert(! copy.behaviors.find {|o| o.equal?(behavior)}, "Behaviors in list should not be same objects.")
+		end
 	end
 	
 	
@@ -183,7 +184,7 @@ class TestEnvironment < Test::Unit::TestCase
 		@environment.objects.each do |creature|
 			behavior = Behavior.new
 			behavior.actions << log
-			creature.behaviors << behavior
+			creature.add_behavior behavior
 		end
 		
 		#Have environment elements interact.
@@ -242,7 +243,7 @@ class TestEnvironment < Test::Unit::TestCase
 		behavior.actions << log
 		name_checker = NameCondition.new
 		behavior.conditions << name_checker
-		@environment.objects.each {|creature| creature.behaviors << behavior}
+		@environment.objects.each {|creature| creature.add_behavior behavior}
 				
 		#Have environment elements interact.
 		@environment.interact
@@ -605,7 +606,7 @@ class TestAdditions < Test::Unit::TestCase
 	def add_action(action, creature)
 		behavior = Behavior.new
 		behavior.actions << action
-		creature.behaviors << behavior
+		creature.add_behavior behavior
 	end
 	
 	def setup
@@ -644,8 +645,12 @@ class TestAdditions < Test::Unit::TestCase
 		behavior = Behavior.new
 		behavior.actions << TagAction.new("1")
 		@actor << behavior
-		assert_equal(1, @actor.behaviors.size)
-		assert_equal("1", @actor.behaviors.first.actions.first.tag)
+		assert_equal(1, @actor.behavior_count)
+		assert(
+			@actor.behaviors.find do |behavior|
+				behavior.actions.find {|action| action.tag == "1"}
+			end
+		)
 	end
 	
 end

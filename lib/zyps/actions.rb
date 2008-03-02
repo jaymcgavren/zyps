@@ -224,40 +224,22 @@ end
 
 
 class BreedAction < Action
-	DEFAULT_DELAY = 60
-	#Delay between actions.
-	attr_accessor :delay
-	def initialize(delay = DEFAULT_DELAY)
-		self.delay = delay
-		@clock = Clock.new
-		@time_since_last_action = 0
-	end
 	def do(actor, targets)
 		targets.each do |target|
 			#Skip action if target is not a Creature.
 			next unless target.is_a?(Creature)
-			#Get time since last action, and skip if it hasn't been long enough.
-			@time_since_last_action += @clock.elapsed_time
-			return unless @time_since_last_action >= @delay
-			#Create a child.
-			child = Creature.new
+			#Copy "mother" to make a child.
+			child = actor.copy
 			#Combine colors.
 			child.color = actor.color + target.color
-			#Combine behaviors EXCEPT those with BreedActions.
-			behaviors = (actor.behaviors + target.behaviors).find_all do |behavior|
-				! behavior.actions.any?{|action| action.is_a?(BreedAction)}
-			end
-			behaviors.each {|behavior| child.behaviors << behavior.copy}
-			#Location should equal actor's.
-			child.location = actor.location.copy
+			#Combine behaviors with "father's".
+			target.behaviors.each {|behavior| child.add_behavior behavior.copy}
 			#Add parents' vectors to get child's vector.
 			child.vector = actor.vector + target.vector
 			#Child's size should be half the average size of the parents'.
 			child.size = ((actor.size + target.size) / 2) / 2
 			#Add child to environment.
 			actor.environment.add_object(child)
-			#Reset elapsed time.
-			@time_since_last_action = 0
 		end
 	end
 end

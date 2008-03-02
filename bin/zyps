@@ -732,13 +732,13 @@ class CreatureGenerator
 		#Set up actions and merge colors according to selected behaviors.
 		if options[:turn]
 			color = color ? color + Color.blue : Color.blue
-			creature.behaviors << Behavior.new(
+			creature.add_behavior Behavior.new(
 				:actions => [TurnAction.new(@turn_rate, @turn_angle)]
 			)
 		end
 		if options[:approach]
 			color = color ? color + Color.red : Color.red
-			creature.behaviors << Behavior.new(
+			creature.add_behavior Behavior.new(
 				:actions => [ApproachAction.new(@approach_rate)],
 				:conditions => [ProximityCondition.new(options[:action_proximity])],
 				:condition_frequency => 10
@@ -746,7 +746,7 @@ class CreatureGenerator
 		end
 		if options[:flee]
 			color = color ? color + Color.yellow : Color.yellow
-			creature.behaviors << Behavior.new(
+			creature.add_behavior Behavior.new(
 				:actions => [FleeAction.new(@flee_rate)],
 				:conditions => [ProximityCondition.new(options[:action_proximity] * 0.5)],
 				:condition_frequency => 5
@@ -754,7 +754,7 @@ class CreatureGenerator
 		end
 		if options[:push]
 			color = color ? color + Color.violet : Color.violet
-			creature.behaviors << Behavior.new(
+			creature.add_behavior Behavior.new(
 				:actions => [PushAction.new(@push_strength)],
 				:conditions => [ProximityCondition.new(options[:action_proximity] * 0.25)],
 				:condition_frequency => 2
@@ -762,7 +762,7 @@ class CreatureGenerator
 		end
 		if options[:pull]
 			color = color ? color + Color.indigo : Color.indigo
-			creature.behaviors << Behavior.new(
+			creature.add_behavior Behavior.new(
 				:actions => [PullAction.new(@pull_strength)],
 				:conditions => [ProximityCondition.new(options[:action_proximity] * 0.75)],
 				:condition_frequency => 7
@@ -770,15 +770,18 @@ class CreatureGenerator
 		end
 		if options[:breed]
 			color = color ? color + Color.orange : Color.orange
-			creature.behaviors << Behavior.new(
-				:actions => [BreedAction.new(@breed_rate)],
-				:conditions => [CollisionCondition.new], #The default ProximityCondition won't do.
+			creature.add_behavior Behavior.new(
+				:actions => [BreedAction.new],
+				:conditions => [
+					CollisionCondition.new, #The default ProximityCondition won't do.
+					ElapsedTimeCondition.new(@breed_rate) #Avoids instant population explosion.
+				],
 				:condition_frequency => 1
 			)
 		end
 		if options[:eat]
 			color = color ? color + Color.green : Color.green
-			creature.behaviors << Behavior.new(
+			creature.add_behavior Behavior.new(
 				:actions => [EatAction.new],
 				:conditions => [
 					StrengthCondition.new, #The eater should be as strong or stronger than its dinner.

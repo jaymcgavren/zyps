@@ -284,7 +284,7 @@ class Demo < Wx::App
 		chase.conditions << TagCondition.new("food")
 		
 		say("We'll apply this behavior to all creatures currently in the environment.")
-		@environment.objects.each {|creature| creature.behaviors << chase}
+		@environment.objects.each {|creature| creature.add_behavior chase}
 		
 	end
 	
@@ -319,7 +319,7 @@ class Demo < Wx::App
 		@environment.objects.each do |creature|
 			accelerate = Behavior.new
 			accelerate.actions << AccelerateAction.new(50)
-			creature.behaviors << accelerate
+			creature.add_behavior accelerate
 		end
 			
 	end
@@ -335,7 +335,7 @@ class Demo < Wx::App
 		@environment.objects.each do |creature|
 			turn = Behavior.new
 			turn.actions << TurnAction.new(100, 90)
-			creature.behaviors << turn
+			creature.add_behavior turn
 		end
 		
 	end
@@ -354,7 +354,7 @@ class Demo < Wx::App
 			approach = Behavior.new
 			approach.actions << ApproachAction.new(360, creature.vector)
 			approach.conditions << TagCondition.new("food")
-			creature.behaviors << approach
+			creature.add_behavior approach
 		end
 		
 		say("Add a target...")
@@ -382,7 +382,7 @@ class Demo < Wx::App
 			flee = Behavior.new
 			flee.actions << FleeAction.new(300)
 			flee.conditions << TagCondition.new("predator")
-			creature.behaviors << flee
+			creature.add_behavior flee
 		end
 		
 		@environment.add_object Creature.new(
@@ -420,7 +420,7 @@ class Demo < Wx::App
 		say("Add a condition that they must collide first...")
 		behavior.conditions << CollisionCondition.new
 		say("Add the behavior to the creature...")
-		predator.behaviors << behavior
+		predator.add_behavior behavior
 		
 		say("Drop the creature into the actual environment...")
 		@environment.add_object(predator)
@@ -437,7 +437,7 @@ class Demo < Wx::App
 		say("First we'll create 'stars' to load into the rocket.")
 		star = Creature.new(:color => Color.red)
 		say("A BlendAction will make them fade to black over time.")
-		star.behaviors << Behavior.new(:actions => [BlendAction.new(0.5, Color.black)])
+		star.add_behavior Behavior.new(:actions => [BlendAction.new(0.5, Color.black)])
 		say("An ExplodeAction copies prototype objects into the environment.")
 		action = ExplodeAction.new
 		say("We'll make copies of our star with random vectors.")

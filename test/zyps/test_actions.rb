@@ -53,7 +53,7 @@ class TestActions < Test::Unit::TestCase
 	def add_action(action, creature)
 		behavior = Behavior.new
 		behavior.actions << action
-		creature.behaviors << behavior
+		creature.add_behavior behavior
 	end
 
 
@@ -215,22 +215,35 @@ class TestActions < Test::Unit::TestCase
 		#Set actor's location to a non-standard place.
 		@actor.location = Location.new(33, 33)
 		#Create a BreedAction using the Environment, and act.
-		add_action(BreedAction.new(0.2), @actor) #0.1 delay ensures modified Clock will trigger action on second operation.
+		@actor.add_behavior Behavior.new(
+			:actions => [BreedAction.new],
+			:conditions => [ElapsedTimeCondition.new(0.2)] #Act only on second interaction.
+		)
 		@environment.interact
 		@environment.interact #Act twice to trigger action on actor (and only actor).
-		#Find child.
-		child = nil
-		@environment.objects.each {|o| child = o}
+		#Find children.
+		children = @environment.objects.find_all {|o| o.name == "Copy of actor"}
+		#One child should have been spawned per target.
+		assert_equal(2, children.length)
 		#Ensure child's color is a mix of parents'.
-		assert_equal(Color.new(0.5, 0.5, 0.5), child.color)
-		#Ensure child's behaviors combine the parents', but exclude those with BreedActions.
-		assert_equal("1", child.behaviors[0].actions.first.tag)
-		assert_equal("2", child.behaviors[1].actions.first.tag)
-		assert_equal(2, child.behaviors.length)
+		assert_equal(Color.new(0.5, 0.5, 0.5), children[0].color)
+		#Ensure child's behaviors combine the parents'.
+		assert_equal(3, children[0].behavior_count)
+		assert(
+			children[0].behaviors.find do |behavior|
+				behavior.actions.find {|action| action.respond_to?(:tag) and action.tag == "1"}
+			end
+		)
+		assert(
+			children[0].behaviors.find do |behavior|
+				behavior.actions.find {|action| action.respond_to?(:tag) and action.tag == "2"}
+			end
+		)
 		#Ensure child appears at actor's location.
-		assert_equal(@actor.location.x, child.location.x)
-		assert_equal(@actor.location.y, child.location.y)
+		assert_equal(@actor.location, children[0].location)
+		assert_equal(@actor.location, children[1].location)
 	end
+	
 	
 	def test_spawn_action
 		#Set up prototypes.

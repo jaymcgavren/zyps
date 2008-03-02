@@ -77,7 +77,7 @@ class TestRemote < Test::Unit::TestCase
 		creature.vector = Vector.new(SPEED, PITCH)
 		behavior = Behavior.new
 		behavior.actions << TurnAction.new(RATE, 90)
-		creature.behaviors << behavior
+		creature.add_behavior behavior
 		@client.add_object(creature)
 		@client.add_object(Creature.new) #Second creature to interact with.
 		@environment.interact
@@ -93,7 +93,7 @@ class TestRemote < Test::Unit::TestCase
 		behavior = Behavior.new
 		behavior.actions << TurnAction.new(RATE, 90)
 		behavior.conditions << TagCondition.new('foobar') #Will return false.
-		creature.behaviors << behavior
+		creature.add_behavior behavior
 		@client.add_object(creature)
 		@client.add_object(Creature.new) #Second creature to interact with.
 		@environment.interact

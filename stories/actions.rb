@@ -39,14 +39,14 @@ steps_for(:actions) do
 	end
 	Given "a creature at $x, $y" do |x, y|
 		@creature = Creature.new(:location => Location.new(x.to_f, y.to_f))
-		@environment.objects << @creature
+		@environment << @creature
 	end
 	Given "a target at $x, $y" do |x, y|
 		@target = Creature.new(:location => Location.new(x.to_f, y.to_f))
-		@environment.objects << @target
+		@environment << @target
 	end
 	Given "an approach action with a rate of $rate" do |rate|
-		@creature.behaviors << Behavior.new(
+		@creature.add_behavior Behavior.new(
 			:actions => [ApproachAction.new(rate.to_f)]
 		)
 	end

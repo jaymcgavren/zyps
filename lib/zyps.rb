@@ -87,8 +87,8 @@ class Environment
 	def copy
 		copy = self.clone #Currently, we overwrite everything anyway, but we may add some clonable attributes later.
 		#Make a deep copy of all objects.
-		copy.clear_objects
-		self.objects.each {|object| copy.add_object(object)}
+		copy.instance_eval {@objects = []}
+		self.objects.each {|object| copy.add_object(object.copy)}
 		#Make a deep copy of all environmental_factors.
 		copy.clear_environmental_factors
 		self.environmental_factors.each {|environmental_factor| copy.add_environmental_factor(environmental_factor)}
@@ -294,15 +294,35 @@ class Creature < GameObject
 			:behaviors => []
 		}.merge(options)
 		super
-		self.behaviors = options[:behaviors]
+		@behaviors = []
+		options[:behaviors].each {|behavior| self.add_behavior(behavior)}
 	end
 	
+	#Add a Behavior to this creature.
+	def add_behavior(behavior)
+		behavior.creature = self
+		@behaviors << behavior
+	end
+	#Remove a Behavior from this creature.
+	def remove_behavior(behavior)
+		behavior.creature = nil
+		@behaviors.delete(behavior)
+	end
+	#An Enumerable::Enumerator over each Behavior this creature has.
+	def behaviors; Enumerable::Enumerator.new(@behaviors, :each); end
+	#Remove all Behaviors from this creature.
+	def clear_behaviors
+		@behaviors.clone.each {|behavior| self.remove_behavior(behavior)}
+	end
+	#Number of Behaviors this creature has.
+	def behavior_count; @behaviors.length; end
+
 	#Make a deep copy.
 	def copy
 		copy = super
 		#Make deep copy of each behavior.
-		copy.behaviors = []
-		@behaviors.each {|behavior| copy.behaviors << behavior.copy}
+		copy.instance_eval {@behaviors = []}
+		self.behaviors.each {|behavior| copy.add_behavior(behavior.copy)}
 		copy
 	end
 	
@@ -315,7 +335,7 @@ class Creature < GameObject
 	#Adds ability to stream in behaviors as well.
 	def <<(item)
 		if(item.kind_of? Zyps::Behavior)
-			self.behaviors << item
+			self.add_behavior item
 		else
 			super
 		end
@@ -396,6 +416,8 @@ class Behavior
 	#Action#start(actor, targets) and action.do(actor, targets) will be called on each when all conditions are true.
 	#Action#stop(actor, targets) will be called when any condition is false.
 	attr_accessor :actions
+	#The Creature this behavior belongs to.
+	attr_accessor :creature
 	#Number of updates before behavior is allowed to select a new group of targets to act on.
 	attr_accessor :condition_frequency
 	
