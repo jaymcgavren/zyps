@@ -52,7 +52,7 @@ class TestActions < Test::Unit::TestCase
 	#Add a new behavior to a creature with the given action.
 	def add_action(action, creature)
 		behavior = Behavior.new
-		behavior.actions << action
+		behavior.add_action action
 		creature.add_behavior behavior
 	end
 

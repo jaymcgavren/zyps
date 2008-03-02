@@ -359,6 +359,8 @@ class Action
 
 	#Whether the action was previously started.
 	attr_reader :started
+	#The Behavior this Action belongs to.
+	attr_accessor :behavior
 	
 	def initialize
 		@started = false
@@ -393,6 +395,9 @@ end
 #A condition for one Creature to act on another.
 class Condition
 
+	#The Behavior this Condition belongs to.
+	attr_accessor :behavior
+	
 	#Make a deep copy.
 	def copy; self.clone; end
 	
@@ -434,14 +439,57 @@ class Behavior
 			:conditions => [],
 			:condition_frequency => 1
 		}.merge(options)
-		self.actions = options[:actions]
-		self.conditions = options[:conditions]
+		@actions = []
+		@conditions = []
+		options[:actions].each {|action| self.add_action(action)}
+		options[:conditions].each {|condition| self.add_condition(condition)}
 		self.condition_frequency = options[:condition_frequency]
 		#Tracks number of calls to perform() so conditions can be evaluated with appropriate frequency.
 		@condition_evaluation_count = 0
 		#Targets currently selected to act upon.
 		@current_targets = []
 	end
+
+	
+	#Add an Action to this behavior.
+	def add_action(action)
+		action.behavior = self
+		@actions << action
+	end
+	#Remove an Action from this behavior.
+	def remove_action(action)
+		action.behavior = nil
+		@actions.delete(action)
+	end
+	#An Enumerable::Enumerator over each Action.
+	def actions; Enumerable::Enumerator.new(@actions, :each); end
+	#Remove all Actions from this behavior.
+	def clear_actions
+		@actions.clone.each {|action| self.remove_action(action)}
+	end
+	#Number of Actions.
+	def action_count; @actions.length; end
+	
+	
+	#Add an Condition to this behavior.
+	def add_condition(condition)
+		condition.behavior = self
+		@conditions << condition
+	end
+	#Remove an Condition from this behavior.
+	def remove_condition(condition)
+		condition.behavior = nil
+		@conditions.delete(condition)
+	end
+	#An Enumerable::Enumerator over each Condition.
+	def conditions; Enumerable::Enumerator.new(@conditions, :each); end
+	#Remove all Conditions from this behavior.
+	def clear_conditions
+		@conditions.clone.each {|condition| self.remove_condition(condition)}
+	end
+	#Number of Conditions.
+	def condition_count; @conditions.length; end
+	
 	
 	def condition_frequency= (value)
 		#Condition frequency must be 1 or more.
@@ -454,12 +502,24 @@ class Behavior
 	#Make a deep copy.
 	def copy
 		copy = self.clone #Currently, we overwrite everything anyway, but we may add some clonable attributes later.
+		#Make a deep copy of all objects.
+		copy.instance_eval {@objects = []}
+		self.objects.each {|object| copy.add_object(object.copy)}
+		#Make a deep copy of all environmental_factors.
+		copy.clear_environmental_factors
+		self.environmental_factors.each {|environmental_factor| copy.add_environmental_factor(environmental_factor)}
+		copy
+	end
+
+	#Make a deep copy.
+	def copy
+		copy = self.clone #Currently, we overwrite everything anyway, but we may add some clonable attributes later.
 		#Make a deep copy of all actions.
-		copy.actions = []
-		@actions.each {|action| copy.actions << action.copy}
+		copy.instance_eval {@actions = []}
+		self.actions.each {|action| copy.add_action(action.copy)}
 		#Make a deep copy of all conditions.
-		copy.conditions = []
-		@conditions.each {|condition| copy.conditions << condition.copy}
+		copy.instance_eval {@conditions = []}
+		self.conditions.each {|condition| copy.add_condition(condition.copy)}
 		copy
 	end
 	

@@ -183,7 +183,7 @@ class TestEnvironment < Test::Unit::TestCase
 		log = LogAction.new
 		@environment.objects.each do |creature|
 			behavior = Behavior.new
-			behavior.actions << log
+			behavior.add_action log
 			creature.add_behavior behavior
 		end
 		
@@ -240,9 +240,9 @@ class TestEnvironment < Test::Unit::TestCase
 		#Set up behavior that will log interactions.
 		behavior = Behavior.new
 		log = LogAction.new
-		behavior.actions << log
+		behavior.add_action log
 		name_checker = NameCondition.new
-		behavior.conditions << name_checker
+		behavior.add_condition name_checker
 		@environment.objects.each {|creature| creature.add_behavior behavior}
 				
 		#Have environment elements interact.
@@ -537,9 +537,9 @@ class TestBehavior < Test::Unit::TestCase
 	
 		#Set up a behavior with a true condition and a mock action.
 		behavior = Behavior.new
-		behavior.conditions << TrueCondition.new
+		behavior.add_condition TrueCondition.new
 		action = MockAction.new
-		behavior.actions << action
+		behavior.add_action action
 		
 		#Perform the behavior.
 		behavior.perform(@actor, @targets)
@@ -554,7 +554,7 @@ class TestBehavior < Test::Unit::TestCase
 		assert_equal(0, action.stop_count, "stop() should NOT have been called.")
 		
 		#Add a false condition to the behavior.
-		behavior.conditions << FalseCondition.new
+		behavior.add_condition FalseCondition.new
 		#Perform the behavior.
 		behavior.perform(@actor, @targets)
 		assert_equal(1, action.start_count, "start() should NOT have been called.")
@@ -566,14 +566,16 @@ class TestBehavior < Test::Unit::TestCase
 	def test_copy
 		original = Behavior.new
 		action = TagAction.new("tag")
-		original.actions << action
+		original.add_action action
 		condition = TagCondition.new("tag")
-		original.conditions << condition
+		original.add_condition condition
 		copy = original.copy
-		assert_not_same(original.actions, copy.actions, "Copy's action list should not be same object.")
-		assert_not_same(original.actions[0], copy.actions[0], "Actions in list should not be same objects.")
-		assert_not_same(original.conditions, copy.conditions, "Copy's condition list should not be same object.")
-		assert_not_same(original.conditions[0], copy.conditions[0], "Conditions in list should not be same objects.")
+		original.actions.each do |action|
+			assert(! copy.actions.find {|a| a.equal?(action)}, "Actions in list should not be same objects.")
+		end
+		original.conditions.each do |condition|
+			assert(! copy.conditions.find {|a| a.equal?(condition)}, "Conditions in list should not be same objects.")
+		end
 	end
 	
 	def test_no_conditions
@@ -586,7 +588,7 @@ class TestBehavior < Test::Unit::TestCase
 		assert_equal(1, action.do_count, "do() should have been called.")
 		assert_equal(0, action.stop_count, "stop() should NOT have been called.")
 		#Add a true condition.
-		behavior.conditions << TrueCondition.new
+		behavior.add_condition TrueCondition.new
 		#Perform the behavior with no targets.
 		behavior.perform(@actor, [])
 		assert_equal(1, action.stop_count, "stop() should have been called.")
@@ -605,7 +607,7 @@ class TestAdditions < Test::Unit::TestCase
 	#Add a new behavior to a creature with the given action.
 	def add_action(action, creature)
 		behavior = Behavior.new
-		behavior.actions << action
+		behavior.add_action action
 		creature.add_behavior behavior
 	end
 	
@@ -643,7 +645,7 @@ class TestAdditions < Test::Unit::TestCase
 		assert_equal(13, @actor.location.y)
 		#test behavior
 		behavior = Behavior.new
-		behavior.actions << TagAction.new("1")
+		behavior.add_action TagAction.new("1")
 		@actor << behavior
 		assert_equal(1, @actor.behavior_count)
 		assert(
