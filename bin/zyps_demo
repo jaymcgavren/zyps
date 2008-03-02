@@ -90,7 +90,7 @@ class Demo < Wx::App
 		say "We tell the View to display our Environment by adding it as an Observer."
 		@environment.add_observer(view)
 		say "We'll also add this application as an observer, to track the number of updates."
-		@update_count = 1300
+		@update_count = 0
 		@environment.add_observer(self)
 		
 		say "The Utility module calculates distances and angles between objects."
@@ -284,7 +284,7 @@ class Demo < Wx::App
 		chase.conditions << TagCondition.new("food")
 		
 		say("We'll apply this behavior to all creatures currently in the environment.")
-		@environment.each_object {|creature| creature.behaviors << chase}
+		@environment.objects.each {|creature| creature.behaviors << chase}
 		
 	end
 	
@@ -316,7 +316,7 @@ class Demo < Wx::App
 		say("We're going to have them pick up the pace.")
 		say("We add a Behavior with an AccelerateAction to all the creatures.")
 		say("This AccelerateAction specifies they should increase their speed by 50 units/second.")
-		@environment.each_object do |creature|
+		@environment.objects.each do |creature|
 			accelerate = Behavior.new
 			accelerate.actions << AccelerateAction.new(50)
 			creature.behaviors << accelerate
@@ -332,7 +332,7 @@ class Demo < Wx::App
 		
 		say("This time we'll use the TurnAction class.")
 		say("We tell each creature it should turn 90 degrees.")
-		@environment.each_object do |creature|
+		@environment.objects.each do |creature|
 			turn = Behavior.new
 			turn.actions << TurnAction.new(100, 90)
 			creature.behaviors << turn
@@ -350,7 +350,7 @@ class Demo < Wx::App
 		say("Our ApproachAction adds the vector the creature WANTS to follow to the vector it's ACTUALLY following.")
 		say("We add a behavior with an ApproachAction to all creatures...")
 		say("We also add a condition that it should only target food.")
-		@environment.each_object do |creature|
+		@environment.objects.each do |creature|
 			approach = Behavior.new
 			approach.actions << ApproachAction.new(360, creature.vector)
 			approach.conditions << TagCondition.new("food")
@@ -378,7 +378,7 @@ class Demo < Wx::App
 		generate_creatures.each {|creature| @environment.add_object(creature)}
 		
 		say("A FleeAction is just like an ApproachAction, but we head in the OPPOSITE direction.")
-		@environment.each_object do |creature|
+		@environment.objects.each do |creature|
 			flee = Behavior.new
 			flee.actions << FleeAction.new(300)
 			flee.conditions << TagCondition.new("predator")

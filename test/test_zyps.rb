@@ -180,7 +180,7 @@ class TestEnvironment < Test::Unit::TestCase
 	
 		#Set up behaviors that will log interactions.
 		log = LogAction.new
-		@environment.each_object do |creature|
+		@environment.objects.each do |creature|
 			behavior = Behavior.new
 			behavior.actions << log
 			creature.behaviors << behavior
@@ -207,7 +207,7 @@ class TestEnvironment < Test::Unit::TestCase
 		end
 		def act(environment)
 			#Log the interaction.
-			environment.each_object {|target| @interactions << "Environment targeting #{target.name}"}
+			environment.objects.each {|target| @interactions << "Environment targeting #{target.name}"}
 		end
 	end
 	
@@ -242,7 +242,7 @@ class TestEnvironment < Test::Unit::TestCase
 		behavior.actions << log
 		name_checker = NameCondition.new
 		behavior.conditions << name_checker
-		@environment.each_object {|creature| creature.behaviors << behavior}
+		@environment.objects.each {|creature| creature.behaviors << behavior}
 				
 		#Have environment elements interact.
 		@environment.interact

@@ -56,7 +56,7 @@ class TestRemote < Test::Unit::TestCase
 		object = GameObject.new
 		@environment.add_object(object)
 		environment_object = nil
-		@environment.each_object {|o| environment_object = o if o.identifier == object.identifier}
+		@environment.objects.each {|o| environment_object = o if o.identifier == object.identifier}
 		assert_equal(object, environment_object)
 	end
 	
@@ -67,7 +67,7 @@ class TestRemote < Test::Unit::TestCase
 		@client.add_object(object)
 		@environment.interact
 		environment_object = nil
-		@environment.each_object {|o| environment_object = o if o.identifier == object.identifier}
+		@environment.objects.each {|o| environment_object = o if o.identifier == object.identifier}
 		assert_in_delta(0.1 * SPEED, environment_object.location.x, 0.001)
 	end
 	
@@ -82,7 +82,7 @@ class TestRemote < Test::Unit::TestCase
 		@client.add_object(Creature.new) #Second creature to interact with.
 		@environment.interact
 		environment_object = nil
-		@client.each_object {|o| environment_object = o if o.identifier == creature.identifier}
+		@client.objects.each {|o| environment_object = o if o.identifier == creature.identifier}
 		assert(environment_object.vector.pitch > PITCH)
 	end
 	
@@ -98,7 +98,7 @@ class TestRemote < Test::Unit::TestCase
 		@client.add_object(Creature.new) #Second creature to interact with.
 		@environment.interact
 		environment_object = nil
-		@client.each_object {|o| environment_object = o if o.identifier == creature.identifier}
+		@client.objects.each {|o| environment_object = o if o.identifier == creature.identifier}
 		#Ensure pitch is unaltered, as condition was false.
 		assert_in_delta(PITCH, environment_object.vector.pitch, 0.001)
 	end
@@ -110,7 +110,7 @@ class TestRemote < Test::Unit::TestCase
 		@client.add_environmental_factor(Accelerator.new(Vector.new(SPEED, PITCH)))
 		@environment.interact
 		environment_object = nil
-		@client.each_object {|o| environment_object = o if o.identifier == creature.identifier}
+		@client.objects.each {|o| environment_object = o if o.identifier == creature.identifier}
 		assert_in_delta(SPEED * 0.1, environment_object.vector.speed, 0.001)
 	end
 		

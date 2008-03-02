@@ -50,7 +50,7 @@ class Enclosure < EnvironmentalFactor
 	
 	#If object is beyond a boundary, set its position equal to the boundary and reflect it.
 	def act(environment)
-		environment.each_object do |object|
+		environment.objects.each do |object|
 			if (object.location.x < @left) then
 				object.location.x = @left
 				object.vector.pitch = Utility.find_reflection_angle(90, object.vector.pitch)
@@ -100,7 +100,7 @@ class WrapAround < EnvironmentalFactor
 	
 	#If object is beyond a boundary, set its position to that of opposite boundary.
 	def act(environment)
-		environment.each_object do |object|
+		environment.objects.each do |object|
 			if (object.location.x < @left) then
 				object.location.x = @right
 			elsif (object.location.x > @right) then
@@ -129,7 +129,7 @@ class SpeedLimit < EnvironmentalFactor
 	
 	#If object is over the speed, reduce its speed.
 	def act(environment)
-		environment.each_object do |object|
+		environment.objects.each do |object|
 			object.vector.speed = Utility.constrain_value(object.vector.speed, @maximum)
 		end
 	end
@@ -151,7 +151,7 @@ class Accelerator < EnvironmentalFactor
 	#Add the given vector to each object, but limited by elapsed time.
 	def act(environment)
 		elapsed_time = @clock.elapsed_time
-		environment.each_object do |object|
+		environment.objects.each do |object|
 			#Push on object.
 			object.vector += Vector.new(@vector.speed * elapsed_time, @vector.pitch)
 		end
@@ -192,7 +192,7 @@ class Friction < EnvironmentalFactor
 	#Reduce each object's speed at the given rate.
 	def act(environment)
 		elapsed_time = @clock.elapsed_time
-		environment.each_object do |object|
+		environment.objects.each do |object|
 			#Slow object.
 			acceleration = @force * elapsed_time
 			speed = object.vector.speed
@@ -224,7 +224,7 @@ class PopulationLimit < EnvironmentalFactor
 		excess = environment.object_count - @count
 		if excess > 0
 			objects_for_removal = []
-			environment.each_object do |object|
+			environment.objects.each do |object|
 				objects_for_removal << object
 				break if objects_for_removal.length >= excess
 			end

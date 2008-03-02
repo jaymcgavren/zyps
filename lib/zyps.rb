@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+require 'enumerator'
 require 'observer'
 
 module Zyps
@@ -52,19 +53,14 @@ class Environment
 		object.environment = nil
 		@objects.delete(object)
 	end
-	#Run a block with each GameObject in environment.
-	def each_object
-		@objects.each {|object| yield object} if block_given?
-	end
+	#An Enumerable::Enumerator over each GameObject in the environment.
+	def objects; Enumerable::Enumerator.new(@objects, :each); end
 	#Remove all GameObjects from this environment.
 	def clear_objects
 		@objects.clone.each {|object| self.remove_object(object)}
 	end
 	#Number of GameObjects in this environment.
 	def object_count; @objects.length; end
-	def objects_include?(*arguments, &block); @objects.include?(*arguments, &block); end
-	def find_object(*arguments, &block); @objects.find(*arguments, &block); end
-	def find_all_objects(*arguments, &block); @objects.find_all(*arguments, &block); end
 	
 	
 	#Add an EnvironmentalFactor to this environment.
@@ -77,10 +73,8 @@ class Environment
 		environmental_factor.environment = nil
 		@environmental_factors.delete(environmental_factor)
 	end
-	#Run a block with each GameObject in environment.
-	def each_environmental_factor
-		@environmental_factors.each {|environmental_factor| yield environmental_factor} if block_given?
-	end
+	#An Enumerable::Enumerator over each EnvironmentalFactor in the environment.
+	def environmental_factors; Enumerable::Enumerator.new(@environmental_factors, :each); end
 	#Remove all EnvironmentalFactors from this environment.
 	def clear_environmental_factors
 		@environmental_factors.clone.each {|environmental_factor| self.remove_environmental_factor(environmental_factor)}
@@ -94,10 +88,10 @@ class Environment
 		copy = self.clone #Currently, we overwrite everything anyway, but we may add some clonable attributes later.
 		#Make a deep copy of all objects.
 		copy.clear_objects
-		self.each_object {|object| copy.add_object(object)}
+		self.objects.each {|object| copy.add_object(object)}
 		#Make a deep copy of all environmental_factors.
 		copy.clear_environmental_factors
-		self.each_environmental_factor {|environmental_factor| copy.add_environmental_factor(environmental_factor)}
+		self.environmental_factors.each {|environmental_factor| copy.add_environmental_factor(environmental_factor)}
 		copy
 	end
 
@@ -111,7 +105,7 @@ class Environment
 		#Get time since last interaction.
 		elapsed_time = @clock.elapsed_time
 		
-		self.each_object do |object|
+		self.objects.each do |object|
 		
 			#Move each object according to its vector.
 			begin
@@ -140,12 +134,12 @@ class Environment
 		end
 		
 		#Have all environmental factors interact with environment.
-		self.each_environmental_factor do |factor|
+		self.environmental_factors.each do |factor|
 			begin
 				factor.act(self)
 			#Remove misbehaving environmental factors.
 			rescue Exception => exception
-				environmental_factors.delete(factor)
+				self.remove_environmental_factor(factor)
 				puts exception, exception.backtrace
 				next
 			end
