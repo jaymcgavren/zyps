@@ -17,63 +17,34 @@
 
 
 require 'zyps'
+require 'zyps/views'
 
 
 module Zyps
 
 
 #A view of game objects.
-class TrailsView
+class TrailsView < View
 
-	#A GUI toolkit-specific drawing area that will be used to render the view.
-	#See WxCanvas and GTK2Canvas.
-	attr_reader :canvas
-	#Dimensions of the view.
-	attr_reader :width, :height
 	#Number of line segments to draw for each object.
 	attr_accessor :trail_length
-	#Whether view should be erased before re-drawing.
-	attr_accessor :erase_flag
 
-	#Takes a hash with these keys and defaults:
-	#	:canvas => nil
-	#	:width => 600
-	#	:height => 400
+	#Takes a hash with these keys and defaults, in addition to those defined for the View constructor:
 	#	:trail_length => 5
 	def initialize (options = {})
 	
+		super
+	
 		options = {
-			:width => 600,
-			:height => 400,
 			:trail_length => 5,
 		}.merge(options)
-		@width = options[:width]
-		@height = options[:height]
 		@trail_length = options[:trail_length]
-		@canvas = options[:canvas]
 		
-		#Set canvas's size to match view's.
-		resize if @canvas
-	
 		#Track a list of locations for each object.
 		@locations = Hash.new {|h, k| h[k] = Array.new}
 		
 	end
 
-	def width= (pixels) #:nodoc:
-		@width = pixels
-		resize
-	end
-	def height= (pixels) #:nodoc:
-		@height = pixels
-		resize
-	end
-	def canvas= (canvas) #:nodoc:
-		@canvas = canvas
-		resize
-	end
-	
-	
 	#Takes an Environment, and draws it to the canvas.
 	#Tracks the position of each GameObject over time so it can draw a trail behind it.
 	#The head will match the object's Color exactly, fading to black at the tail.
@@ -89,12 +60,12 @@ class TrailsView
 		)
 		
 		#For each GameObject in the environment:
-		environment.objects.each do |object|
+		super do |object|
 
 			object_radius = Math.sqrt(object.size / Math::PI)
 
 			#Add the object's current location to the list.
-			@locations[object.identifier] << [object.location.x, object.location.y]
+			@locations[object.identifier] << drawing_coordinates(object.location)
 			#If the list is larger than the number of tail segments, delete the first position.
 			@locations[object.identifier].shift while @locations[object.identifier].length > @trail_length
 			
@@ -116,7 +87,7 @@ class TrailsView
 						object.color.green * multiplier,
 						object.color.blue * multiplier
 					),
-					:width => object_radius * 2 * multiplier,
+					:width => drawing_width(object_radius * 2 * multiplier).ceil,
 					:x1 => previous_location[0], :y1 => previous_location[1],
 					:x2 => location[0], :y2 => location[1]
 				)
@@ -128,15 +99,6 @@ class TrailsView
 		@canvas.render
 		
 	end
-	
-	
-	private
-	
-
-		def resize
-			@canvas.width = @width
-			@canvas.height = @height
-		end
 
 	
 end
