@@ -105,7 +105,7 @@ class ClassCondition < Condition
 end
 
 
-#True if the given interval has elapsed.
+#True if the given interval has elapsed since targets were last selected.
 class ElapsedTimeCondition < Condition
 	#The number of seconds that must elapse before the condition is true.
 	attr_accessor :interval
@@ -117,7 +117,7 @@ class ElapsedTimeCondition < Condition
 	#Returns the array of targets if the interval has elapsed.
 	def select(actor, targets)
 		@elapsed_time += @clock.elapsed_time
-		if @elapsed_time >= interval
+		if ! targets.empty? and @elapsed_time >= self.interval
 			@elapsed_time = 0
 			return targets
 		else
