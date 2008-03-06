@@ -32,6 +32,11 @@ class TagCondition < Condition
 	def select(actor, targets)
 		targets.find_all {|target| target.tags.include?(@tag)}
 	end
+	#True if tags are equal.
+	def ==(other)
+		return false unless super
+		self.tag == other.tag
+	end
 end
 
 
@@ -46,6 +51,11 @@ class AgeCondition < Condition
 	def select(actor, targets)
 		targets.find_all {|target| target.age > @age}
 	end
+	#True if age is equal.
+	def ==(other)
+		return false unless super
+		self.age == other.age
+	end
 end
 
 
@@ -59,6 +69,11 @@ class ProximityCondition < Condition
 	#Returns an array of targets that are at the given distance or closer.
 	def select(actor, targets)
 		targets.find_all {|target| Utility.find_distance(actor.location, target.location) <= @distance}
+	end
+	#True if distance is equal.
+	def ==(other)
+		return false unless super
+		self.distance == other.distance
 	end
 end
 
@@ -102,6 +117,11 @@ class ClassCondition < Condition
 	def select(actor, targets)
 		targets.grep(target_class)
 	end
+	#True if target class is equal.
+	def ==(other)
+		return false unless super
+		self.target_class == other.target_class
+	end
 end
 
 
@@ -123,6 +143,11 @@ class ElapsedTimeCondition < Condition
 		else
 			return []
 		end
+	end
+	#True if interval is equal.
+	def ==(other)
+		return false unless super
+		self.interval == other.interval
 	end
 end
 

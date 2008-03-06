@@ -388,6 +388,10 @@ class Action
 	#Synonym for started
 	def started?; started; end
 	
+	#True if class and started status are the same.
+	#Subclasses should extend or override this method.
+	def ==(other); self.class == other.class and self.started == other.started; end
+	
 end
 
 
@@ -404,6 +408,10 @@ class Condition
 	def select(actor, targets)
 		raise NotImplementedError.new("Condition subclasses must implement a select(actor, target) instance method.")
 	end
+	
+	#True if class is the same.
+	#Subclasses should extend or override this method.
+	def ==(other); self.class == other.class; end
 	
 end
 
@@ -545,6 +553,16 @@ class Behavior
 		
 		
 	end
+
+	
+	#True if all attributes, actions and conditions are the same.
+	def ==(other)
+		return false if @actions != other.actions.to_a
+		return false if @conditions != other.conditions.to_a
+		return false if condition_frequency != other.condition_frequency
+		true
+	end
+	
 	
 	private
 		
@@ -698,7 +716,12 @@ end
 #A clock to use for timing actions.
 class Clock
 
-	def initialize
+	#Speed at which this clock operates.
+	#Multiplied by global clock speed.
+	attr_accessor :speed
+
+	def initialize(speed = 1.0)
+		@speed = speed
 		reset_elapsed_time
 	end
 	
@@ -723,6 +746,9 @@ class Clock
 	#Set speed at which all Clocks will operate.
 	#1 is real-time, 2 is double speed, 0 is paused.
 	def Clock.speed=(value); @@speed = value; end
+
+	#True if instance speed is equal.
+	def ==(other); self.speed == other.speed; end
 
 end
 

@@ -59,6 +59,13 @@ class TimedAction < Action
 		@clock.reset_elapsed_time
 	end
 	
+	#True if rate and clock are equal.
+	#Subclasses with additional attributes should extend this method.
+	def ==(other)
+		return false unless super
+		self.rate == other.rate and self.clock == other.clock
+	end
+	
 end
 
 
@@ -97,6 +104,12 @@ class TurnAction < TimedAction
 			delta,
 			actor.vector.pitch + @angle
 		)
+	end
+	#True if rate and clock are equal.
+	#Subclasses with additional attributes should extend this method.
+	def ==(other)
+		return false unless super
+		self.angle == other.angle
 	end
 end
 
@@ -167,6 +180,11 @@ class TagAction < Action
 			target.tags << tag unless target.tags.include?(tag)
 		end
 	end
+	#True if tag is equal.
+	def ==(other)
+		return false unless super
+		self.tag == other.tag
+	end
 end
 
 
@@ -183,6 +201,11 @@ class BlendAction < TimedAction
 		actor.color.red += (@color.red - actor.color.red) * delta
 		actor.color.green += (@color.green - actor.color.green) * delta
 		actor.color.blue += (@color.blue - actor.color.blue) * delta
+	end
+	#True if color is equal.
+	def ==(other)
+		return false unless super
+		self.color == other.color
 	end
 end
 
@@ -233,7 +256,9 @@ class BreedAction < Action
 			#Combine colors.
 			child.color = actor.color + target.color
 			#Combine behaviors with "father's".
-			target.behaviors.each {|behavior| child.add_behavior behavior.copy}
+			target.behaviors.each do |behavior|
+				child.add_behavior behavior.copy unless child.behaviors.include?(behavior)
+			end
 			#Add parents' vectors to get child's vector.
 			child.vector = actor.vector + target.vector
 			#Child's size should be half the average size of the parents'.
@@ -264,6 +289,11 @@ class SpawnAction < Action
 		child = prototype.copy
 		child.location = actor.location.copy
 		child
+	end
+	#True if prototypes are equal.
+	def ==(other)
+		return false unless super
+		self.prototypes == other.prototypes
 	end
 end
 
