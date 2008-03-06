@@ -68,6 +68,15 @@ class Enclosure < EnvironmentalFactor
 		end
 	end
 	
+	#True if boundaries are same.
+	def ==(other)
+		return false unless super
+		self.left == other.left and
+			self.right == other.right and
+			self.top == other.top and
+			self.bottom == other.bottom
+	end
+	
 end
 
 
@@ -114,6 +123,15 @@ class WrapAround < EnvironmentalFactor
 		end
 	end
 	
+	#True if boundaries are same.
+	def ==(other)
+		return false unless super
+		self.left == other.left and
+			self.right == other.right and
+			self.top == other.top and
+			self.bottom == other.bottom
+	end
+	
 end
 
 
@@ -132,6 +150,12 @@ class SpeedLimit < EnvironmentalFactor
 		environment.objects.each do |object|
 			object.vector.speed = Utility.constrain_value(object.vector.speed, @maximum)
 		end
+	end
+	
+	#True if maximum is the same.
+	def ==(other)
+		return false unless super
+		self.maximum == other.maximum
 	end
 	
 end
@@ -157,7 +181,14 @@ class Accelerator < EnvironmentalFactor
 		end
 	end
 
+	#True if maximum is the same.
+	def ==(other)
+		return false unless super
+		self.vector == other.vector
+	end
+	
 end
+
 
 #Gravity pulls all objects downward.
 class Gravity < Accelerator
@@ -207,6 +238,12 @@ class Friction < EnvironmentalFactor
 		end
 	end
 	
+	#True if force is the same.
+	def ==(other)
+		return false unless super
+		self.force == other.force
+	end
+	
 end
 
 
@@ -230,6 +267,12 @@ class PopulationLimit < EnvironmentalFactor
 			end
 			objects_for_removal.each {|object| environment.remove_object(object)}
 		end
+	end
+	
+	#True if count is the same.
+	def ==(other)
+		return false unless super
+		self.count == other.count
 	end
 	
 end
