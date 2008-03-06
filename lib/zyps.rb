@@ -350,6 +350,9 @@ end
 class EnvironmentalFactor
 	#Environment this EnvironmentalFactor belongs to.
 	attr_accessor :environment
+	#True if classes are equal.
+	#Subclasses should extend this method.
+	def ==(other); self.class == other.class; end
 end
 
 
