@@ -260,6 +260,7 @@ class GameObject
 		else
 			raise "Invalid item: #{item.class}"
 		end
+		self
 	end
 	
 	private
@@ -339,6 +340,7 @@ class Creature < GameObject
 		else
 			super
 		end
+		self
 	end
 	
 end
@@ -566,6 +568,22 @@ class Behavior
 		true
 	end
 	
+	
+	#Overloads the << operator to put the new item into the correct
+	#list or assign it to the correct attribute.
+	#Assignment is done based on item's class or a parent class of item.
+	def <<(item)
+		case item
+		when Condition
+			add_condition(item)
+		when Action
+			add_action(item)
+		else
+			raise "Invalid item: #{item.class}"
+		end
+		self
+	end
+
 	
 	private
 		

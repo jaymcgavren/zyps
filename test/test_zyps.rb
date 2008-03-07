@@ -715,4 +715,19 @@ class TestAdditions < Test::Unit::TestCase
 		)
 	end
 	
+	def test_behavior_double_arrow
+		behavior = Behavior.new
+		#test action
+		behavior << TagAction.new('action')
+		#test condition
+		behavior << TagCondition.new('condition')
+		assert_equal(
+			Behavior.new(
+				:actions => [TagAction.new('action')],
+				:conditions => [TagCondition.new('condition')]
+			),
+			behavior
+		)
+	end
+	
 end
