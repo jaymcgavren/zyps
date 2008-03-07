@@ -356,10 +356,10 @@ You can "launch" a creature by clicking and dragging the mouse in the playfield,
 
 Controlling the View
 The "Length" slider controls the length of the tail behind each creature.
-Check the "Trails" checkbox to have creatures leave a winding trail behind them as they travel.  Uncheck it to make all trails disappear.
 
 Controlling the Environment
-Click the "Clear" button to clear all creatures from the environment (any trails will still be left behind).
+Click the "Clear" button to clear all creatures from the environment.
+The "Speed" slider controls the speed at which everything moves.  Move it all the way to the left to pause, or all the way to the right for several times the normal speed.
 
 Saving and Loading
 Use the "Save As..." and "Save" menus under the File menu to save the environment to a ".zyp" file.  When you later reopen the file via the "Load" menu, all your creatures will be brought back.
