@@ -24,8 +24,6 @@ load File.join(File.dirname(__FILE__), '..', 'lib', 'object_manager.rb')
 include Zyps
 
 
-$om = ObjectManager.new
-
 steps_for(:any_type) do
 	Given /(?:given )?([\w\s]+)/ do |subject|
 		$om.resolve_objects(subject)
@@ -67,11 +65,10 @@ steps_for(:any_type) do
 			end
 		end
 	end
-	Then /(?:then )?(the \w+)'s "(.+?)" should equal (the \w+)'s "(.+?)"/ do |subject, attribute1, target, attribute2|
+	Then /(?:then )?([\w\s]+?) should have an? ([\w\s]+?) of "(.+?)"/ do |subject, attribute, value|
 		$om.resolve_objects(subject).each do |s|
-			$om.resolve_objects(target).each do |t|
-				s.method(attribute1.sub(/\s+/, '_')).should == t.method(attribute2.sub(/\s+/, '_'))
-			end
+			method_name = attribute.split(/\s+/).map{|w| w.downcase}.join('_')
+			s.method(method_name).should == value
 		end
 	end
 	Then /(?:then )?([\w\s]+?) should raise an? (.* )?error/ do |subject, error_type|

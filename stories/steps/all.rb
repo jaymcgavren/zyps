@@ -35,7 +35,7 @@ steps_for(:all) do
 	#Given a creature at "1", "2"
 	#Given a game object at "1", "3.1415"
 	#Given a target at "1", "2"
-	Given /(.+?) at "([\d\.]+?)", "([\d\.]+?)"/ do |subject, x, y|
+	Given /(.+?) whose location is "([\d\.]+)", "([\d\.]+)"/ do |subject, x, y|
 		location = Location.new(x.to_f, y.to_f)
 		$om.resolve_objects(subject).each do |s|
 			s << location
@@ -46,7 +46,7 @@ steps_for(:all) do
 	#Given a creature with a speed of "10.2" and an angle of "45"
 	#Given a game object with a speed of "10" and a pitch of "45"
 	#Given a target with a speed of "10" and a pitch of "45"
-	Given /(.+?) with a speed of "([\d\.]+?)" and an? (?:angle|pitch) of "([\d\.]+?)"/ do |subject, speed, pitch|
+	Given /(.+?) whose vector has a speed of "([\d\.]+)" and an? (?:angle|pitch) of "([\d\.]+)"/ do |subject, speed, pitch|
 		vector = Vector.new(speed.to_f, pitch.to_f)
 		$om.resolve_objects(subject).each do |s|
 			s << vector
@@ -56,7 +56,7 @@ steps_for(:all) do
 	
 	#Given an approach action initialized with a rate of "0.1"
 	#Given a tag condition with a tag of "foobar"
-	Given /^an? (\w+) (action|condition) (initialized )?with an? (\w+) of "([\d\.]+?)"/ do |name, type, use_constructor, attribute, value|
+	Given /^an? (\w+) (action|condition) (initialized )?with an? (\w+) of "(.+)?"/ do |name, type, use_constructor, attribute, value|
 		#If attribute values are to be passed to constructor, do so.
 		if use_constructor == "initialized "
 			object = Object.const_get(name.capitalize + type.capitalize).new(value)
@@ -68,7 +68,7 @@ steps_for(:all) do
 	end
 	#Given a turn action initialized with a rate of "0.1" and an angle of "45"
 	#Given a foobar condition with a foo of "bar" and a baz of "0.2"
-	Given /^an? (\w+?) (action|condition) (initialized )?with an? (\w+) of "([\d\.]+?)" and an? (\w+) of "([\d\.]+?)"/ do |name, type, use_constructor, attribute1, value1, attribute2, value2|
+	Given /^an? (\w+?) (action|condition) (initialized )?with an? (\w+) of "([\d\.]+)" and an? (\w+) of "([\d\.]+)"/ do |name, type, use_constructor, attribute1, value1, attribute2, value2|
 		if use_constructor == "initialized "
 			object = Object.const_get(name.capitalize + type.capitalize).new(value1, value2)
 		else
@@ -84,22 +84,18 @@ steps_for(:all) do
 		@environment.interact
 	end
 	
-	When /"([\d\.]+?)" seconds? elapses?/ do |seconds|
+	When /"([\d\.]+)" seconds? elapses?/ do |seconds|
 		#Monkey-patch Time to return the given number of seconds when Clock calls it.
 		Time.class_eval "def to_f; #{seconds}; end"
 	end
 	
 	
-	Then %Q{the creature's location should be "$x", "$y"} do |x, y|
-		@creatures.last.vector.should == Vector.new(x, y)
+	Then /(.+?) should have a location of "([\d\.]+)", "([\d\.]+)"/ do |subject, x, y|
+		$om.resolve_objects(subject).each {|s| s.location.should == Location.new(x.to_f, y.to_f)}
 	end
 	
-	Then %Q{the creature's speed should be "$speed"} do |speed|
-		@creatures.last.vector.speed.should == speed.to_f
-	end
-	
-	Then /the creature's (?:angle|pitch) should be "([\d\.]+?)"/ do |attribute, pitch|
-		@creature.vector.pitch.should == pitch.to_f
+	Then /(.+?) should have a vector with a speed of "([\d\.]+)" and an? (?:angle|pitch) of "([\d\.]+)"/ do |subject, speed, pitch|
+		$om.resolve_objects(subject).each {|s| s.vector.should == Vector.new(speed.to_f, pitch.to_f)}
 	end
 	
 	Then %Q{there should be "$object_count" objects in the environment} do |object_count|
