@@ -16,34 +16,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
-gems_loaded = false
-begin
-	require 'spec/story'
-	require 'zyps'
-	require 'zyps/actions'
-rescue LoadError
-	if gems_loaded == false
-		require 'rubygems'
-		gems_loaded = true
-		retry
-	else
-		raise
-	end
+class IncludesMatcher
+	def initialize(item); @item = item; end
+	def matches?(collection); collection.include?(@item); end
+	def failure_message; "did not include #{@item}"; end
+	def negative_failure_message; "included #{@item}"; end
+end
+def contain(required_items)
+	IncludesMatcher.new(required_items)
 end
 
-load File.join(File.dirname(__FILE__), 'steps', 'all.rb')
-
-include Zyps
-
-class Clock
-	def elapsed_time; @@elapsed_time; end
-	def Clock.elapsed_time=(value); @@elapsed_time = value; end
-end
-
-steps_for(:actions) do
-end
-
-with_steps_for :actions, :all do
-	run File.expand_path(__FILE__).sub(/.rb$/, ".txt")
-end

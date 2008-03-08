@@ -24,6 +24,7 @@ Story: Pausing game
 		And a creature at "0", "0"
 		And a vector with a speed of "4" and an angle of "150"
 		When the global clock speed is set to "0"
+		And the vector is assigned to the creature
 		And "2" seconds elapse
 		And the environment interacts
 		Then the creature's location should be "0", "0"
@@ -31,7 +32,8 @@ Story: Pausing game
 		Given an environment
 		And a creature at "0", "0"
 		And a vector with a speed of "4" and an angle of "150"
-		When the global clock speed is set to "0"
+		When the vector is assigned to the creature
+		And the global clock speed is set to "0"
 		And "1" second elapses
 		And the environment interacts
 		And the global clock speed is set to "1"
@@ -46,7 +48,8 @@ Story: Speeding up game
 		Given an environment
 		And a creature at "0", "0"
 		And a vector with a speed of "4" and an angle of "150"
-		When the global clock speed is set to "2"
+		When the vector is assigned to the creature
+		And the global clock speed is set to "2"
 		And "1" second elapses
 		And the environment interacts
 		Then the creature's location should be "-6.928", "4"
@@ -58,11 +61,11 @@ Story: Slowing down game
 		Given an environment
 		And a creature at "0", "0"
 		And a vector with a speed of "4" and an angle of "150"
-		When the global clock speed is set to "0.5"
+		When the vector is assigned to the creature
+		And the global clock speed is set to "0.5"
 		And "1" second elapses
 		And the environment interacts
 		Then the creature's location should be "-1.732", "1"
-
 Story: Speeding up one action
 	As a user
 	I want to be able to speed up one action

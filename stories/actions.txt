@@ -22,9 +22,10 @@ Story: Approaching a target
 	
 	Scenario: starting from a standstill
 		Given an environment
-		And a creature at 0, 0
-		And a target at 1, 1
-		And an approach action with a rate of 1
-		When 0.1 seconds elapse
-		Then the creature's speed should be 0.1
-		And the creature's angle should be 45
+		And a creature at "0", "0"
+		And a new behavior
+		And an approach action initialized with a rate of "1"
+		And a game object at "1", "1"
+		When "0.1" seconds elapse
+		Then the creature's speed should be "0.1"
+		And the creature's angle should be "45"
