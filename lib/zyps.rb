@@ -169,6 +169,17 @@ class Environment
 	end
 	
 	
+	def to_s
+		[
+			"Environment",
+			[
+				"\tObjects", objects.map{|o| o.to_s.gsub(/^/, "\t\t")},
+				"\tEnvironmental Factors", environmental_factors.map{|o| o.to_s.gsub(/^/, "\t\t")}
+			].join("\n")
+		].join("\n")
+	end
+	
+	
 end
 
 
@@ -263,6 +274,14 @@ class GameObject
 		self
 	end
 	
+	def to_s
+		[
+			name || sprintf("%x", identifier),
+			sprintf("x%+04dy%+04d", location.x, location.y),
+			sprintf("s%+04dp%+04d", vector.speed, vector.pitch)
+		].join(" ")
+	end
+	
 	private
 	
 		#Make a unique GameObject identifier.
@@ -282,13 +301,6 @@ class Creature < GameObject
 	
 	#Identical to the GameObject constructor, except that it also takes a list of Behavior objects.
 	#Takes a hash with these keys and defaults:
-	#	:name => nil
-	#	:location => Location.new
-	#	:color => Color.new
-	#	:vector => Vector.new
-	#	:age => 0
-	#	:size => 1
-	#	:tags => []
 	#	:behaviors => []
 	def initialize (options = {})
 		options = {
@@ -341,6 +353,13 @@ class Creature < GameObject
 			super
 		end
 		self
+	end
+	
+	def to_s
+		[
+			super,
+			behaviors.map{|b| "\t#{b}"}
+		].join("\n")
 	end
 	
 end
@@ -584,6 +603,14 @@ class Behavior
 		self
 	end
 
+	
+	def to_s
+		[
+			(@actions + @conditions).map{|o| o.class}.join(", "),
+			"[#{@current_targets.map{|o| o.name || sprintf("%x", o.identifier)}.join(',')}]"
+		].join(" ")
+	end
+	
 	
 	private
 		
