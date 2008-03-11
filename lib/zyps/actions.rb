@@ -171,7 +171,7 @@ end
 class TagAction < Action
 	#Tag to apply to targets.
 	attr_accessor :tag
-	def initialize(tag)
+	def initialize(tag = '')
 		self.tag = tag
 	end
 	#Apply the given tag to the targets.
