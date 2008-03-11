@@ -29,3 +29,19 @@ Story: Approaching a target
 		When "0.1" seconds elapse
 		Then the creature's speed should be "0.1"
 		And the creature's angle should be "45"
+Story: Starting/stopping actions
+	As a developer
+	I want to define what actions will do when they start or stop
+	So that I can have them play sounds or provide other indicators the state is changing
+	Scenario: Starting an action
+		Given an environment
+		Given a creature
+		And a behavior
+		And a tag action with a tag of "foo"
+		When the tag action is added to the behavior
+		And the behavior is added to the creature
+		And the environment interacts
+		Then start() should be called on the tag action
+		And do() should be called on the tag action
+		And stop() should NOT be called on the tag action
+		

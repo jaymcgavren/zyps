@@ -16,18 +16,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 require 'logger'
+require 'singleton'
 
-LOG_HANDLE = STDOUT
-LOG_LEVEL = Logger::DEBUG
 
 class ObjectManager
 
 	#These accessors store the object(s) referred to by various pronouns.
-	attr_accessor :it, :them, :they
+	attr_accessor :it, :them
 
 	def initialize
-		@log = Logger.new(LOG_HANDLE)
-		@log.level = LOG_LEVEL
+		@log = Logger.new(STDOUT)
+		@log.level = Logger::WARN
 		@log.progname = self
 		@the = Hash.new {|h, k| h[k] = []}
 		@creators = Hash.new
@@ -72,17 +71,20 @@ class ObjectManager
 		when /^them$/i
 			objects = @them or fail "Could not determine what 'them' references."
 		when /^they$/i
-			objects = @they or fail "Could not determine what 'they' references."
+			objects = @them or fail "Could not determine what 'they' references."
 		#Objects should be created for indefinite articles.
 		when /^(?:a|an|another) (.+)$/i
 			objects = create($1)
-			@it = objects.first
-			@log.debug "'it' is now #{objects.first}."
-		#TODO: Consider creating /^(?:some) (.+)$/i and assigning to @them and @they.
+			@it = [objects.first]
+			@log.debug "'it' is now #{@it}."
 		#Objects should already exist for the definite article.
 		when /^the (.+)$/i
 			#TODO: Add support for ordinals.
 			objects = @the[$1] or fail "Could not find previous reference to '#{$1}'."
+		when /^each (.+)$/i
+			objects = @the[$1] or fail "Could not find previous reference to '#{$1}'."
+			@them = objects
+			@log.debug "'them' is now #{@them}."
 		else
 			fail "Could not parse phrase: '#{phrase}'"
 		end

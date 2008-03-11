@@ -20,86 +20,128 @@ require 'spec/story'
 require 'zyps'
 
 load File.join(File.dirname(__FILE__), '..', 'lib', 'object_manager.rb')
+load File.join(File.dirname(__FILE__), '..', 'lib', 'utility.rb')
 
 
 include Zyps
 
 
 
-$om = ObjectManager.new
-$om.on_create("target") {Creature.new}
 
 steps_for(:all) do
 
+	#TODO: This is a total kludge.
+	Given /an environment/ do
+		@om = ObjectManager.new
+		@environment = @om.resolve_objects("an environment").first
+		def add_to_environment(object)
+			@environment << object
+			object
+		end
+		@om.on_create("target") {add_to_environment Creature.new}
+		@om.on_create("creature") {add_to_environment Creature.new}
+		@om.on_create("game object") {add_to_environment GameObject.new}
+	end
 
-	#Given a creature at "1", "2"
-	#Given a game object at "1", "3.1415"
-	#Given a target at "1", "2"
-	Given /(.+?) whose location is "([\d\.]+)", "([\d\.]+)"/ do |subject, x, y|
+	Given /(an? (?:creature|game object|target|behavior|color|location|vector|clock))/ do |subject|
+		@om.resolve_objects(subject)
+	end
+	Given /(an? (?:creature|game object|target|behavior|color|location|vector|clock)) with an? (.+?) of "(.+?)"/ do |subject, attribute_name, value|
+		@om.resolve_objects(subject).each {|s| s.method("#{attribute_name}=").call(convert(value))}
+	end
+	Given /(an? (?:creature|game object|target|behavior|color|location|vector|clock)) with an? (.+?) of "(.+?)" and an? (.+?) of "(.+?)"/ do |subject, attribute1, value1, attribute2, value2|
+		@om.resolve_objects(subject).each do |s|
+			s.method("#{attribute1}=").call(convert(value1))
+			s.method("#{attribute2}=").call(convert(value2))
+		end
+	end
+
+	Given /(a (?:creature|game object|target)) whose location is "([\d\.]+)", "([\d\.]+)"/ do |subject, x, y|
 		location = Location.new(x.to_f, y.to_f)
-		$om.resolve_objects(subject).each do |s|
+		@om.resolve_objects(subject).each do |s|
 			s << location
-			(@environment ||= Environment.new) << s
 		end
 	end
 	
-	#Given a creature with a speed of "10.2" and an angle of "45"
-	#Given a game object with a speed of "10" and a pitch of "45"
-	#Given a target with a speed of "10" and a pitch of "45"
-	Given /(.+?) whose vector has a speed of "([\d\.]+)" and an? (?:angle|pitch) of "([\d\.]+)"/ do |subject, speed, pitch|
+	Given /(a creature|a game object) whose vector has a speed of "([\d\.]+)" and an? (?:angle|pitch) of "([\d\.]+)"/ do |subject, speed, pitch|
 		vector = Vector.new(speed.to_f, pitch.to_f)
-		$om.resolve_objects(subject).each do |s|
+		@om.resolve_objects(subject).each do |s|
 			s << vector
-			(@environment ||= Environment.new) << s
 		end
 	end
 	
-	#Given an approach action initialized with a rate of "0.1"
-	#Given a tag condition with a tag of "foobar"
-	Given /^an? (\w+) (action|condition) (initialized )?with an? (\w+) of "(.+)?"/ do |name, type, use_constructor, attribute, value|
+	Given /^an? (\w+?) (action|condition) (initialized )?with an? (\w+) of "(.+)?"/ do |name, type, use_constructor, attribute, value|
 		#If attribute values are to be passed to constructor, do so.
 		if use_constructor == "initialized "
-			object = Object.const_get(name.capitalize + type.capitalize).new(value)
+			object = Object.const_get(name.capitalize + type.capitalize).new(convert(value))
 		else
 			object = Object.const_get(name.capitalize + type.capitalize).new
-			object.method(attribute).call(value.to_f)
+			object.method("#{attribute}=").call(convert(value))
 		end
-		@behaviors.last << object
 	end
-	#Given a turn action initialized with a rate of "0.1" and an angle of "45"
-	#Given a foobar condition with a foo of "bar" and a baz of "0.2"
+
 	Given /^an? (\w+?) (action|condition) (initialized )?with an? (\w+) of "([\d\.]+)" and an? (\w+) of "([\d\.]+)"/ do |name, type, use_constructor, attribute1, value1, attribute2, value2|
 		if use_constructor == "initialized "
-			object = Object.const_get(name.capitalize + type.capitalize).new(value1, value2)
+			object = Object.const_get(name.capitalize + type.capitalize).new(convert(value1), convert(value2))
 		else
 			object = Object.const_get(name.capitalize + type.capitalize).new
-			object.method(attribute1).call(value1.to_f)
-			object.method(attribute2).call(value2.to_f)
+			object.method(attribute1).call(convert(value1))
+			object.method(attribute2).call(convert(value2))
 		end
-		@behaviors.last << object
+	end
+
+	Given /(.+?) has a (.+?) value of "(.+?)"/ do |subject, attribute_name, value|
+		@om.resolve_objects(subject).each {|s| s.method("#{attribute_name}=").call(convert(value))}
 	end
 
 	
+	When /(.+?) (?:is|are) (?:added|assigned) to (.+?)/ do |subject, target|
+		@om.resolve_objects(subject).each do |s|
+			@om.resolve_objects(target).each do |t|
+				t << s
+			end
+		end
+	end
+
 	When %Q{the environment interacts} do
-		@environment.interact
+		@om.resolve_objects('the environment').each {|s| s.interact}
 	end
 	
 	When /"([\d\.]+)" seconds? elapses?/ do |seconds|
 		#Monkey-patch Time to return the given number of seconds when Clock calls it.
 		Time.class_eval "def to_f; #{seconds}; end"
 	end
+
 	
+	Then /(.+?) should have an? (.+?) value of "(.+?)"/ do |subject, attribute_name, value|
+		@om.resolve_objects(subject).each do |s|
+			method_name = attribute_name.split(/\s+/).map{|w| w.downcase}.join('_')
+			s.method(method_name).call.should == convert(value)
+		end
+	end
+	
+	Then /(\w+)\(\) should (not )?be called on (.+?)/ do |method, negative, subject|
+		@om.resolve_objects(subject).each do |s|
+			if negative != "not "
+				s.should_receive(method.to_sym)
+			else
+				s.should_not_receive(method.to_sym)
+			end
+		end
+	end
 	
 	Then /(.+?) should have a location of "([\d\.]+)", "([\d\.]+)"/ do |subject, x, y|
-		$om.resolve_objects(subject).each {|s| s.location.should == Location.new(x.to_f, y.to_f)}
+		@om.resolve_objects(subject).each {|s| s.location.should == Location.new(x.to_f, y.to_f)}
 	end
 	
 	Then /(.+?) should have a vector with a speed of "([\d\.]+)" and an? (?:angle|pitch) of "([\d\.]+)"/ do |subject, speed, pitch|
-		$om.resolve_objects(subject).each {|s| s.vector.should == Vector.new(speed.to_f, pitch.to_f)}
+		@om.resolve_objects(subject).each {|s| s.vector.should == Vector.new(speed.to_f, pitch.to_f)}
 	end
 	
-	Then %Q{there should be "$object_count" objects in the environment} do |object_count|
-		@environment.object_count.should == object_count
+	Then /display (.+?)/ do |subject|
+		puts "", "-" * 60
+		@om.resolve_objects(subject).each {|s| puts s.to_s}
+		puts "-" * 60
 	end
 
 	
