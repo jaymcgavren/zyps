@@ -276,7 +276,7 @@ class GameObject
 	
 	def to_s
 		[
-			name || sprintf("%x", identifier),
+			name || sprintf("%07X", identifier),
 			sprintf("x%+04dy%+04d", location.x, location.y),
 			sprintf("s%+04dp%+04d", vector.speed, vector.pitch)
 		].join(" ")
@@ -607,7 +607,7 @@ class Behavior
 	def to_s
 		[
 			(@actions + @conditions).map{|o| o.class}.join(", "),
-			"[#{@current_targets.map{|o| o.name || sprintf("%x", o.identifier)}.join(',')}]"
+			"[#{@current_targets.map{|o| o.name || sprintf("%07X", o.identifier)}.join(',')}]"
 		].join(" ")
 	end
 	
