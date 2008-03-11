@@ -47,6 +47,17 @@ Rake::TestTask.new do |test|
 end
 
 
+begin
+	require 'spec/rake/spectask'
+	desc "Run user stories"
+	task :stories do
+		FileList["stories/*.rb"].each {|f| ruby f}
+	end
+rescue Exception => exception
+	warn "Could not load rSpec - it might not be installed."
+end
+
+
 desc "Run a demonstration"
 task :demo do
 	$: << "lib"
