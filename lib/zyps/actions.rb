@@ -29,7 +29,7 @@ class TimedAction < Action
 	#Units per second for action.
 	attr_accessor :rate
 	
-	def initialize(rate, *arguments)
+	def initialize(rate = nil, *arguments)
 		self.rate = rate
 		@clock = Clock.new
 	end
@@ -66,6 +66,10 @@ class TimedAction < Action
 		self.rate == other.rate and self.clock == other.clock
 	end
 	
+	def to_s
+		[super, rate].join(" ")
+	end
+	
 end
 
 
@@ -95,7 +99,7 @@ end
 class TurnAction < TimedAction
 	#Angle to turn at.
 	attr_accessor :angle
-	def initialize(rate, angle)
+	def initialize(rate = nil, angle = nil)
 		super
 		@angle = angle
 	end
@@ -110,6 +114,9 @@ class TurnAction < TimedAction
 	def ==(other)
 		return false unless super
 		self.angle == other.angle
+	end
+	def to_s
+		[super, angle].join(" ")
 	end
 end
 
@@ -171,7 +178,7 @@ end
 class TagAction < Action
 	#Tag to apply to targets.
 	attr_accessor :tag
-	def initialize(tag = '')
+	def initialize(tag = nil)
 		self.tag = tag
 	end
 	#Apply the given tag to the targets.
@@ -185,6 +192,9 @@ class TagAction < Action
 		return false unless super
 		self.tag == other.tag
 	end
+	def to_s
+		[super, tag].join(" ")
+	end
 end
 
 
@@ -192,7 +202,7 @@ end
 class BlendAction < TimedAction
 	#Color to apply to actor.
 	attr_accessor :color
-	def initialize(rate, color)
+	def initialize(rate = nil, color = nil)
 		super
 		@color = color
 	end
@@ -206,6 +216,9 @@ class BlendAction < TimedAction
 	def ==(other)
 		return false unless super
 		self.color == other.color
+	end
+	def to_s
+		[super, color].join(" ")
 	end
 end
 
@@ -297,6 +310,12 @@ class SpawnAction < Action
 	def ==(other)
 		return false unless super
 		self.prototypes == other.prototypes
+	end
+	def to_s
+		[
+			super,
+			prototypes.map {|p| "\t#{p}"}
+		].join("\n")
 	end
 end
 

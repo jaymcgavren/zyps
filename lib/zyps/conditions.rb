@@ -25,7 +25,7 @@ module Zyps
 class TagCondition < Condition
 	#The tag to look for on the target.
 	attr_accessor :tag
-	def initialize(tag)
+	def initialize(tag = nil)
 		self.tag = tag
 	end
 	#Returns an array of targets which have the assigned tag.
@@ -37,6 +37,9 @@ class TagCondition < Condition
 		return false unless super
 		self.tag == other.tag
 	end
+	def to_s
+		[super, tag].join(" ")
+	end
 end
 
 
@@ -44,7 +47,7 @@ end
 class AgeCondition < Condition
 	#The minimum age in seconds.
 	attr_accessor :age
-	def initialize(age)
+	def initialize(age = nil)
 		self.age = age
 	end
 	#Returns an array of targets which are older than the assigned age.
@@ -56,6 +59,9 @@ class AgeCondition < Condition
 		return false unless super
 		self.age == other.age
 	end
+	def to_s
+		[super, age].join(" ")
+	end
 end
 
 
@@ -63,7 +69,7 @@ end
 class ProximityCondition < Condition
 	#The maximum number of units away the target can be.
 	attr_accessor :distance
-	def initialize(distance)
+	def initialize(distance = nil)
 		self.distance = distance
 	end
 	#Returns an array of targets that are at the given distance or closer.
@@ -74,6 +80,9 @@ class ProximityCondition < Condition
 	def ==(other)
 		return false unless super
 		self.distance == other.distance
+	end
+	def to_s
+		[super, distance].join(" ")
 	end
 end
 
@@ -110,7 +119,7 @@ end
 class ClassCondition < Condition
 	#The class of target to look for.
 	attr_accessor :target_class
-	def initialize(target_class)
+	def initialize(target_class = nil)
 		self.target_class = target_class
 	end
 	#Returns an array of targets that are of the selected Ruby class.
@@ -121,6 +130,9 @@ class ClassCondition < Condition
 	def ==(other)
 		return false unless super
 		self.target_class == other.target_class
+	end
+	def to_s
+		[super, target_class].join(" ")
 	end
 end
 
@@ -148,6 +160,9 @@ class ElapsedTimeCondition < Condition
 	def ==(other)
 		return false unless super
 		self.interval == other.interval
+	end
+	def to_s
+		[super, interval].join(" ")
 	end
 end
 

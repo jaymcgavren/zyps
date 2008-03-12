@@ -277,8 +277,8 @@ class GameObject
 	def to_s
 		[
 			name || sprintf("%07X", identifier),
-			sprintf("x%+04dy%+04d", location.x, location.y),
-			sprintf("s%+04dp%+04d", vector.speed, vector.pitch)
+			location,
+			vector
 		].join(" ")
 	end
 	
@@ -681,6 +681,12 @@ class Color
 	def self.black; Color.new(0, 0, 0); end
 	def self.grey; Color.new(0.5, 0.5, 0.5); end
 
+	def to_s
+		[
+			super,
+			sprintf("r%0.1fg%0.1fb%0.1f", red, green, blue)
+		].join(" ")
+	end
 		
 end
 
@@ -701,6 +707,10 @@ class Location
 	
 	#True if x and y coordinates are the same.
 	def ==(other); self.x == other.x and self.y == other.y; end
+	
+	def to_s
+		sprintf("x%+04.1fy%+04.1f", x, y)
+	end
 	
 end
 
@@ -757,6 +767,10 @@ class Vector
 	#True if x and y coordinates are the same.
 	def ==(other); self.speed == other.speed and self.pitch == other.pitch; end
 	
+	def to_s
+		sprintf("s%+04.1fp%+04.1f", speed, pitch)
+	end
+	
 end
 
 
@@ -781,7 +795,7 @@ class Clock
 		time = Time.new.to_f
 		elapsed_time = time - @last_check_time
 		@last_check_time = time
-		elapsed_time * @@speed
+		elapsed_time * @@speed * @speed
 	end
 	
 	def reset_elapsed_time
