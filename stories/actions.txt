@@ -19,16 +19,20 @@ Story: Approaching a target
 	As a user
 	I want to add an approach action to a creature
 	so that it will move toward its target
-	
 	Scenario: starting from a standstill
 		Given an environment
-		And a creature at "0", "0"
-		And a new behavior
-		And an approach action initialized with a rate of "1"
-		And a game object at "1", "1"
-		When "0.1" seconds elapse
-		Then the creature's speed should be "0.1"
-		And the creature's angle should be "45"
+		And a creature whose location is "0", "0"
+		And a game object whose location is "1", "1"
+		And a behavior
+		And an approach action with a rate of "1"
+		When the approach action is added to the behavior
+		And the behavior is added to the creature
+		And the creature is added to the environment
+		And the game object is added to the environment
+		And "0.1" seconds elapse
+		And the environment interacts
+		Then do() should be called on the approach action
+		And the creature should have a vector with a speed of "0.1" and a pitch of "45"
 Story: Starting/stopping actions
 	As a developer
 	I want to define what actions will do when they start or stop
@@ -43,5 +47,17 @@ Story: Starting/stopping actions
 		And the environment interacts
 		Then start() should be called on the tag action
 		And do() should be called on the tag action
-		And stop() should NOT be called on the tag action
-		
+		And stop() should not be called on the tag action
+	Scenario: Stopping an action
+		Given an environment
+		Given a creature
+		And a behavior
+		And a tag action with a tag of "foo"
+		And a tag condition with a tag of "bar"
+		When the tag action is added to the behavior
+		And the tag condition is added to the behavior
+		And the behavior is added to the creature
+		And the environment interacts
+		Then start() should not be called on the tag action
+		And do() should not be called on the tag action
+		And stop() should be called on the tag action

@@ -82,7 +82,8 @@ class ObjectManager
 			#TODO: Add support for ordinals.
 			objects = @the[$1] or fail "Could not find previous reference to '#{$1}'."
 		when /^each (.+)$/i
-			objects = @the[$1] or fail "Could not find previous reference to '#{$1}'."
+			objects = @the[$1]
+			fail "Could not find previous reference to '#{$1}'." if objects.empty?
 			@them = objects
 			@log.debug "'them' is now #{@them}."
 		else
