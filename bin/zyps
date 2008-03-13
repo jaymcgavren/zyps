@@ -476,7 +476,7 @@ class MenuSet
 		help_menu = Wx::Menu.new
 		@using_zyps_menu = add_item(
 			help_menu,
-			:label => "&Using Zyps",
+			:label => "&Using Zyps\tF1",
 			:id => Wx::ID_HELP_CONTENTS
 		)
 		help_menu.append_separator
