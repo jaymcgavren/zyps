@@ -38,7 +38,7 @@ class TimedAction < Action
 	def copy
 		copy = super
 		#Copies should have their own Clock.
-		copy.clock = Clock.new
+		copy.clock = @clock.copy
 		copy
 	end
 	
@@ -261,7 +261,7 @@ end
 
 #Combine Behaviors, Color, and Vector of "mother" (actor) and "father" (target) and the resulting child to the environment.
 #Note: This action is prone to infinite loops, as children will copy mother's BreedAction and immediately spawn more children.
-#Be sure to use ElapsedTimeCondition or other limiters on the parent Behavior.
+#Be sure to use InactiveLongerThanCondition or other limiters on the parent Behavior.
 class BreedAction < Action
 	def do(actor, targets)
 		targets.each do |target|

@@ -29,9 +29,8 @@ REQUIRED_ACCURACY = 0.001
 
 
 #Redefine Clock to return a predictable time.
-ELAPSED_TIME = 0.1
 class Clock
-	def elapsed_time; ELAPSED_TIME; end
+	def elapsed_time; 0.1 * speed * Clock.speed; end
 end
 
 
@@ -217,7 +216,7 @@ class TestActions < Test::Unit::TestCase
 		#Create a BreedAction using the Environment, and act.
 		@actor.add_behavior Behavior.new(
 			:actions => [BreedAction.new],
-			:conditions => [ElapsedTimeCondition.new(0.2)] #Act only on second interaction.
+			:conditions => [InactiveLongerThanCondition.new(0.15)] #Act only on second interaction.
 		)
 		@environment.interact
 		@environment.interact #Act twice to trigger action on actor (and only actor).

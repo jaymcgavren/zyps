@@ -137,32 +137,59 @@ class ClassCondition < Condition
 end
 
 
-#True if the given interval has elapsed since targets were last selected.
-class ElapsedTimeCondition < Condition
-	#The number of seconds that must elapse before the condition is true.
-	attr_accessor :interval
-	def initialize(interval = 1.0)
-		self.interval = interval
+#Parent class to other time-based conditions.
+class TimeCondition < Condition
+	#A Clock that tracks time between evaluations.
+	attr_accessor :clock
+	#The number of seconds that must elapse.
+	attr_accessor :duration
+	def initialize(duration = nil)
+		self.duration = duration
 		@clock = Clock.new
 		@elapsed_time = 0
 	end
-	#Returns the array of targets if the interval has elapsed.
+	#Make a deep copy, with separate clock and elapsed time.
+	def copy
+		copy = super
+		copy.clock = @clock.copy
+		copy.instance_eval {@elapsed_time = 0}
+		copy
+	end
+	#True if duration is equal.
+	def ==(other)
+		return false unless super
+		self.duration == other.duration
+	end
+	def to_s
+		[super, duration].join(" ")
+	end
+end
+
+#True if this condition has been true for less than the given duration.
+class ActiveLessThanCondition < TimeCondition
+	#Returns the array of targets if this condition has been true for less than the assigned duration.
 	def select(actor, targets)
 		@elapsed_time += @clock.elapsed_time
-		if ! targets.empty? and @elapsed_time >= self.interval
+		if @elapsed_time >= self.duration or targets.empty?
+			@elapsed_time = 0
+			return []
+		else
+			return targets
+		end
+	end
+end
+
+#False until a given duration has elapsed.
+class InactiveLongerThanCondition < TimeCondition
+	#Returns the array of targets and resets the clock if the assigned duration has elapsed.
+	def select(actor, targets)
+		@elapsed_time += @clock.elapsed_time
+		if @elapsed_time > self.duration and (!targets.empty?)
 			@elapsed_time = 0
 			return targets
 		else
 			return []
 		end
-	end
-	#True if interval is equal.
-	def ==(other)
-		return false unless super
-		self.interval == other.interval
-	end
-	def to_s
-		[super, interval].join(" ")
 	end
 end
 

@@ -774,7 +774,7 @@ class CreatureGenerator
 				:actions => [BreedAction.new],
 				:conditions => [
 					CollisionCondition.new, #The default ProximityCondition won't do.
-					ElapsedTimeCondition.new(@breed_rate) #Avoids instant population explosion.
+					InactiveLongerThanCondition.new(@breed_rate) #Avoids instant population explosion.
 				],
 				:condition_frequency => 1
 			)

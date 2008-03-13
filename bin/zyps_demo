@@ -430,7 +430,7 @@ class Demo < Wx::App
 	end
 	
 	
-	#Demonstrates ElapsedTimeCondition.
+	#Demonstrates InactiveLongerThanCondition.
 	def test_explode
 	
 		say("Let's have some fireworks.")
@@ -449,10 +449,10 @@ class Demo < Wx::App
 		end
 		
 		say("It's just not smart to build fireworks without a fuse.")
-		say("An ElapsedTimeCondition should do nicely.")
-		condition = ElapsedTimeCondition.new
+		say("An InactiveLongerThanCondition should do nicely.")
+		condition = InactiveLongerThanCondition.new
 		say("This will be a short fuse, though, say 2 seconds.")
-		condition.interval = 2
+		condition.duration = 2
 		
 		say("We set up a Behavior with the Action and Condition...")
 		explode = Behavior.new(:actions => [action], :conditions => [condition])
@@ -518,14 +518,14 @@ class Demo < Wx::App
 		say("And lastly, we need an enemy to fire the bullets at the player.")
 		say("We'll give him a ShootAction, and assign it our group of bullets.")
 		say("The action copies the bullets into the Environment and aims them at its target.")
-		say("An ElapsedTimeCondition makes it fire every 0.5 seconds.")
+		say("An InactiveLongerThanCondition makes it fire every 0.5 seconds.")
 		enemy = Creature.new(
 			:vector => Vector.new(30, 45),
 			:behaviors => [
 				Behavior.new(
 					:actions => [ShootAction.new([bullets])],
 					:conditions => [
-						ElapsedTimeCondition.new(0.5),
+						InactiveLongerThanCondition.new(0.5),
 						TagCondition.new('player'),
 					]
 				)

@@ -164,6 +164,8 @@ end
 #A force that pushes on all objects.
 class Accelerator < EnvironmentalFactor
 	
+	#A Clock that tracks time between actions.
+	attr_accessor :clock
 	#Vector to apply to objects.
 	attr_accessor :vector
 	
@@ -172,12 +174,19 @@ class Accelerator < EnvironmentalFactor
 		@clock = Clock.new
 	end
 
+	#Make a deep copy.
+	def copy
+		copy = super
+		#Copies should have their own Clock.
+		copy.clock = @clock.copy
+		copy
+	end
+	
 	#Add the given vector to each object, but limited by elapsed time.
 	def act(environment)
-		elapsed_time = @clock.elapsed_time
 		environment.objects.each do |object|
 			#Push on object.
-			object.vector += Vector.new(@vector.speed * elapsed_time, @vector.pitch)
+			object.vector += Vector.new(@vector.speed * @clock.elapsed_time, @vector.pitch)
 		end
 	end
 
@@ -211,6 +220,8 @@ end
 #A force that slows all objects.
 class Friction < EnvironmentalFactor
 	
+	#A Clock that tracks time between actions.
+	attr_accessor :clock
 	#Rate of slowing.
 	attr_accessor :force
 	
@@ -220,12 +231,19 @@ class Friction < EnvironmentalFactor
 		@clock = Clock.new
 	end
 	
+	#Make a deep copy.
+	def copy
+		copy = super
+		#Copies should have their own Clock.
+		copy.clock = @clock.copy
+		copy
+	end
+	
 	#Reduce each object's speed at the given rate.
 	def act(environment)
-		elapsed_time = @clock.elapsed_time
 		environment.objects.each do |object|
 			#Slow object.
-			acceleration = @force * elapsed_time
+			acceleration = @force * @clock.elapsed_time
 			speed = object.vector.speed
 			if speed > 0
 				speed -= acceleration 
