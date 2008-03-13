@@ -64,6 +64,12 @@ task :demo do
 	load "bin/zyps_demo"
 end
 
+desc "Run the GUI"
+task :gui do
+	$: << "lib"
+	load "bin/zyps"
+end
+
 
 desc "Package a gem"
 specification = Gem::Specification.new do |spec|
