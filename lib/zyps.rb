@@ -371,6 +371,8 @@ end
 class EnvironmentalFactor
 	#Environment this EnvironmentalFactor belongs to.
 	attr_accessor :environment
+	#Make a deep copy.
+	def copy; self.clone; end
 	#True if classes are equal.
 	#Subclasses should extend this method.
 	def ==(other); self.class == other.class; end
@@ -787,8 +789,12 @@ class Clock
 		reset_elapsed_time
 	end
 	
-	#Make a deep copy.
-	def copy; self.clone; end
+	#Make a deep copy, resetting elapsed_time.
+	def copy
+		copy = self.clone
+		copy.reset_elapsed_time
+		copy
+	end
 	
 	#Returns the time in (fractional) seconds since this method was last called (or on the first call, time since the Clock was created).
 	def elapsed_time

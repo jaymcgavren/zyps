@@ -184,9 +184,10 @@ class Accelerator < EnvironmentalFactor
 	
 	#Add the given vector to each object, but limited by elapsed time.
 	def act(environment)
+		elapsed_time = @clock.elapsed_time
 		environment.objects.each do |object|
 			#Push on object.
-			object.vector += Vector.new(@vector.speed * @clock.elapsed_time, @vector.pitch)
+			object.vector += Vector.new(@vector.speed * elapsed_time, @vector.pitch)
 		end
 	end
 
@@ -241,9 +242,10 @@ class Friction < EnvironmentalFactor
 	
 	#Reduce each object's speed at the given rate.
 	def act(environment)
+		elapsed_time = @clock.elapsed_time
 		environment.objects.each do |object|
 			#Slow object.
-			acceleration = @force * @clock.elapsed_time
+			acceleration = @force * elapsed_time
 			speed = object.vector.speed
 			if speed > 0
 				speed -= acceleration 
