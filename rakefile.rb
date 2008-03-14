@@ -74,14 +74,12 @@ end
 
 desc "Run a demonstration"
 task :demo do
-	$: << "lib"
-	load "bin/zyps_demo"
+	ruby "-I lib bin/zyps_demo"
 end
 
 desc "Run the GUI"
 task :gui do
-	$: << "lib"
-	load "bin/zyps"
+	ruby "-I lib bin/zyps zyps.cfg"
 end
 
 

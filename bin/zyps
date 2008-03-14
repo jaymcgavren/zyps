@@ -51,6 +51,8 @@ LOG_LEVEL = Logger::WARN
 #The Zyps GUI.
 class Application < Wx::App
 
+	#Application configuration.
+	attr_accessor :options
 
 	#Takes a hash with these keys and defaults:
 	#	:width => 800
@@ -60,6 +62,8 @@ class Application < Wx::App
 	#	:fps => 60
 	#	:enclosure => true
 	#	:uri => nil
+	#	:object_file => nil
+	#	:config_file => 'zyps.cfg'
 	def initialize(options = {})
 	
 		super()
@@ -68,8 +72,6 @@ class Application < Wx::App
 		@log.level = LOG_LEVEL
 		@log.progname = self
 
-		@log.debug "Load options and merge with defaults."
-		@options = Configuration.load('options')
 		@options = {
 			:width => 800,
 			:height => 600,
@@ -78,6 +80,8 @@ class Application < Wx::App
 			:fps => 30,
 			:enclosure => true,
 			:uri => nil,
+			:object_file => nil,
+			:config_file => 'zyps.cfg',
 		}.merge(options)
 		@log.debug "options: #{@options.inspect}"
 		
@@ -167,12 +171,20 @@ class Application < Wx::App
 		evt_timer(timer_id) {on_timer}
 		timer.start(milliseconds_per_frame)
 		
-		
 		if @options[:uri]
 			@log.debug "Start a network service at #{@options[:uri]}."
 			server = EnvironmentServer.new(@environment, @options[:uri])
 			server.start
 			$SAFE = 1
+		end
+		
+		if @options[:object_file]
+			@log.debug "Load environment objects from #{@options[:object_file]}."
+			begin
+				load_game_objects(@options[:object_file])
+			rescue Exception => exception
+				show_alert(exception.message)
+			end
 		end
 		
 		@log.debug "Display GUI."
@@ -217,9 +229,9 @@ class Application < Wx::App
 	end
 	
 	
-	#Save config and shut down.
+	#Shut down.
 	def on_exit
-		Configuration.save('options', @options)
+		Configuration.save_object(@options[:config_file], @options)
 		exit
 	end
 	
@@ -276,20 +288,20 @@ class Application < Wx::App
 		@log.debug "Act only if user presses OK."
 		if dialog.show_modal == Wx::ID_OK
 			begin
-				@environment.instance_eval {@objects = YAML.load_file(dialog.path)}
-				@object_file = dialog.path
+				load_game_objects(dialog.path)
+				@options[:object_file] = path
 			rescue Exception => exception
 				show_alert(exception.message)
 			end
 		end
 	end
 	
-	
+
 	#Save environment to file, or choose a file if none is selected.
 	def on_save_menu(event)
-		if @object_file
+		if @options[:object_file]
 			begin
-				save_objects(@object_file)
+				save_game_objects(@options[:object_file])
 			rescue Exception => exception
 				show_alert(exception.message)
 				on_save_as_menu(event)
@@ -313,8 +325,8 @@ class Application < Wx::App
 		@log.debug "Act only if user presses OK."
 		if dialog.show_modal == Wx::ID_OK
 			begin
-				save_objects(dialog.path)
-				@object_file = dialog.path
+				save_game_objects(dialog.path)
+				@options[:object_file] = dialog.path
 			rescue Exception => exception
 				show_alert(exception.message)
 			end
@@ -367,11 +379,15 @@ EOD
 	end
 	
 	
+	#Load environment's game objects from file.
+	def load_game_objects(path)
+		@environment.instance_eval {@objects = Configuration.load_object(path)}
+	end
+	
+	
 	#Save environment objects to the given path.
-	def save_objects(path)
-		File.open(path, "w") do |file|
-			@environment.instance_eval {YAML.dump(@objects, file)}
-		end
+	def save_game_objects(path)
+		@environment.instance_eval {Configuration.save_object(path, @objects)}
 	end
 	
 	
@@ -417,17 +433,6 @@ EOD
 	end
 	
 	
-end
-
-
-
-#TODO
-module Configuration
-	def Configuration.load(name)
-		{}
-	end
-	def Configuration.save(name, options)
-	end
 end
 
 
@@ -803,8 +808,40 @@ class CreatureGenerator
 end
 
 
+#Saves a Ruby object to a file, or loads one from a file.
+module Configuration
+
+	#Load Ruby objects from file.
+	def self.load_object(path)
+		YAML.load_file(path)
+	end
+	
+	#Save Ruby objects to file.
+	def self.save_object(path, object)
+		File.open(path, "w") do |file|
+			YAML.dump(object, file)
+		end
+	end
+	
+end
+
+
 begin
-	Application.new.main_loop
+	#Load application configuration from file given on command line.
+	application = Application.new
+	begin
+		config_file = ARGV[0] || 'zyps.cfg'
+		options = Configuration.load_object(config_file)
+		#Override options with files given on command line.
+		options[:config_file] = config_file
+		options[:object_file] = ARGV[1] if ARGV[1]
+		#Assign options to application.
+		application.options = options
+	rescue Exception => exception
+		warn "Could not load configuration, using defaults."
+	end
+	#Start application.
+	application.main_loop
 rescue SystemExit
 	#No action.
 rescue Exception => exception
