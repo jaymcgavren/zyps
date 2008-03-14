@@ -53,8 +53,22 @@ begin
 	task :stories do
 		FileList["stories/*.rb"].each {|f| ruby f}
 	end
-rescue Exception => exception
+rescue LoadError => exception
 	warn "Could not load rSpec - it might not be installed."
+end
+
+
+begin
+	require 'ruby-prof'
+	desc "Run profiler"
+	task :profile do
+		FileList["profile/*.rb"].each do |f|
+			output = `ruby-prof --printer=graph_html #{f} > #{f.sub(/\.rb/, '.htm')}`
+			fail "Error #{$?}: #{output}" unless $? == 0
+		end
+	end
+rescue LoadError => exception
+	warn "Could not load ruby-prof - it might not be installed."
 end
 
 
