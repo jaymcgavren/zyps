@@ -141,7 +141,7 @@ class SpeedLimit < EnvironmentalFactor
 	#Maximum allowed speed in units.
 	attr_accessor :maximum
 	
-	def initialize(units)
+	def initialize(units = nil)
 		self.maximum = units
 	end
 	
@@ -169,7 +169,7 @@ class Accelerator < EnvironmentalFactor
 	#Vector to apply to objects.
 	attr_accessor :vector
 	
-	def initialize(vector)
+	def initialize(vector = nil)
 		self.vector = vector
 		@clock = Clock.new
 	end
@@ -226,7 +226,7 @@ class Friction < EnvironmentalFactor
 	#Rate of slowing.
 	attr_accessor :force
 	
-	def initialize(force)
+	def initialize(force = nil)
 		self.force = force
 		#Track time since last action.
 		@clock = Clock.new
@@ -272,7 +272,7 @@ class PopulationLimit < EnvironmentalFactor
 	#Maximum allowed population.
 	attr_accessor :count
 	
-	def initialize(count)
+	def initialize(count = nil)
 		self.count = count
 	end
 	
