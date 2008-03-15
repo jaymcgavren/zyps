@@ -226,6 +226,10 @@ class GameObject
 		self.name, self.location, self.color, self.vector, self.age, self.size, self.tags = options[:name], options[:location], options[:color], options[:vector], options[:age], options[:size], options[:tags]
 		@identifier = generate_identifier
 	end
+	#A list of attribute variable names that will be included when this object is marshalled to YAML.
+	def to_yaml_properties
+		instance_variables.reject{|v| v == "@environment"}
+	end
 	
 	#Make a deep copy.
 	def copy
@@ -371,6 +375,10 @@ end
 class EnvironmentalFactor
 	#Environment this EnvironmentalFactor belongs to.
 	attr_accessor :environment
+	#A list of attribute variable names that will be included when this object is marshalled to YAML.
+	def to_yaml_properties
+		instance_variables.reject{|v| v == "@environment"}
+	end
 	#Make a deep copy.
 	def copy; self.clone; end
 	#True if classes are equal.
@@ -390,6 +398,10 @@ class Action
 	
 	def initialize
 		@started = false
+	end
+	#A list of attribute variable names that will be included when this object is marshalled to YAML.
+	def to_yaml_properties
+		instance_variables.reject{|v| v == "@behavior"}
 	end
 	
 	#Make a deep copy.
@@ -427,6 +439,11 @@ class Condition
 
 	#The Behavior this Condition belongs to.
 	attr_accessor :behavior
+
+	#A list of attribute variable names that will be included when this object is marshalled to YAML.
+	def to_yaml_properties
+		instance_variables.reject{|v| v == "@behavior"}
+	end
 	
 	#Make a deep copy.
 	def copy; self.clone; end
@@ -482,6 +499,10 @@ class Behavior
 		@condition_evaluation_count = 0
 		#Targets currently selected to act upon.
 		@current_targets = []
+	end
+	#A list of attribute variable names that will be included when this object is marshalled to YAML.
+	def to_yaml_properties
+		instance_variables.reject{|v| v == "@creature"}
 	end
 
 	
@@ -787,6 +808,10 @@ class Clock
 	def initialize(speed = 1.0)
 		@speed = speed
 		reset_elapsed_time
+	end
+	#A list of attribute variable names that will be included when this object is marshalled to YAML.
+	def to_yaml_properties
+		instance_variables.reject{|v| v == "@last_check_time"}
 	end
 	
 	#Make a deep copy, resetting elapsed_time.
