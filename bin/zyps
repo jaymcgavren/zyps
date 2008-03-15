@@ -53,6 +53,8 @@ class Application < Wx::App
 
 	#Application configuration.
 	attr_accessor :options
+	#Config file name.
+	attr_accessor :options_file
 
 	#Takes a hash with these keys and defaults:
 	#	:width => 800
@@ -63,7 +65,6 @@ class Application < Wx::App
 	#	:enclosure => true
 	#	:uri => nil
 	#	:object_file => nil
-	#	:config_file => 'zyps.cfg'
 	def initialize(options = {})
 	
 		super()
@@ -81,9 +82,13 @@ class Application < Wx::App
 			:enclosure => true,
 			:uri => nil,
 			:object_file => nil,
-			:config_file => 'zyps.cfg',
 		}.merge(options)
 		@log.debug "options: #{@options.inspect}"
+		
+		self.options_file = File.join(
+			(ENV['HOME'] || ENV['USERPROFILE'] || '.'),
+			'.zyps'
+		)
 		
 	end
 	
@@ -183,7 +188,7 @@ class Application < Wx::App
 			begin
 				load_game_objects(@options[:object_file])
 			rescue Exception => exception
-				show_alert(exception.message)
+				@log.warn exception.message
 			end
 		end
 		
@@ -231,7 +236,7 @@ class Application < Wx::App
 	
 	#Shut down.
 	def on_exit
-		Configuration.save_object(@options[:config_file], @options)
+		Configuration.save_object(self.options_file, @options) if self.options_file
 		exit
 	end
 	
@@ -289,7 +294,7 @@ class Application < Wx::App
 		if dialog.show_modal == Wx::ID_OK
 			begin
 				load_game_objects(dialog.path)
-				@options[:object_file] = path
+				@options[:object_file] = dialog.path
 			rescue Exception => exception
 				show_alert(exception.message)
 			end
@@ -827,20 +832,16 @@ end
 
 
 begin
-	#Load application configuration from file given on command line.
+	#Create application.
 	application = Application.new
 	begin
-		config_file = ARGV[0] || 'zyps.cfg'
-		options = Configuration.load_object(config_file)
-		#Override options with files given on command line.
-		options[:config_file] = config_file
-		options[:object_file] = ARGV[1] if ARGV[1]
-		#Assign options to application.
-		application.options = options
+		#If a config was specified on command line, load that, otherwise use default.
+		application.options_file = ARGV[0] if ARGV[0]
+		#Assign loaded config to app.
+		application.options = Configuration.load_object(application.options_file)
 	rescue Exception => exception
-		warn "Could not load configuration, using defaults."
+		warn "Could not load config file '#{application.options_file}', using defaults."
 	end
-	#Start application.
 	application.main_loop
 rescue SystemExit
 	#No action.
