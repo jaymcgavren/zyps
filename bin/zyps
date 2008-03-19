@@ -389,6 +389,8 @@ EOD
 	def load_game_objects(path)
 		stored_objects = IO.read(path)
 		@environment.instance_eval {@objects = Serializer.instance.deserialize(stored_objects)}
+		#Set each object's environment attribute, as Serializer doesn't set that unless restoring an entire environment.
+		@environment.objects.each {|o| o.environment = @environment}
 	end
 	
 	
