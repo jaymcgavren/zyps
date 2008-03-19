@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+require 'yaml'
 require 'zyps'
 require 'singleton'
 
@@ -23,40 +24,66 @@ module Zyps
 
 YAML_DOMAIN = "jay.mcgavren.com,2008-03-15"
 
-module Serializable
-	def to_yaml_type
-		"#{YAML_DOMAIN}/#{self.class}"
+
+#Define attributes that should not be serialized.
+
+class Action
+	def to_yaml_properties
+		instance_variables.reject{|v| v == "@behavior"}
 	end
 end
-
+class Behavior
+	def to_yaml_properties
+		instance_variables.reject{|v| v == "@creature"}
+	end
+end
+class Clock
+	def to_yaml_properties
+		instance_variables.reject{|v| v == "@last_check_time"}
+	end
+end
+class Condition
+	def to_yaml_properties
+		instance_variables.reject{|v| v == "@behavior"}
+	end
+end
 class Environment
-	include Serializable
 	#Environment should exclude any observers.
 	def to_yaml_properties
 		instance_variables.reject{|v| v == "@observer_peers"}
 	end
 end
-#Restore environment attribute of any member GameObjects.
-YAML.add_domain_type(YAML_DOMAIN, Zyps::Environment) do |type, value|
-puts "*" * 50
-	environment = YAML.object_maker(type, value)
-	environment.objects.each {|o| o.environment = environment}
-end
-
-
-class GameObject
-	#GameObject should exclude its Environment.
-	def to_yaml_properties
-		instance_variables.reject{|v| v == "@environment"}
-	end
-end
 class EnvironmentalFactor
-	#EnvironmentalFactor should exclude its Environment.
+	def to_yaml_properties
+		instance_variables.reject{|v| v == "@environment"}
+	end
+end
+class GameObject
 	def to_yaml_properties
 		instance_variables.reject{|v| v == "@environment"}
 	end
 end
 
+
+#Restore environment attribute of any member GameObjects, EnvironmentalFactors.
+YAML.add_ruby_type("object:Zyps::Environment") do |type, value|
+	environment = YAML.object_maker(Zyps::Environment, value)
+	environment.objects.each {|o| o.environment = environment}
+	environment.environmental_factors.each {|f| f.environment = environment}
+	environment
+end
+#Restore creature attribute of any member Behaviors.
+YAML.add_ruby_type("object:Zyps::Creature") do |type, value|
+	creature = YAML.object_maker(Zyps::Creature, value)
+	creature.behaviors.each {|o| o.creature = creature}
+	creature
+end
+#Reset elapsed time for any clocks.
+YAML.add_ruby_type("object:Zyps::Clock") do |type, value|
+	clock = YAML.object_maker(Zyps::Clock, value)
+	clock.reset_elapsed_time
+	clock
+end
 
 
 

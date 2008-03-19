@@ -28,6 +28,7 @@ begin
 	require 'zyps/conditions'
 	require 'zyps/environmental_factors'
 	require 'zyps/remote'
+	require 'zyps/serializer'
 	require 'zyps/views/trails'
 	require 'zyps/views/canvas/wx'
 rescue LoadError
@@ -386,24 +387,17 @@ EOD
 	
 	#Load environment's game objects from file.
 	def load_game_objects(path)
-		@environment.instance_eval {@objects = Configuration.load_object(path)}
-		#Re-set attributes that weren't dumped.
-		@environment.objects.each do |object|
-			object.environment = @environment
-			if object.kind_of?(Creature)
-				object.behaviors.each do |behavior|
-					behavior.creature = object
-					behavior.actions.each {|action| action.behavior = behavior}
-					behavior.conditions.each {|condition| condition.behavior = behavior}
-				end
-			end
-		end
+		stored_objects = IO.read(path)
+		@environment.instance_eval {@objects = Serializer.instance.deserialize(stored_objects)}
 	end
 	
 	
 	#Save environment objects to the given path.
 	def save_game_objects(path)
-		@environment.instance_eval {Configuration.save_object(path, @objects)}
+		File.open(path, "w") do |file|
+			stored_objects = @environment.instance_eval {Serializer.instance.serialize(@objects)}
+			file.print(stored_objects)
+		end
 	end
 	
 	
