@@ -72,6 +72,13 @@ YAML.add_ruby_type("object:Zyps::Environment") do |type, value|
 	environment.environmental_factors.each {|f| f.environment = environment}
 	environment
 end
+#Restore behavior attribute of any member Actions and Conditions.
+YAML.add_ruby_type("object:Zyps::Behavior") do |type, value|
+	behavior = YAML.object_maker(Zyps::Behavior, value)
+	behavior.actions.each {|a| a.behavior = behavior}
+	behavior.conditions.each {|a| a.behavior = behavior}
+	behavior
+end
 #Restore creature attribute of any member Behaviors.
 YAML.add_ruby_type("object:Zyps::Creature") do |type, value|
 	creature = YAML.object_maker(Zyps::Creature, value)
