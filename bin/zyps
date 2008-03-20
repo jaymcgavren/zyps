@@ -100,53 +100,30 @@ class Application < Wx::App
 	def on_init
 		
 		@log.debug "Create the main window."
-		frame = Wx::Frame.new(
+		@frame = Wx::Frame.new(
 			nil, #No parent.
 			:size => [@options[:width], @options[:height]],
 			:title => "Zyps"
 		)
 		@log.debug "All controls in frame should be resized when frame is."
-		frame.sizer = Wx::BoxSizer.new(Wx::HORIZONTAL)
+		@frame.sizer = Wx::BoxSizer.new(Wx::HORIZONTAL)
 		@log.debug "Application should exit when frame is closed."
-		frame.evt_close {on_exit}
+		@frame.evt_close {on_exit}
 		
-		@log.debug "Create a view and canvas."
-		@drawing_area = Wx::Window.new(frame)
-		@drawing_area.min_size = [0, 0]
-		frame.sizer.add(@drawing_area, 1, Wx::GROW)
+		@log.debug "Create a canvas."
+		self.drawing_area = Wx::Window.new(@frame)
+		
+		@log.debug "Create a View for the Environment to update."
 		@view = TrailsView.new(
 			:width => @options[:width],
 			:height => @options[:height],
 			:canvas => WxCanvas.new
 		)
-		@log.debug "Set up mouse click/drag handlers for canvas."
-		@press_location = nil
-		@drawing_area.evt_left_down {|event| on_mouse_press(event)}
-		@drawing_area.evt_left_up {|event| on_mouse_release(event)}
-		#Whenever the drawing area needs updating, copy the view's buffer over.
-		@drawing_area.evt_paint {|event| @drawing_area.paint {|dc| render(dc)}}
 		
 		@log.debug "Create menus."
-		@menus = MenuSet.new(frame)
-		evt_menu(@menus.open_menu) {|event| on_open_menu(event)}
-		evt_menu(@menus.save_menu) {|event| on_save_menu(event)}
-		evt_menu(@menus.save_as_menu) {|event| on_save_as_menu(event)}
-		evt_menu(@menus.exit_menu) {|event| on_exit}
-		evt_menu(@menus.using_zyps_menu) {|event| on_using_zyps_menu(event)}
-		evt_menu(@menus.about_menu) {|event| on_about_menu(event)}
-
+		self.menus = MenuSet.new(@frame)
 		@log.debug "Create an interface."
-		@controls = ControlPanel.new(frame)
-		@controls.clear_button.evt_button(@controls.clear_button.get_id) do |event|
-			@environment.clear_objects
-		end
-		@controls.length_slider.evt_slider(@controls.length_slider.get_id) do |event|
-			@view.trail_length = @controls.length_slider.value
-		end
-		@controls.speed_slider.evt_slider(@controls.speed_slider) do |event|
-			Clock.speed = @controls.speed_slider.value.to_f / 5.0
-		end
-		frame.sizer.add(@controls, 0, Wx::GROW)
+		self.controls = ControlPanel.new(@frame)
 		
 		@log.debug "Create an environment, and link it to the view."
 		self.environment = Environment.new
@@ -175,8 +152,8 @@ class Application < Wx::App
 		end
 		
 		@log.debug "Display GUI."
-		frame.send_size_event
-		frame.show
+		@frame.send_size_event
+		@frame.show
 	
 	end
 	
@@ -456,6 +433,52 @@ EOD
 				$SAFE = 1
 			end
 			
+		end
+		
+		
+		#Set up a new drawing area.
+		def drawing_area=(value)
+		
+			@drawing_area = value
+			@drawing_area.min_size = [0, 0]
+			@frame.sizer.add(@drawing_area, 1, Wx::GROW)
+			
+			@log.debug "Set up mouse click/drag handlers for canvas."
+			@press_location = nil
+			@drawing_area.evt_left_down {|event| on_mouse_press(event)}
+			@drawing_area.evt_left_up {|event| on_mouse_release(event)}
+			
+			#Whenever the drawing area needs updating, copy the view's buffer over.
+			@drawing_area.evt_paint {|event| @drawing_area.paint {|dc| render(dc)}}
+			
+		end
+		
+		
+		#Set up menus.
+		def menus=(value)
+			@menus = value
+			evt_menu(@menus.open_menu) {|event| on_open_menu(event)}
+			evt_menu(@menus.save_menu) {|event| on_save_menu(event)}
+			evt_menu(@menus.save_as_menu) {|event| on_save_as_menu(event)}
+			evt_menu(@menus.exit_menu) {|event| on_exit}
+			evt_menu(@menus.using_zyps_menu) {|event| on_using_zyps_menu(event)}
+			evt_menu(@menus.about_menu) {|event| on_about_menu(event)}
+		end
+		
+		
+		#Set up control panel.
+		def controls=(value)
+			@controls = value
+			@controls.clear_button.evt_button(@controls.clear_button.get_id) do |event|
+				@environment.clear_objects
+			end
+			@controls.length_slider.evt_slider(@controls.length_slider.get_id) do |event|
+				@view.trail_length = @controls.length_slider.value
+			end
+			@controls.speed_slider.evt_slider(@controls.speed_slider) do |event|
+				Clock.speed = @controls.speed_slider.value.to_f / 5.0
+			end
+			@frame.sizer.add(@controls, 0, Wx::GROW)
 		end
 
 
