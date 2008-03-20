@@ -34,7 +34,7 @@ class Action
 end
 class Behavior
 	def to_yaml_properties
-		instance_variables.reject{|v| v == "@creature"}
+		instance_variables.reject{|v| v == "@creature" or v == "@current_targets"}
 	end
 end
 class Clock
@@ -73,10 +73,12 @@ YAML.add_ruby_type("object:Zyps::Environment") do |type, value|
 	environment
 end
 #Restore behavior attribute of any member Actions and Conditions.
+#Set current targets to empty array.
 YAML.add_ruby_type("object:Zyps::Behavior") do |type, value|
 	behavior = YAML.object_maker(Zyps::Behavior, value)
 	behavior.actions.each {|a| a.behavior = behavior}
 	behavior.conditions.each {|a| a.behavior = behavior}
+	behavior.instance_eval {@current_targets = []}
 	behavior
 end
 #Restore creature attribute of any member Behaviors.
