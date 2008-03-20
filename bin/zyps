@@ -46,7 +46,7 @@ include Zyps
 
 
 LOG_HANDLE = STDOUT
-LOG_LEVEL = Logger::WARN
+LOG_LEVEL = Logger::DEBUG
 
 
 #The Zyps GUI.
@@ -64,7 +64,8 @@ class Application < Wx::App
 	#	:max_population => 100
 	#	:fps => 60
 	#	:enclosure => true
-	#	:uri => nil
+	#	:client_uri => nil
+	#	:server_uri => nil
 	#	:object_file => nil
 	def initialize(options = {})
 	
@@ -81,7 +82,8 @@ class Application < Wx::App
 			:max_population => 50,
 			:fps => 30,
 			:enclosure => true,
-			:uri => nil,
+			:client_uri => nil,
+			:server_uri => nil,
 			:object_file => nil,
 		}.merge(options)
 		@log.debug "options: #{@options.inspect}"
@@ -147,24 +149,10 @@ class Application < Wx::App
 		frame.sizer.add(@controls, 0, Wx::GROW)
 		
 		@log.debug "Create an environment, and link it to the view."
-		@environment = Environment.new
-		@environment.add_observer(@view)
-		
-		@log.debug "Set up environmental factors."
-		if @options[:enclosure]
-			@enclosure = Enclosure.new(
-				:left => 0,
-				:bottom => 0,
-				:top => @drawing_area.size.height,
-				:right => @drawing_area.size.width
-			)
-			@environment.add_environmental_factor @enclosure
-		end
-		@environment.add_environmental_factor SpeedLimit.new(@options[:max_speed]) if @options[:max_speed]
-		@environment.add_environmental_factor PopulationLimit.new(@options[:max_population]) if @options[:max_population]
+		self.environment = Environment.new
 		
 		@log.debug "Set up a creature generator."
-		@generator = CreatureGenerator.new(:environment => @environment)
+		@generator = CreatureGenerator.new
 		
 		@log.debug "Set the Utility module to cache distances and angles."
 		Utility.caching_enabled = true
@@ -176,13 +164,6 @@ class Application < Wx::App
 		timer = Wx::Timer.new(self, timer_id)
 		evt_timer(timer_id) {on_timer}
 		timer.start(milliseconds_per_frame)
-		
-		if @options[:uri]
-			@log.debug "Start a network service at #{@options[:uri]}."
-			server = EnvironmentServer.new(@environment, @options[:uri])
-			server.start
-			$SAFE = 1
-		end
 		
 		if @options[:object_file]
 			@log.debug "Load environment objects from #{@options[:object_file]}."
@@ -198,8 +179,8 @@ class Application < Wx::App
 		frame.show
 	
 	end
-
-
+	
+	
 	#Update environment and view.
 	def on_timer
 		#Resize playfield if window has been resized.
@@ -443,8 +424,41 @@ EOD
 			dc.size.height / 2 - (text_size[1] / 2)
 		)
 	end
+
+	
+	private
 	
 	
+		#Set a new environment up.
+		def environment=(value)
+		
+			@environment = value
+			@log.debug "Link #{@environment} to #{@view}."
+			@environment.add_observer(@view)
+			
+			@log.debug "Set up environmental factors."
+			if @options[:enclosure]
+				@enclosure = Enclosure.new(
+					:left => 0,
+					:bottom => 0,
+					:top => @drawing_area.size.height,
+					:right => @drawing_area.size.width
+				)
+				@environment.add_environmental_factor @enclosure
+			end
+			@environment.add_environmental_factor SpeedLimit.new(@options[:max_speed]) if @options[:max_speed]
+			@environment.add_environmental_factor PopulationLimit.new(@options[:max_population]) if @options[:max_population]
+			
+			if @options[:client_uri]
+				@log.debug "Start a network service at #{@options[:client_uri]}."
+				server = EnvironmentServer.new(@environment, @options[:client_uri])
+				server.start
+				$SAFE = 1
+			end
+			
+		end
+
+
 end
 
 
@@ -646,8 +660,6 @@ end
 class CreatureGenerator
 
 
-	#Environment creatures will be placed in.
-	attr_accessor :environment
 	#Default size of new creatures.
 	attr_accessor :default_size
 	#Default required proximity for actions.
@@ -665,7 +677,6 @@ class CreatureGenerator
 
 	
 	#Takes a hash with these keys and defaults:
-	#	:environment => nil
 	#	:default_size => 5
 	#	:default_proximity => 200
 	#	:approach_rate => 200
@@ -691,7 +702,6 @@ class CreatureGenerator
 		}.merge(options)
 		@log.debug "options: #{options.inspect}"
 		
-		@environment = options[:environment]
 		@default_size = options[:default_size]
 		@default_proximity = options[:default_proximity]
 		@approach_rate = options[:approach_rate]
