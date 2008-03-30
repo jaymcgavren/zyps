@@ -16,71 +16,53 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+require 'zyps'
+
 module Zyps
 
 
-require 'drb'
-require 'zyps'
-require 'zyps/actions'
-require 'zyps/conditions'
-require 'zyps/environmental_factors'
-
-
-#An Environment proxy, served over DRb.
-#As with all DRb services, it is recommended you set $SAFE to 1 or higher.
+#Updates remote EnvironmentClients.
 class EnvironmentServer
-
-
-	#The URI on which the server is operating.
-	attr_reader :uri
 	
+	LENGTH_BYTE_COUNT = 3
 	
-	def initialize(environment = Environment.new, uri = nil)
-		@environment, @uri = environment, uri
+	#Takes the environment to serve, and the following options:
+	#	:protocol => Zyps::Protocol::UDP
+	#	:port => 9977
+	def initialize(environment, options = {})
+		@environment = environment
+		@options = {
+			:protocol => Protocol::UDP,
+			:port => 9977
+		}.merge(options)
 	end
 	
 	
-	#Offer the given environment for remote connections.
+	#Listens for connections on the given port.
 	def start
-	
-		#Ensure Environment stays on server side.
-		@environment.extend DRbUndumped
-		
-		#Start a network service.
-		@server = DRb::DRbServer.new(
-			@uri,
-			@environment
-		)
-		@uri ||= @server.uri
-		
-	end
-
-	
-	#Wait until the server is finished running.
-	def wait
-		@server.thread.join
+		case @options[:protocol]
+		when Protocol::UDP
+			socket = UDPSocket.new
+			socket.bind("localhost", @options[:port])
+		end
+		#Listen for incoming data until stop is called.
+		@running = true
+		Thread.new do
+			while @running
+				length, info = socket.recvfrom(LENGTH_BYTE_COUNT)
+				data, info = socket.recvfrom(length)
+			end
+		end
 	end
 	
 	
-	#Stop the server.
+	#Closes connection port.
 	def stop
-		@server.stop_service
+		#Breaks out of listener loop.
+		@running = false
 	end
 	
-	
-end
 
-
-#Get proxies to remote Environment objects via DRb.
-#As with all DRb services, it is recommended you set $SAFE to 1 or higher.
-module EnvironmentClient
-
-	#Get an environment proxy from the given URI.
-	def EnvironmentClient.get_environment(uri)
-		DRb.start_service()
-		DRbObject.new_with_uri(uri)
-	end
-	
 end
 
 
