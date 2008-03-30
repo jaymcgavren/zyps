@@ -31,87 +31,127 @@ end
 
 class TestRemote < Test::Unit::TestCase
 
-	URI = 'druby://localhost:8989'
 	SPEED = 1
 	PITCH = 0
 	RATE = 1
 
 	def setup
-		@environment = Environment.new
-		@server = EnvironmentServer.new(@environment, URI)
-		@server.start
-		@client = EnvironmentClient.get_environment(URI)
+		@server_environment = Environment.new
+		@server = EnvironmentServer.new(
+			@server_environment,
+			:protocol => Protocol::UDP,
+			:port => 8989
+		)
+		@client_environment = Environment.new
+		@client = EnvironmentClient.new(
+			@client_environment,
+			:protocol => Protocol::UDP,
+			:port => 8989
+		)
+		@object = Creature.new(:color => Color.blue, :vector => Vector.new(1, 45))
 	end
 	
 	def teardown
+		@client.disconnect
 		@server.stop
 	end
 	
-	def test_uri
-		assert_equal(URI, @server.uri)
+	def find_matching_object(object, environment)
+		environment.objects.each {|o| return o if o.identifier == object.identifier}
+		return nil
 	end
 	
-	#Add an object to local environment and ensure client receives it.
-	def test_local_add_object
-		object = GameObject.new
-		@environment.add_object(object)
-		environment_object = nil
-		@environment.objects.each {|o| environment_object = o if o.identifier == object.identifier}
-		assert_equal(object, environment_object)
+	#Ensure client receives objects that were already on server.
+	def test_receive_old_server_objects
+		@server_environment << @object
+		@server.start
+		@client.connect
+		assert(find_matching_object(@object, @client_environment))
 	end
 	
-	#Place GameObjects and ensure they can move.
-	def test_objects
-		object = GameObject.new
-		object.vector = Vector.new(SPEED, PITCH)
-		@client.add_object(object)
-		@environment.interact
-		environment_object = nil
-		@environment.objects.each {|o| environment_object = o if o.identifier == object.identifier}
-		assert_in_delta(0.1 * SPEED, environment_object.location.x, 0.001)
+	#Ensure client receives objects as they're added to server.
+	def test_receive_new_server_objects
+		@server.start
+		@client.connect
+		@server_environment << @object
+		assert(find_matching_object(@object, @client_environment))
 	end
 	
-	#Place Creature with Action and ensure it's carried out.
-	def test_actions
-		creature = Creature.new
-		creature.vector = Vector.new(SPEED, PITCH)
-		behavior = Behavior.new
-		behavior.add_action TurnAction.new(RATE, 90)
-		creature.add_behavior behavior
-		@client.add_object(creature)
-		@client.add_object(Creature.new) #Second creature to interact with.
-		@environment.interact
-		environment_object = nil
-		@client.objects.each {|o| environment_object = o if o.identifier == creature.identifier}
-		assert(environment_object.vector.pitch > PITCH)
+	#Ensure server receives objects that were already on client.
+	def test_receive_old_client_objects
+		@client_environment << @object
+		@server.start
+		@client.connect
+		assert(find_matching_object(@object, @server_environment))
 	end
 	
-	#Place Creature with Condition and ensure it's followed.
-	def test_conditions
-		creature = Creature.new
-		creature.vector = Vector.new(SPEED, PITCH)
-		behavior = Behavior.new
-		behavior.add_action TurnAction.new(RATE, 90)
-		behavior.add_condition TagCondition.new('foobar') #Will return false.
-		creature.add_behavior behavior
-		@client.add_object(creature)
-		@client.add_object(Creature.new) #Second creature to interact with.
-		@environment.interact
-		environment_object = nil
-		@client.objects.each {|o| environment_object = o if o.identifier == creature.identifier}
-		#Ensure pitch is unaltered, as condition was false.
-		assert_in_delta(PITCH, environment_object.vector.pitch, 0.001)
+	#Ensure server receives objects as they're added to client.
+	def test_receive_new_client_objects
+		@server.start
+		@client.connect
+		@client_environment << @object
+		assert(find_matching_object(@object, @server_environment))
 	end
 	
-	#Add EnvironmentalFactors and ensure they're usable.
-	def test_environmental_factors
-		creature = Creature.new
-		@client.add_object(creature)
-		@client.add_environmental_factor(Accelerator.new(Vector.new(SPEED, PITCH)))
-		@environment.interact
-		environment_object = nil
-		@client.objects.each {|o| environment_object = o if o.identifier == creature.identifier}
-		assert_in_delta(SPEED * 0.1, environment_object.vector.speed, 0.001)
+	#Ensure server is authority on object movement by default.
+	def test_server_movement_authority
+		@server.start
+		@client.connect
+		@client_environment << @object
+		server_object = find_matching_object(@object, @server_environment)
+		#Move client object one way, server object another.
+		@object.vector.pitch = 90
+		server_object.vector.pitch = 180
+		#Interact.
+		@server_environment.interact
+		#Ensure client location/vector matches server's anyway.
+		assert_equal(@object.vector, server_object.vector)
+		assert_equal(@object.location, server_object.location)
 	end
-		
+	
+	#Ensure client is authority on object movement when assigned to client.
+	def test_client_movement_authority
+		@server.start
+		@client.connect
+		@server_environment << @object
+		client_object = find_matching_object(@object, @client_environment)
+		@server.set_manager(@object, @client) #TODO: Server won't have @client; will it use an ID?
+		#Move client object one way, server object another.
+		@object.vector.pitch = 90
+		client_object.vector.pitch = 180
+		#Interact.
+		@server_environment.interact
+		@client_environment.interact
+		#Ensure server location/vector matches client's anyway.
+		assert_equal(@object.vector, client_object.vector)
+		assert_equal(@object.location, client_object.location)
+	end
+	
+	#Ensure server is authority on object removal.
+	def test_server_removal_authority
+		@server.start
+		@client.connect
+		@client_environment << @object
+		server_object = find_matching_object(@object, @server_environment)
+		#Remove object from client.
+		@client_environment.remove_object(@object)
+		@server_environment.interact
+		#Object should have been re-added to client environment, because it wasn't removed from server.
+		assert(find_matching_object(@object, @client_environment))
+		#Remove object from server.
+		@server_environment.remove_object(@object)
+		@server_environment.interact
+		#Object should have been removed from client environment.
+		assert_nil(find_matching_object(@object, @client_environment))
+	end
+	
+	#Ensure server doesn't send new object to client if a rule tells it not to.
+	
+	#Ensure client doesn't send new object to server if a rule tells it not to.
+	
+	#Ensure server keeps telling client about object creation until client acknowledges it.
+	#Ensure client keeps telling server about object creation until server acknowledges it.
+	#Ensure server keeps updating other clients if one disconnects.
+	#Ensure new clients can connect and get world if others are already connected.
+	
 end
