@@ -31,10 +31,6 @@ end
 
 class TestRemote < Test::Unit::TestCase
 
-	SPEED = 1
-	PITCH = 0
-	RATE = 1
-
 	def setup
 		@server_environment = Environment.new
 		@server = EnvironmentServer.new(
@@ -145,13 +141,47 @@ class TestRemote < Test::Unit::TestCase
 		assert_nil(find_matching_object(@object, @client_environment))
 	end
 	
+	#Ensure server keeps updating other clients if one disconnects.
+	def test_client_disconnect
+		@server.start
+		@client.connect
+		client_environment_2 = Environment.new
+		client_2 = EnvironmentClient.new(
+			Environment.new
+			:protocol => Protocol::UDP,
+			:port => 8989
+		)
+		client_2.connect
+		@server_environment << @object
+		assert(find_matching_object(@object, @client_environment))
+		assert(find_matching_object(@object, client_environment_2))
+		@client.disconnect
+		@server_environment.interact
+		assert_equal(find_matching_object(@object, client_environment_2).location, @object.location)
+	end
+	
+	#Ensure new clients can connect and get world if others are already connected.
+	def test_multiple_clients_connect
+		@server.start
+		@client.connect
+		@server_environment << @object
+		assert(find_matching_object(@object, @client_environment))
+		@server_environment.interact
+		client_environment_2 = Environment.new
+		client_2 = EnvironmentClient.new(
+			Environment.new
+			:protocol => Protocol::UDP,
+			:port => 8989
+		)
+		client_2.connect
+		assert(find_matching_object(@object, client_environment_2))
+	end
+	
 	#Ensure server doesn't send new object to client if a rule tells it not to.
 	
 	#Ensure client doesn't send new object to server if a rule tells it not to.
 	
 	#Ensure server keeps telling client about object creation until client acknowledges it.
 	#Ensure client keeps telling server about object creation until server acknowledges it.
-	#Ensure server keeps updating other clients if one disconnects.
-	#Ensure new clients can connect and get world if others are already connected.
 	
 end
