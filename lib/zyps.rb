@@ -185,6 +185,15 @@ class Environment
 	end
 	
 	
+	#True if clock, all objects, and all environmental factors are the same.
+	def ==(other)
+		return false if @objects != other.objects.to_a
+		return false if @environmental_factors != other.environmental_factors.to_a
+		return false if self.clock != other.clock
+		true
+	end
+	
+	
 end
 
 
