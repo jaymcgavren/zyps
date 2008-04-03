@@ -63,6 +63,7 @@ begin
 	task :stories do
 		FileList["stories/*.rb"].each {|f| ruby f}
 	end
+	task :default => :spec
 rescue LoadError => exception
 	warn "Could not load rSpec - it might not be installed."
 end
