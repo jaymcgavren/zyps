@@ -581,7 +581,7 @@ class Behavior
 		end
 		actions.each do |action|
 			if @current_targets.empty? and ! @conditions.empty?
-				action.stop(actor, targets) #Not @current_targets; that array is empty.
+				action.stop(actor, targets) if action.started? #Not @current_targets; that array is empty.
 			else
 				action.start(actor, @current_targets) unless action.started?
 				action.do(actor, @current_targets)
