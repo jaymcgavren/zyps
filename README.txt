@@ -53,7 +53,7 @@ To create a "doc" subdirectory with API documentation:
 
 	rake rdoc
 
-Also see "bin/zyps_demo" and the "test" subfolder in the project directory for sample code.
+Also see "bin/zyps_demo" and the "spec" subfolder in the project directory for sample code.
 
 
 == Thanks
