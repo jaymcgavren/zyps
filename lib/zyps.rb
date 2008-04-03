@@ -553,19 +553,8 @@ class Behavior
 		@condition_order = @@condition_order[@condition_frequency]
 		@@condition_order[@condition_frequency] += 1
 	end
-	
-	#Make a deep copy.
-	def copy
-		copy = self.clone #Currently, we overwrite everything anyway, but we may add some clonable attributes later.
-		#Make a deep copy of all objects.
-		copy.instance_eval {@objects = []}
-		self.objects.each {|object| copy.add_object(object.copy)}
-		#Make a deep copy of all environmental_factors.
-		copy.clear_environmental_factors
-		self.environmental_factors.each {|environmental_factor| copy.add_environmental_factor(environmental_factor)}
-		copy
-	end
 
+	
 	#Make a deep copy.
 	def copy
 		copy = self.clone #Currently, we overwrite everything anyway, but we may add some clonable attributes later.
@@ -577,6 +566,7 @@ class Behavior
 		self.conditions.each {|condition| copy.add_condition(condition.copy)}
 		copy
 	end
+	
 	
 	#Finds targets that meet all conditions, then acts on them.
 	#Calls select(actor, targets) on each Condition, each time discarding targets that fail.
