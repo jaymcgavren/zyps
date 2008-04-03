@@ -27,19 +27,24 @@ class Environment
 
 	include Observable
 	
+	#A Clock used to track time between updates.
+	attr_accessor :clock
+	
 	#Takes a hash with these keys and defaults:
 	#	:objects => [], 
 	#	:environmental_factors => []
+	#	:clock => Clock.new
 	def initialize (options = {})
 		options = {
 			:objects => [], 
-			:environmental_factors => []
+			:environmental_factors => [],
+			:clock => Clock.new
 		}.merge(options)
 		@objects = []
 		@environmental_factors = []
 		options[:objects].each {|object| self.add_object(object)}
 		options[:environmental_factors].each {|environmental_factor| self.add_environmental_factor(environmental_factor)}
-		@clock = Clock.new
+		self.clock = options[:clock]
 	end
 
 	
@@ -282,6 +287,15 @@ class GameObject
 		].join(" ")
 	end
 	
+	#True if color, size, name, and tags are the same.
+	def ==(other)
+		return false if @color != other.color
+		return false if @size != other.size
+		return false if @name != other.name
+		return false if @tags != other.tags
+		true
+	end
+	
 	private
 	
 		#Make a unique GameObject identifier.
@@ -353,6 +367,13 @@ class Creature < GameObject
 			super
 		end
 		self
+	end
+	
+	#In addition to criteria for GameObjects, true if all behaviors are the same.
+	def ==(other)
+		return false unless super
+		return false if @behaviors != other.behaviors.to_a
+		true
 	end
 	
 	def to_s
@@ -683,6 +704,9 @@ class Color
 	def self.black; Color.new(0, 0, 0); end
 	def self.grey; Color.new(0.5, 0.5, 0.5); end
 
+	#True if components are the same.
+	def ==(other); self.red == other.red and self.green == other.green and self.blue == other.blue; end
+	
 	def to_s
 		[
 			super,
@@ -699,6 +723,8 @@ class Location
 
 	#Coordinates can be negative, and don't have to be integers.
 	attr_accessor :x, :y
+	def x; @x.to_f; end
+	def y; @y.to_f; end
 	
 	def initialize (x = 0, y = 0)
 		self.x, self.y = x, y
@@ -766,7 +792,7 @@ class Vector
 		Vector.new(new_length, new_angle)
 	end
 	
-	#True if x and y coordinates are the same.
+	#True if speed and pitch are the same.
 	def ==(other); self.speed == other.speed and self.pitch == other.pitch; end
 	
 	def to_s
