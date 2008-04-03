@@ -18,6 +18,8 @@
 
 require 'spec'
 require 'zyps'
+require 'zyps/actions'
+require 'zyps/conditions'
 require 'zyps/environmental_factors'
 
 
@@ -74,6 +76,57 @@ describe Environment do
 		@environment.interact
 	end
 	
+	it "should have all EnvironmentalFactors act on environment" do
+		gravity_1 = Gravity.new
+		gravity_2 = Gravity.new
+		@environment << gravity_1 << gravity_2
+		gravity_1.should_receive(:act).with(@environment)
+		gravity_2.should_receive(:act).with(@environment)
+		@environment.interact
+	end
+	
 	it "should remove objects that throw exceptions on update"
 	
+end
+
+
+describe Behavior do
+
+	before(:each) do
+		@behavior = Behavior.new
+		@condition = TagCondition.new("foo")
+		@action = TagAction.new("bar")
+		@behavior << @action << @condition
+		@actor = Creature.new
+		@target = Creature.new
+	end
+
+	it "should start and perform all Actions when all Conditions are true" do
+		@action.should_receive(:start).with(@actor, [@target])
+		@action.should_receive(:do).with(@actor, [@target])
+		@target.tags << "foo"
+		@behavior.perform(@actor, [@target])
+	end
+	
+	it "should not call Actions unless all Conditions are true" do
+		@action.should_not_receive(:start)
+		@action.should_not_receive(:do)
+		@behavior.perform(@actor, [@target])
+	end
+	
+	it "should not start Actions that are already started" do
+		@target.tags << "foo"
+		@behavior.perform(@actor, [@target])
+		@action.should_not_receive(:start)
+		@action.should_receive(:do)
+		@behavior.perform(@actor, [@target])
+	end
+	
+	it "should not stop Actions that aren't started" do
+		@action.should_not_receive(:start)
+		@action.should_not_receive(:do)
+		@action.should_not_receive(:stop)
+		@behavior.perform(@actor, [@target])
+	end
+
 end
