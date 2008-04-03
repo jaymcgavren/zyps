@@ -184,4 +184,6 @@ class TestRemote < Test::Unit::TestCase
 	#Ensure server keeps telling client about object creation until client acknowledges it.
 	#Ensure client keeps telling server about object creation until server acknowledges it.
 	
+	#Ensure banned clients are rejected.
+	
 end

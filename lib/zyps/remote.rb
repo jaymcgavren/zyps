@@ -17,14 +17,39 @@
 
 
 require 'zyps'
+require 'zyps/serializer'
+
 
 module Zyps
 
 
+module EnvironmentTransmitter
+
+	#Parses incoming data and determines what to do with it.
+	def receive(data, sender_info)
+		Serializer.instance.deserialize(data).each do |object|
+			case object
+			when Request::ENVIRONMENT
+				send(@environment.objects.to_a + @environment.environmental_factors.to_a, sender_info)
+			when GameObject, EnvironmentalFactor
+				@environment << object
+			when Exception
+				raise object
+			else
+				send(Exception.new("Could not process #{object}."), sender_info)
+			end
+		end
+	end
+	
+end
+
+
 #Updates remote EnvironmentClients.
 class EnvironmentServer
+
+	include EnvironmentTransmitter
 	
-	LENGTH_BYTE_COUNT = 3
+	MAX_PACKET_SIZE = 10240
 	
 	#Takes the environment to serve, and the following options:
 	#	:protocol => Zyps::Protocol::UDP
@@ -43,14 +68,17 @@ class EnvironmentServer
 		case @options[:protocol]
 		when Protocol::UDP
 			socket = UDPSocket.new
-			socket.bind("localhost", @options[:port])
+			socket.bind(nil, @options[:port])
+		else
+			raise "Unknown protocol #{@options[:protocol]}."
 		end
 		#Listen for incoming data until stop is called.
 		@running = true
 		Thread.new do
 			while @running
-				length, info = socket.recvfrom(LENGTH_BYTE_COUNT)
-				data, info = socket.recvfrom(length)
+				length, client_info = socket.recvfrom(LENGTH_BYTE_COUNT)
+				data, client_info = socket.recvfrom(length)
+				receive(data, client_info)
 			end
 		end
 	end
@@ -62,7 +90,15 @@ class EnvironmentServer
 		@running = false
 	end
 	
+	
+end
 
+
+#Updates local Environment based on instructions from EnvironmentServer.
+class EnvironmentServer
+
+	include EnvironmentTransmitter
+	
 end
 
 

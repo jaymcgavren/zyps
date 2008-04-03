@@ -8,7 +8,7 @@ require 'rake/testtask'
 
 #Configuration variables.
 PRODUCT_NAME = "Zyps"
-PRODUCT_VERSION = "0.7.6"
+PRODUCT_VERSION = "0.7.7"
 SUMMARY = "A game library for Ruby"
 AUTHOR = "Jay McGavren"
 AUTHOR_EMAIL = "jay@mcgavren.com"
@@ -30,13 +30,13 @@ task :default => [:test, :gem]
 
 
 desc "Create documentation"
-Rake::RDocTask.new do |rdoc|
-	rdoc.rdoc_dir = "doc"
-	rdoc.rdoc_files = FileList[
+Rake::RDocTask.new do |task|
+	task.rdoc_dir = "doc"
+	task.rdoc_files = FileList[
 		"lib/**/*.rb",
 		"*.txt",
 	].exclude(/\bsvn\b/).to_a
-	rdoc.options = RDOC_OPTIONS
+	task.options = RDOC_OPTIONS
 end
 
 
@@ -49,6 +49,16 @@ end
 
 begin
 	require 'spec/rake/spectask'
+	Spec::Rake::SpecTask.new do |task|
+		task.spec_files = FileList['spec/**/*_spec.rb']
+	end
+	desc "Generate spec doc HTML files"
+	Spec::Rake::SpecTask.new do |task|
+		task.name = :spec_docs
+		task.spec_files = FileList['spec/**/*_spec.rb']
+		task.spec_opts << "--format html:spec_doc.html"
+		task.fail_on_error = false
+	end
 	desc "Run user stories"
 	task :stories do
 		FileList["stories/*.rb"].each {|f| ruby f}
