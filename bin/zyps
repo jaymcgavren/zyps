@@ -46,7 +46,7 @@ include Zyps
 
 
 LOG_HANDLE = STDOUT
-LOG_LEVEL = Logger::DEBUG
+LOG_LEVEL = Logger::WARN
 
 
 #The Zyps GUI.
