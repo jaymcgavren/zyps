@@ -95,7 +95,7 @@ end
 
 
 #Updates local Environment based on instructions from EnvironmentServer.
-class EnvironmentServer
+class EnvironmentClient
 
 	include EnvironmentTransmitter
 	

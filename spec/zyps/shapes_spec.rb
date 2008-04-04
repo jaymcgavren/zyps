@@ -21,7 +21,6 @@ require 'zyps/shapes'
 
 
 include Zyps
-include Shapes
 
 
 describe Rectangle do

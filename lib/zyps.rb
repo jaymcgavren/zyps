@@ -960,4 +960,10 @@ module Utility
 end
 
 
+#Returns GameObjects within its boundaries.
+#Can be set to return objects only after a certain number of updates, for limiting AI CPU usage or network bandwidth.
+class AreaOfInterest
+end
+
+
 end #module Zyps
