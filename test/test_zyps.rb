@@ -47,19 +47,6 @@ class TestGameObject < Test::Unit::TestCase
 	end
 
 
-	def test_move
-		#Set up moving object.
-		object = GameObject.new
-		object.location = Location.new(0, 0)
-		object.vector = Vector.new(1.4142, 45)
-		#Move for 1 second.
-		object.move(1)
-		#Check object moved to expected coordinates.
-		assert_in_delta(1, object.location.x, 0.001)
-		assert_in_delta(1, object.location.y, 0.001)
-	end
-	
-	
 	def test_copy
 		object = GameObject.new
 		object.vector = Vector.new(1, 1)
@@ -142,116 +129,6 @@ class TestCreature < Test::Unit::TestCase
 		creature.behaviors.each do |behavior|
 			assert(! copy.behaviors.find {|o| o.equal?(behavior)}, "Behaviors in list should not be same objects.")
 		end
-	end
-	
-	
-end
-
-
-
-class TestEnvironment < Test::Unit::TestCase
-
-	
-	def setup
-	
-		#Create an environment and add creatures.
-		@environment = Environment.new
-		@environment.add_object(Creature.new(:name => '1'))
-		@environment.add_object(Creature.new(:name => '2'))
-		@environment.add_object(Creature.new(:name => '3'))
-		
-	end
-	
-	
-	#An action that keeps a log of the actor and target.
-	class LogAction < Action
-		attr_reader :interactions
-		def initialize
-			#Interactions will be logged here.
-			@interactions = []
-		end
-		def do(actor, targets)
-			#Log the interaction.
-			targets.each do |target|
-				@interactions << "#{actor.name} targeting #{target.name}"
-			end
-		end
-	end
-	
-	def test_interactions
-	
-		#Set up behaviors that will log interactions.
-		log = LogAction.new
-		@environment.objects.each do |creature|
-			behavior = Behavior.new
-			behavior.add_action log
-			creature.add_behavior behavior
-		end
-		
-		#Have environment elements interact.
-		@environment.interact
-
-		#Look for expected interactions (each should only occur once).
-		assert(log.interactions.find_all{|i| i == "2 targeting 1"}.length == 1)
-		assert(log.interactions.find_all{|i| i == "1 targeting 2"}.length == 1)
-		assert(log.interactions.find_all{|i| i == "1 targeting 1"}.length == 0)
-		assert(log.interactions.find_all{|i| i == "2 targeting 2"}.length == 0)
-		
-	end
-	
-	
-	#An environmental factor that logs its target.
-	class LogFactor < EnvironmentalFactor
-		attr_reader :interactions
-		def initialize
-			#Interactions will be logged here.
-			@interactions = []
-		end
-		def act(environment)
-			#Log the interaction.
-			environment.objects.each {|target| @interactions << "Environment targeting #{target.name}"}
-		end
-	end
-	
-	def test_environmental_factors
-	
-		#Create an environmental factor.
-		logger = LogFactor.new
-		@environment.add_environmental_factor(logger)
-		
-		#Have environment elements interact.
-		@environment.interact
-
-		#Look for expected interactions (each should only occur once).
-		assert(logger.interactions.find_all{|i| i == "Environment targeting 1"}.length == 1)
-		assert(logger.interactions.find_all{|i| i == "Environment targeting 2"}.length == 1)
-		
-	end
-	
-	
-	#A condition that is false unless actor and target have specific names.
-	class NameCondition < Condition
-		def select(actor, targets)
-			targets.find_all {|target| actor.name == '1' and target.name == '2'}
-		end
-	end
-	
-	def test_conditions
-	
-		#Set up behavior that will log interactions.
-		behavior = Behavior.new
-		log = LogAction.new
-		behavior.add_action log
-		name_checker = NameCondition.new
-		behavior.add_condition name_checker
-		@environment.objects.each {|creature| creature.add_behavior behavior}
-				
-		#Have environment elements interact.
-		@environment.interact
-
-		assert_equal(0, log.interactions.find_all{|i| i == "2 targeting 1"}.length, "Creature '1' should NOT have been acted on.")
-		assert_equal(1, log.interactions.find_all{|i| i == "1 targeting 2"}.length, "Creature '2' SHOULD have been acted on.")
-		
 	end
 	
 	
@@ -492,20 +369,7 @@ end
 
 class TestBehavior < Test::Unit::TestCase
 
-	#True for all targets.
-	class TrueCondition < Condition
-		def select(actor, targets)
-			targets #Select all targets.
-		end
-	end
-	#False for all targets.
-	class FalseCondition < Condition
-		def select(actor, targets)
-			[] #Select no targets.
-		end
-	end
-	
-	
+
 	def setup
 		@actor = Creature.new(:name => 'actor')
 		@target = Creature.new(:name => 'target')
@@ -514,55 +378,6 @@ class TestBehavior < Test::Unit::TestCase
 		@targets << @target << @other
 	end
 	
-	
-	#Tracks number of times its start, stop, and do methods are called.
-	class MockAction < Action
-		attr_accessor :start_count, :stop_count, :do_count
-		def initialize
-			@start_count, @stop_count, @do_count = 0, 0, 0
-		end
-		def start(actor, targets)
-			super
-			@start_count += 1
-		end
-		def do(actor, targets)
-			@do_count += 1
-		end
-		def stop(actor, targets)
-			super
-			@stop_count += 1
-		end
-	end
-	
-	def test_actions
-	
-		#Set up a behavior with a true condition and a mock action.
-		behavior = Behavior.new
-		behavior.add_condition TrueCondition.new
-		action = MockAction.new
-		behavior.add_action action
-		
-		#Perform the behavior.
-		behavior.perform(@actor, @targets)
-		assert_equal(1, action.start_count, "start() should have been called on the mock action.")
-		assert_equal(1, action.do_count, "do() should have been called.")
-		assert_equal(0, action.stop_count, "stop() should NOT have been called.")
-		
-		#Perform the behavior again.
-		behavior.perform(@actor, @targets)
-		assert_equal(1, action.start_count, "start() should NOT have been called.")
-		assert_equal(2, action.do_count, "do() should have been called.")
-		assert_equal(0, action.stop_count, "stop() should NOT have been called.")
-		
-		#Add a false condition to the behavior.
-		behavior.add_condition FalseCondition.new
-		#Perform the behavior.
-		behavior.perform(@actor, @targets)
-		assert_equal(1, action.start_count, "start() should NOT have been called.")
-		assert_equal(2, action.do_count, "do() should NOT have been called, because conditions are no longer true.")
-		assert_equal(1, action.stop_count, "stop() SHOULD have been called.")
-				
-	end
 	
 	def test_copy
 		original = Behavior.new
@@ -579,26 +394,6 @@ class TestBehavior < Test::Unit::TestCase
 		end
 	end
 	
-	def test_no_conditions
-		#Set up a behavior with no conditions.
-		action = MockAction.new
-		behavior = Behavior.new(:conditions => [], :actions => [action])
-		#Perform the behavior with no targets.
-		behavior.perform(@actor, [])
-		assert_equal(1, action.start_count, "start() should have been called on the mock action.")
-		assert_equal(1, action.do_count, "do() should have been called.")
-		assert_equal(0, action.stop_count, "stop() should NOT have been called.")
-		#Add a true condition.
-		behavior.add_condition TrueCondition.new
-		#Perform the behavior with no targets.
-		behavior.perform(@actor, [])
-		assert_equal(1, action.stop_count, "stop() should have been called.")
-		#Perform the behavior WITH targets.
-		behavior.perform(@actor, @targets)
-		assert_equal(2, action.start_count, "start() should have been called.")
-		assert_equal(2, action.do_count, "do() should have been called.")
-		assert_equal(1, action.stop_count, "stop() should NOT have been called.")
-	end
 	
 	def test_equality
 		#Equivalent behaviors have the same actions.
@@ -657,77 +452,6 @@ class TestBehavior < Test::Unit::TestCase
 				:condition_frequency => 2
 			),
 			"Condition frequency and all actions and conditions match."
-		)
-	end
-	
-end
-
-
-class TestAdditions < Test::Unit::TestCase
-
-	#Add a new behavior to a creature with the given action.
-	def add_action(action, creature)
-		behavior = Behavior.new
-		behavior.add_action action
-		creature.add_behavior behavior
-	end
-	
-	def setup
-		@environment = Environment.new
-		@actor = Creature.new(:name => 'target1', :location => Location.new(1, 1))
-		@env_fact = gravity = Gravity.new(200)
-	end
-	
-	def test_environment_double_arrow_objects
-		assert_equal(0, @environment.object_count)
-		@environment << @actor
-		assert_equal(1, @environment.object_count)
-		assert_equal(0, @environment.environmental_factor_count)
-	end
-	
-	def test_environment_double_arrow_factors
-		assert_equal(0, @environment.environmental_factor_count)
-		@environment << @env_fact
-		assert_equal(1, @environment.environmental_factor_count)
-		assert_equal(0, @environment.object_count)
-	end
-
-	def test_game_object_double_arrow
-		#test color
-		@actor << Color.new(1,1,1)
-		assert_equal(Color.new(1,1,1), @actor.color)
-		#test vector
-		vect =Vector.new(23,13)
-		@actor << vect
-		assert_equal(vect, @actor.vector)
-		#test location
-		@actor << Location.new(13,13)
-		assert_equal(13, @actor.location.x)
-		assert_equal(13, @actor.location.y)
-		#test behavior
-		behavior = Behavior.new
-		behavior.add_action TagAction.new("1")
-		@actor << behavior
-		assert_equal(1, @actor.behavior_count)
-		assert(
-			@actor.behaviors.find do |behavior|
-				behavior.actions.find {|action| action.tag == "1"}
-			end
-		)
-	end
-	
-	def test_behavior_double_arrow
-		behavior = Behavior.new
-		#test action
-		behavior << TagAction.new('action')
-		#test condition
-		behavior << TagCondition.new('condition')
-		assert_equal(
-			Behavior.new(
-				:actions => [TagAction.new('action')],
-				:conditions => [TagCondition.new('condition')]
-			),
-			behavior
 		)
 	end
 	
