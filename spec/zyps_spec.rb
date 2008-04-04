@@ -87,6 +87,21 @@ describe Environment do
 	
 	it "should remove objects that throw exceptions on update"
 	
+	it "should have no area of interest by default"
+	
+	it "should update all game objects if no area of interest is defined"
+	
+	it "should not move an object outside its area of interest"
+	it "should move an object inside its area of interest"
+	it "should not have other objects act on an object outside its area of interest"
+	it "should have other objects act on an object inside its area of interest"
+	it "should not have environmental factors act on an object outside its area of interest"
+	it "should have environmental factors act on an object inside its area of interest"
+	it "should not allow an object outside its area of interest to act on others"
+	it "should allow an object inside its area of interest to act on others"
+	
+	it "should update multiple areas of interest"
+	
 end
 
 
@@ -135,5 +150,28 @@ describe Behavior do
 		@action.should_receive(:do).with(@actor, [@target])
 		@behavior.perform(@actor, [@target])
 	end
+
+end
+
+
+describe Creature do
+	
+	it "should have no area of interest by default"
+	it "should act on all objects if no area of interest is defined"
+	it "should not act on an object outside its area of interest"
+	it "should act on all objects inside its area of interest"
+	it "should allow multiple areas of interest"
+	
+end
+
+
+describe AreaOfInterest do
+
+	it "should report all GameObjects whose Locations intersect its Shape"
+	it "should filter out all GameObjects whose Locations do not intersect its Shape"
+	it "should have a default evaluation frequency of 1"
+	it "should always report objects if its evaluation frequency is 1"
+	it "should report objects every other update if its evaluation frequency is 2"
+	it "should report objects every three updates if its evaluation frequency is 3"
 
 end
