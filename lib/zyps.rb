@@ -535,12 +535,12 @@ class Behavior
 	def action_count; @actions.length; end
 	
 	
-	#Add an Condition to this behavior.
+	#Add a Condition to this behavior.
 	def add_condition(condition)
 		condition.behavior = self
 		@conditions << condition
 	end
-	#Remove an Condition from this behavior.
+	#Remove a Condition from this behavior.
 	def remove_condition(condition)
 		condition.behavior = nil
 		@conditions.delete(condition)
