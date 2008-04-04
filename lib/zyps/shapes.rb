@@ -24,11 +24,57 @@ module Zyps
 
 #Base class of shapes in Zyps.
 class Shape
+
+	#A Location object for the Shape.
+	attr_accessor :location
+	#A Color object for the Shape.
+	attr_accessor :color
+
+	#Takes a hash with the following keys and defaults:
+	def initialize(options = {})
+		options = {
+			:location => Location.new,
+			:color => Color.new
+		}.merge(options)
+		self.location = options[:location]
+		self.color = options[:color]
+	end
+	
 end
 
 
 #A rectanglular shape.
 class Rectangle < Shape
+
+	#The shape's width.
+	attr_accessor :width
+	#The shape's height.
+	attr_accessor :height
+	
+	#Takes a hash with the following keys and defaults, in addition to those for Shape:
+	#	:width => 1,
+	#	:height => 1
+	def initialize(options = {})
+		options = {
+			:width => 1,
+			:height => 1
+		}.merge(options)
+		super
+		self.width = options[:width]
+		self.height = options[:height]
+	end
+	
+	#Renders self to given Canvas.
+	def draw(canvas)
+		canvas.draw_rectangle(
+			:color => self.color,
+			:x => self.location.x,
+			:y => self.location.y,
+			:width => self.width,
+			:height => self.height
+		)
+	end
+
 end
 
 

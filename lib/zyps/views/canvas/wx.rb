@@ -17,6 +17,7 @@
 
 
 require 'wx'
+require 'zyps/views/canvas'
 
 
 module Zyps
@@ -24,28 +25,19 @@ module Zyps
 
 #Called by View objects for use in wxRuby applications.
 #Assign an instance to a View, and the drawing_area will be updated whenever the View is.
-class WxCanvas
+class WxCanvas < Canvas
 
 
 	#A Wx::Bitmap that will be painted on.
 	attr_reader :buffer
-	#Dimensions of the drawing area.
-	#Control should normally be left to the owner View object.
-	attr_reader :width, :height
-
-
-	def initialize
 	
-		#Will be resized later.
-		@width, @height = 1, 1
+	def initialize
 
-		#Set to correct size.
+		super
+
+		#Set buffer to match current width and height.
 		resize
-		
-		#Arrays of shapes that will be painted when render() is called.
-		@rectangle_queue = []
-		@line_queue = []
-		
+	
 		#Hash of Wx::Pens used to draw in various colors and widths.
 		@pens = Hash.new {|h, k| h[k] = Hash.new}
 		#Hash of Wx::Brushes for various colors.
@@ -63,36 +55,6 @@ class WxCanvas
 		resize
 	end
 	
-	
-	#Takes a hash with these keys and defaults:
-	#	:color => nil
-	#	:border_width => 1
-	#	:filled => true
-	#	:x => nil
-	#	:y => nil
-	#	:width => nil
-	#	:height => nil
-	def draw_rectangle(options = {})
-		options = {
-			:filled => true,
-			:border_width => 1
-		}.merge(options)
-		@rectangle_queue << options
-	end
-
-	
-	
-	#Takes a hash with these keys and defaults:
-	#	:color => nil
-	#	:width => nil
-	#	:x1 => nil
-	#	:y1 => nil
-	#	:x2 => nil
-	#	:y2 => nil
-	def draw_line(options = {})
-		@line_queue << options
-	end
-		
 	
 	#Draw all objects to the drawing area.
 	def render

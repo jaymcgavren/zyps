@@ -18,6 +18,7 @@
 
 require 'zyps'
 require 'zyps/shapes'
+require 'zyps/views/canvas'
 
 
 include Zyps
@@ -30,16 +31,16 @@ describe Rectangle do
 	end
 
 	it "should have a default Location" do
-		@shape.location.should equal(Location.new(0, 0))
+		@shape.location.should == Location.new(0, 0)
 	end
 	
 	it "should have a default size" do
-		@shape.width.should equal(1)
-		@shape.height.should equal(1)
+		@shape.width.should == 1
+		@shape.height.should == 1
 	end
 	
 	it "should have a default Color" do
-		@shape.color.should equal(Color.new)
+		@shape.color.should == Color.new
 	end
 	
 	it "should draw itself to Canvases" do
@@ -51,7 +52,7 @@ describe Rectangle do
 			:width => 1,
 			:height => 1
 		)
-		shape.draw(canvas)
+		@shape.draw(canvas)
 	end
 	
 	it "should collide with Locations inside it" do
