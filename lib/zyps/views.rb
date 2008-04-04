@@ -54,7 +54,7 @@ class View
 			:width => 600,
 			:height => 400,
 			:scale => 1,
-			:origin => Location.new(0.0),
+			:origin => Location.new(0, 0),
 			:erase_flag => true,
 			:background_color => Color.black
 		}.merge(options)
