@@ -128,5 +128,12 @@ describe Behavior do
 		@action.should_not_receive(:stop)
 		@behavior.perform(@actor, [@target])
 	end
+	
+	it "should call all Actions when there are no Conditions" do
+		@behavior.remove_condition(@condition)
+		@action.should_receive(:start).with(@actor, [@target])
+		@action.should_receive(:do).with(@actor, [@target])
+		@behavior.perform(@actor, [@target])
+	end
 
 end
