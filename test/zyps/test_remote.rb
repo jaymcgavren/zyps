@@ -147,7 +147,7 @@ class TestRemote < Test::Unit::TestCase
 		@client.connect
 		client_environment_2 = Environment.new
 		client_2 = EnvironmentClient.new(
-			Environment.new
+			Environment.new,
 			:protocol => Protocol::UDP,
 			:port => 8989
 		)
@@ -169,7 +169,7 @@ class TestRemote < Test::Unit::TestCase
 		@server_environment.interact
 		client_environment_2 = Environment.new
 		client_2 = EnvironmentClient.new(
-			Environment.new
+			Environment.new,
 			:protocol => Protocol::UDP,
 			:port => 8989
 		)
