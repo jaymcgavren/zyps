@@ -78,4 +78,14 @@ class Rectangle < Shape
 end
 
 
+#A circular shape.
+class Circle < Shape
+end
+
+
+#Acts like a circle, but has a segmented, intangible tail.
+class Zyp < Circle
+end
+
+
 end #module Zyps
