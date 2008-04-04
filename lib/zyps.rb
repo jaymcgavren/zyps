@@ -296,14 +296,8 @@ class GameObject
 		].join(" ")
 	end
 	
-	#True if color, size, name, and tags are the same.
-	def ==(other)
-		return false if @color != other.color
-		return false if @size != other.size
-		return false if @name != other.name
-		return false if @tags != other.tags
-		true
-	end
+	#True if identifier is the same.
+	def ==(other); self.identifier == other.identifier; end
 	
 	private
 	
@@ -376,13 +370,6 @@ class Creature < GameObject
 			super
 		end
 		self
-	end
-	
-	#In addition to criteria for GameObjects, true if all behaviors are the same.
-	def ==(other)
-		return false unless super
-		return false if @behaviors != other.behaviors.to_a
-		true
 	end
 	
 	def to_s
