@@ -37,6 +37,8 @@ describe View do
 	it "erases between frames by default"
 	it "has a black background by default"
 	
+	it "clears the canvas before an update"
+	
 	it "corrects for scale when drawing rectangles to a Canvas" do
 		@view.scale = 0.5
 		@view.canvas = Canvas.new
@@ -44,19 +46,61 @@ describe View do
 			:x => 0.5,
 			:y => 1,
 			:width => 2,
-			:height => 1
+			:height => 1,
+			:color => Color.white,
+			:border_width => 0.5,
+			:filled => true
 		)
 		@view.draw_rectangle(
-			:x => 1,
-			:y => 2,
+			:location => Location.new(1, 2),
 			:width => 4,
-			:height => 2
+			:height => 2,
+			:color => Color.white,
+			:border_width => 1
 		)
 	end
 	
-	it "corrects for origin when drawing rectangles to a Canvas"
+	it "corrects for origin when drawing rectangles to a Canvas" do
+		@view.origin = Location.new(-2, -3)
+		@view.canvas = Canvas.new
+		@view.canvas.should_receive(:draw_rectangle).with(
+			:x => 5,
+			:y => 8,
+			:width => 1,
+			:height => 3,
+			:color => Color.blue,
+			:border_width => 2,
+			:filled => false
+		)
+		@view.draw_rectangle(
+			:location => Location.new(3, 5),
+			:width => 1,
+			:height => 3,
+			:color => Color.blue,
+			:border_width => 2,
+			:filled => false
+		)
+	end
 	
-	it "corrects for scale when drawing lines to a Canvas"
+	it "corrects for scale when drawing lines to a Canvas" do
+		@view.scale = 2
+		@view.canvas = Canvas.new
+		@view.canvas.should_receive(:draw_line).with(
+			:x1 => 2,
+			:y1 => 4,
+			:x2 => 6,
+			:y2 => 8,
+			:width => 10,
+			:color => Color.orange
+		)
+		@view.draw_line(
+			:location_1 => Location.new(1, 2),
+			:location_2 => Location.new(3, 4),
+			:width => 5,
+			:color => Color.orange
+		)
+	end
+	
 	it "corrects for origin when drawing lines to a Canvas"
 	
 end

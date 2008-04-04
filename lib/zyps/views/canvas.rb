@@ -44,17 +44,7 @@ class Canvas
 		
 	end
 
-	def width= (pixels) #:nodoc:
-		@width = pixels
-		resize
-	end
-	
-	def height= (pixels) #:nodoc:
-		@height = pixels
-		resize
-	end
-	
-	
+
 	#Takes a hash with these keys and defaults:
 	#	:color => nil
 	#	:border_width => 1
@@ -70,7 +60,6 @@ class Canvas
 		}.merge(options)
 		@rectangle_queue << options
 	end
-
 	
 	
 	#Takes a hash with these keys and defaults:
