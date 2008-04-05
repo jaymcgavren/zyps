@@ -101,6 +101,23 @@ describe View do
 		)
 	end
 	
-	it "corrects for origin when drawing lines to a Canvas"
+	it "corrects for origin when drawing lines to a Canvas" do
+		@view.origin = Location.new(10, 10)
+		@view.canvas = Canvas.new
+		@view.canvas.should_receive(:draw_line).with(
+			:x1 => -5,
+			:y1 => -4,
+			:x2 => -7,
+			:y2 => -6,
+			:width => 2,
+			:color => Color.green
+		)
+		@view.draw_line(
+			:location_1 => Location.new(5, 6),
+			:location_2 => Location.new(3, 4),
+			:width => 2,
+			:color => Color.green
+		)
+	end
 	
 end
