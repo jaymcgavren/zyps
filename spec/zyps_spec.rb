@@ -154,6 +154,19 @@ describe Behavior do
 end
 
 
+describe GameObject do
+
+	before(:each) do
+		@object = GameObject.new
+	end
+
+	it "should have Zyp as a default shape" do
+		@object.shape.should be_an_instance_of(Zyp)
+	end
+
+end
+
+
 describe Creature do
 	
 	it "should have no area of interest by default"
