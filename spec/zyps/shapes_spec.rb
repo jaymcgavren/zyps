@@ -78,20 +78,41 @@ describe Zyp do
 
 	it "draws itself to Views when it has 1 segment" do
 		view = View.new
-		@shape.size = 10
+		@shape.size = 100
 		@shape.color = Color.white
 		@shape.location = Location.new(1, 1)
 		@shape.segment_ends << Location.new(0, 0)
 		view.should_receive(:draw_line).with(
 			:location_1 => @shape.location,
 			:location_2 => @shape.segment_ends[0],
-			:width => 2.3664,
+			:width => 23.664,
 			:color => Color.white
 		)
 		@shape.draw(view)
 	end
 	
-	it "draws itself to Views when it has 2 segments"
+	it "draws itself to Views when it has 2 segments" do
+		view = View.new
+		@shape.size = 100
+		@shape.color = Color.white
+		@shape.location = Location.new(10, 10)
+		@shape.segment_ends << Location.new(15, 12)
+		@shape.segment_ends << Location.new(16, 14)
+		view.should_receive(:draw_line).with(
+			:location_1 => @shape.location,
+			:location_2 => @shape.segment_ends[0],
+			:width => 23.664,
+			:color => Color.white
+		)
+		view.should_receive(:draw_line).with(
+			:location_1 => @shape.segment_ends[0],
+			:location_2 => @shape.segment_ends[1],
+			:width => 11.832,
+			:color => Color.new(0.5, 0.5, 0.5)
+		)
+		@shape.draw(view)
+	end
+	
 	it "draws itself to Views when it has 3 segments"
 	it "draws itself to Views when it has 100 segments"
 	
