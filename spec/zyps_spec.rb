@@ -160,8 +160,8 @@ describe GameObject do
 		@object = GameObject.new
 	end
 
-	it "should have Zyp as a default shape" do
-		@object.shape.should be_an_instance_of(Zyp)
+	it "has no default shape" do
+		@object.shape.should be_nil
 	end
 
 end

@@ -30,10 +30,6 @@ describe Rectangle do
 		@shape = Rectangle.new
 	end
 
-	it "has a default Location" do
-		@shape.location.should == Location.new(0, 0)
-	end
-	
 	it "has a default size" do
 		@shape.width.should == 1
 		@shape.height.should == 1
@@ -52,15 +48,30 @@ describe Rectangle do
 			:width => 1,
 			:height => 1
 		)
-		@shape.draw(view)
+		@shape.draw(view, Location.new(0, 0))
 	end
 	
 	it "collides with Locations inside it" do
-		@shape.should satisfy {|shape| shape.collided?(Location.new(0.5, 0.5), Location.new(0.5, 0.5))}
+		@shape.should satisfy do |shape|
+			shape.collided?(
+				Location.new(0, 0), #This shape's current Location.
+				Location.new(0, 0), #This shape's prior Location.
+				Location.new(0.5, 0.5), #The other shape's current Location.
+				Location.new(0.5, 0.5) #The other shape's prior Location.
+			)
+		end
 	end
 	
 	it "collides with Locations that have passed through it since the prior frame" do
-		@shape.should satisfy {|shape| shape.collided?(Location.new(-1, 0.5), Location.new(2, 0.5))}
+		@shape.should satisfy {|shape| shape.collided?(Location.new(-1, 0.5), Location.new(2, 0.5), Location.new(0, 0))}
+		@shape.should satisfy do |shape|
+			shape.collided?(
+				Location.new(0, 0), #This shape's current Location.
+				Location.new(0, 0), #This shape's prior Location.
+				Location.new(2, 0.5), #The other shape's current Location.
+				Location.new(-1, 0.5) #The other shape's prior Location.
+			)
+		end
 	end
 
 end
@@ -80,25 +91,24 @@ describe Zyp do
 		view = View.new
 		@shape.size = 100
 		@shape.color = Color.white
-		@shape.location = Location.new(1, 1)
+		@shape.add_segment_end Location.new(0, 0)
 		view.should_receive(:draw_line).with(
-			:location_1 => @shape.location,
-			:location_2 => Location.new(0,0), #Location initialized to 0, 0.
+			:location_1 => Location.new(1, 1),
+			:location_2 => Location.new(0, 0),
 			:width => 23.664,
 			:color => Color.white
 		)
-		@shape.draw(view)
+		@shape.draw(view, Location.new(1, 1))
 	end
 	
 	it "draws itself to Views when it has 2 segments" do
 		view = View.new
 		@shape.size = 100
 		@shape.color = Color.white
-		@shape.location = Location.new(10, 10)
-		@shape.segment_ends << Location.new(15, 12)
-		@shape.segment_ends << Location.new(16, 14)
+		@shape.add_segment_end Location.new(15, 12)
+		@shape.add_segment_end Location.new(16, 14)
 		view.should_receive(:draw_line).with(
-			:location_1 => @shape.location,
+			:location_1 => Location.new(10, 10),
 			:location_2 => @shape.segment_ends[0],
 			:width => 23.664,
 			:color => Color.white
@@ -109,7 +119,7 @@ describe Zyp do
 			:width => 11.832,
 			:color => Color.new(0.5, 0.5, 0.5)
 		)
-		@shape.draw(view)
+		@shape.draw(view, Location.new(10, 10))
 	end
 	
 	it "draws itself to Views when it has 3 segments"
@@ -117,12 +127,12 @@ describe Zyp do
 	
 	it "drops prior segment end locations when over its maximum segment count" do
 		@shape.max_segment_count = 2
-		@shape.location = Location.new(1, 1)
-		@shape.location = Location.new(2, 2)
-		@shape.location = Location.new(3, 3) #Over the limit because our starting location was 0, 0.
+		@shape.add_segment_end Location.new(1, 1)
+		@shape.add_segment_end Location.new(2, 2)
+		@shape.add_segment_end Location.new(3, 3) #Over the limit.
 		view = View.new
 		view.should_receive(:draw_line).twice
-		@shape.draw(view)
+		@shape.draw(view, Location(0, 0))
 	end
 	
 	it "collides with Locations inside it"
