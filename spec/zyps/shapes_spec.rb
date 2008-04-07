@@ -81,10 +81,9 @@ describe Zyp do
 		@shape.size = 100
 		@shape.color = Color.white
 		@shape.location = Location.new(1, 1)
-		@shape.segment_ends << Location.new(0, 0)
 		view.should_receive(:draw_line).with(
 			:location_1 => @shape.location,
-			:location_2 => @shape.segment_ends[0],
+			:location_2 => Location.new(0,0), #Location initialized to 0, 0.
 			:width => 23.664,
 			:color => Color.white
 		)
@@ -116,7 +115,15 @@ describe Zyp do
 	it "draws itself to Views when it has 3 segments"
 	it "draws itself to Views when it has 100 segments"
 	
-	it "drops prior segment end locations when over its maximum segment count"
+	it "drops prior segment end locations when over its maximum segment count" do
+		@shape.max_segment_count = 2
+		@shape.location = Location.new(1, 1)
+		@shape.location = Location.new(2, 2)
+		@shape.location = Location.new(3, 3) #Over the limit because our starting location was 0, 0.
+		view = View.new
+		view.should_receive(:draw_line).twice
+		@shape.draw(view)
+	end
 	
 	it "collides with Locations inside it"
 	
