@@ -26,9 +26,43 @@ include Zyps
 describe EnvironmentServer do
 
 	before(:each) do
+		@server_environment = Environment.new
+		@server = EnvironmentServer.new(@environment)
+		@client_environment = Environment.new
+		@client = EnvironmentClient.new(@environment, :host => 'localhost', :port => 8989)
 	end
 	
-	it "sends objects that were already on server when a new client connects"
+	it "allows a client to join" do
+		@server.start
+		@server.should_receive(:receive).with(Request::JOIN)
+		@client.start
+		@client.connect
+	end
+	
+	it "acknowledges when a client has joined" do
+		@server.start
+		@client.start
+		@client.connect
+		@client.should_receive(:receive).with(Acknowledge::JOIN)
+	end
+	
+	it "sends denial to rejected clients" do
+		@server.start
+		@server.ban("localhost")
+		@client.start
+		@client.connect
+		@client.should_receive(:receive).with(Deny::JOIN)
+	end
+	
+	it "sends objects that were already on server when a new client connects" do
+		server_object = GameObject.new
+		@server_environment << server_object
+		@server.start
+		@client_environment.object_count.should == 0
+		@client.start
+		@client_environment.object_count.should == 1
+	end
+	
 	it "sends new objects as they're added to server"
 	it "has authority on object movement by default"
 	it "does not have authority on object movement when assigned to client"
