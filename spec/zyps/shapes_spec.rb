@@ -138,5 +138,7 @@ describe Zyp do
 	it "collides with Locations inside it"
 	
 	it "collides with Locations that have passed through it since the prior frame"
+	
+	it "should report the normal from its surface for a given point of impact"
 
 end

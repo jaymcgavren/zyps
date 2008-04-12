@@ -163,6 +163,8 @@ describe GameObject do
 	it "has no default shape" do
 		@object.shape.should be_nil
 	end
+	
+	it "should pass calls to collided method on to its Shape object"
 
 end
 
