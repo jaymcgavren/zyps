@@ -16,8 +16,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+require 'logger'
 require 'zyps'
 require 'zyps/serializer'
+
+
+LOG_HANDLE = STDOUT
+LOG_LEVEL = Logger::DEBUG
 
 
 module Zyps
@@ -55,12 +60,13 @@ module EnvironmentTransmitter
 	NAME = 2
 	ADDRESS = 3
 
+
 	#Listens for connections on the given port.
 	def start
 		case @options[:protocol]
 		when Protocol::UDP
 			@socket = UDPSocket.new
-			@socket.bind(nil, @options[:port])
+			@socket.bind(nil, @options[:listen_port])
 		else
 			raise "Unknown protocol #{@options[:protocol]}."
 		end
@@ -93,13 +99,17 @@ class EnvironmentServer
 	
 	#Takes the environment to serve, and the following options:
 	#	:protocol => Zyps::Protocol::UDP
-	#	:port => 9977
+	#	:listen_port => 9977
 	def initialize(environment, options = {})
+		@log = Logger.new(LOG_HANDLE)
+		@log.level = LOG_LEVEL
+		@log.progname = self
 		@environment = environment
 		@options = {
 			:protocol => Protocol::UDP,
-			:port => 9977
+			:listen_port => 9977
 		}.merge(options)
+		@log.debug "Hosting Environment #{@environment.object_id} with #{@options.inspect}."
 	end
 	
 	
@@ -126,6 +136,7 @@ class EnvironmentServer
 			end
 		end
 	end
+
 	
 end
 
@@ -138,13 +149,18 @@ class EnvironmentClient
 	#Takes a hash with the following keys and defaults:
 	#	:protocol => Protocol::UDP,
 	#	:host => nil,
-	#	:port => 9977
+	#	:host_port => 9977,
+	#	:listen_port => nil,
 	def initialize(environment, options = {})
+		@log = Logger.new(LOG_HANDLE)
+		@log.level = LOG_LEVEL
+		@log.progname = self
 		@environment = environment
 		@options = {
 			:protocol => Protocol::UDP,
 			:host => nil,
-			:port => 9977
+			:host_port => 9977,
+			:listen_port => nil
 		}.merge(options)
 	end
 	
@@ -152,7 +168,8 @@ class EnvironmentClient
 	def connect
 		case @options[:protocol]
 		when Protocol::UDP
-			@socket.connect(@options[:host], @options[:port])
+			@log.debug "Joining #{@options[:host]} on #{@options[:host_port]}."
+			@socket.connect(@options[:host], @options[:host_port])
 			@socket.send(Request::JOIN.to_s, 0)
 		else
 			raise "Unknown protocol #{@options[:protocol]}."
