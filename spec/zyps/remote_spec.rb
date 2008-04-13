@@ -29,7 +29,12 @@ describe EnvironmentServer do
 		@server_environment = Environment.new
 		@server = EnvironmentServer.new(@environment)
 		@client_environment = Environment.new
-		@client = EnvironmentClient.new(@environment, :host => 'localhost')
+		@client = EnvironmentClient.new(@environment, :host => 'localhost', :listen_port => 8989)
+	end
+	
+	after(:each) do
+		@server.stop
+		@client.stop
 	end
 	
 	it "allows a client to join" do

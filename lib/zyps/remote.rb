@@ -17,6 +17,7 @@
 
 
 require 'logger'
+require 'socket'
 require 'zyps'
 require 'zyps/serializer'
 
@@ -65,7 +66,8 @@ module EnvironmentTransmitter
 	def start
 		case @options[:protocol]
 		when Protocol::UDP
-			@socket = UDPSocket.new
+			@log.debug "Binding port #{@options[:listen_port]}."
+			@socket = UDPSocket.open
 			@socket.bind(nil, @options[:listen_port])
 		else
 			raise "Unknown protocol #{@options[:protocol]}."
@@ -75,6 +77,7 @@ module EnvironmentTransmitter
 		Thread.new do
 			while @running
 				length, sender_info = @socket.recvfrom(LENGTH_BYTE_COUNT)
+				@log.debug "Receiving #{length} bytes from #{sender_info}."
 				data, sender_info = @socket.recvfrom(length)
 				receive(data, sender_info)
 			end
@@ -84,10 +87,10 @@ module EnvironmentTransmitter
 	
 	#Closes connection port.
 	def stop
+		@log.debug "Halting listener thread."
 		#Breaks out of listener loop.
 		@running = false
-	end
-	
+	end	
 	
 end
 
@@ -163,6 +166,7 @@ class EnvironmentClient
 			:listen_port => nil
 		}.merge(options)
 	end
+
 	
 	#Connect to specified server.
 	def connect
