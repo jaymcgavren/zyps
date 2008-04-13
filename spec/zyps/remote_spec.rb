@@ -42,6 +42,7 @@ describe EnvironmentServer do
 		@server.should_receive(:receive).with(Request::JOIN)
 		@client.start
 		@client.connect
+		sleep 1
 	end
 	
 	it "acknowledges when a client has joined" do

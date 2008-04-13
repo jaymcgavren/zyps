@@ -29,11 +29,6 @@ LOG_LEVEL = Logger::DEBUG
 module Zyps
 
 
-module Protocol
-	UDP = 1
-end
-
-
 module Request
 	REQUEST_OFFSET = 0
 	JOIN = REQUEST_OFFSET + 1
@@ -53,7 +48,9 @@ end
 
 module EnvironmentTransmitter
 
-	MAX_PACKET_SIZE = 10240
+
+	MAX_PACKET_SIZE = 65535
+	LENGTH_BYTE_COUNT = 2
 	
 	#sender_info array indices
 	DOMAIN = 0
@@ -64,22 +61,23 @@ module EnvironmentTransmitter
 
 	#Listens for connections on the given port.
 	def start
-		case @options[:protocol]
-		when Protocol::UDP
-			@log.debug "Binding port #{@options[:listen_port]}."
-			@socket = UDPSocket.open
-			@socket.bind(nil, @options[:listen_port])
-		else
-			raise "Unknown protocol #{@options[:protocol]}."
-		end
+		@log.debug "Binding port #{@options[:listen_port]}."
+		@socket = UDPSocket.open
+		@socket.bind(nil, @options[:listen_port])
 		#Listen for incoming data until stop is called.
 		@running = true
 		Thread.new do
-			while @running
-				length, sender_info = @socket.recvfrom(LENGTH_BYTE_COUNT)
-				@log.debug "Receiving #{length} bytes from #{sender_info}."
-				data, sender_info = @socket.recvfrom(length)
-				receive(data, sender_info)
+			begin
+				while @running
+					@log.debug "Waiting for packet."
+					length, sender_info = @socket.recvfrom(LENGTH_BYTE_COUNT)
+					@log.debug "Receiving #{length} bytes from #{sender_info.join('/')}."
+					data, sender_info = @socket.recvfrom(length.to_i)
+					@log.debug "Got #{data}."
+					receive(data, sender_info)
+				end
+			rescue Exception => exception
+				puts exception, exception.message, exception.backtrace.join("\n")
 			end
 		end
 	end
@@ -90,7 +88,17 @@ module EnvironmentTransmitter
 		@log.debug "Halting listener thread."
 		#Breaks out of listener loop.
 		@running = false
-	end	
+	end
+	
+	
+	#Sends data.
+	def send(data, host, port)
+		string = data.to_s
+		raise "#{string.length} is over maximum packet size of #{MAX_PACKET_SIZE}." if string.length > MAX_PACKET_SIZE
+		@log.debug "Sending '#{string}' to #{host} on #{port}."
+		UDPSocket.open.send(string, 0, host, port)
+	end
+	
 	
 end
 
@@ -101,7 +109,6 @@ class EnvironmentServer
 	include EnvironmentTransmitter
 	
 	#Takes the environment to serve, and the following options:
-	#	:protocol => Zyps::Protocol::UDP
 	#	:listen_port => 9977
 	def initialize(environment, options = {})
 		@log = Logger.new(LOG_HANDLE)
@@ -109,7 +116,6 @@ class EnvironmentServer
 		@log.progname = self
 		@environment = environment
 		@options = {
-			:protocol => Protocol::UDP,
 			:listen_port => 9977
 		}.merge(options)
 		@log.debug "Hosting Environment #{@environment.object_id} with #{@options.inspect}."
@@ -123,13 +129,13 @@ class EnvironmentServer
 			Serializer.instance.deserialize(data).each do |object|
 				case object
 				when Request::ENVIRONMENT
-					send(@environment.objects.to_a + @environment.environmental_factors.to_a, sender_info)
+					send(@environment.objects.to_a + @environment.environmental_factors.to_a, sender_info[NAME], sender_info[PORT])
 				when GameObject, EnvironmentalFactor
 					@environment << object
 				when Exception
 					raise object
 				else
-					send(Exception.new("Could not process #{object}."), sender_info)
+					send(Exception.new("Could not process #{object}."), sender_info[NAME], sender_info[PORT])
 				end
 			end
 		#If sender wants to join, process request.
@@ -150,7 +156,6 @@ class EnvironmentClient
 	include EnvironmentTransmitter
 	
 	#Takes a hash with the following keys and defaults:
-	#	:protocol => Protocol::UDP,
 	#	:host => nil,
 	#	:host_port => 9977,
 	#	:listen_port => nil,
@@ -160,7 +165,6 @@ class EnvironmentClient
 		@log.progname = self
 		@environment = environment
 		@options = {
-			:protocol => Protocol::UDP,
 			:host => nil,
 			:host_port => 9977,
 			:listen_port => nil
@@ -170,14 +174,8 @@ class EnvironmentClient
 	
 	#Connect to specified server.
 	def connect
-		case @options[:protocol]
-		when Protocol::UDP
-			@log.debug "Joining #{@options[:host]} on #{@options[:host_port]}."
-			@socket.connect(@options[:host], @options[:host_port])
-			@socket.send(Request::JOIN.to_s, 0)
-		else
-			raise "Unknown protocol #{@options[:protocol]}."
-		end
+		@log.debug "Sending join request to #{@options[:host]} on #{@options[:host_port]}."
+		send(Request::JOIN, @options[:host], @options[:host_port])
 	end
 	
 end
