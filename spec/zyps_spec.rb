@@ -16,11 +16,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-require 'spec'
-require 'zyps'
-require 'zyps/actions'
-require 'zyps/conditions'
-require 'zyps/environmental_factors'
+gems_loaded = false
+begin
+	require 'spec'
+	require 'zyps'
+	require 'zyps/actions'
+	require 'zyps/conditions'
+	require 'zyps/environmental_factors'
+rescue LoadError
+	if gems_loaded == false
+		require 'rubygems'
+		gems_loaded = true
+		retry
+	else
+		raise
+	end
+end
 
 
 include Zyps

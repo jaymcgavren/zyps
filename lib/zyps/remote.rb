@@ -39,26 +39,17 @@ module Acknowledge
 	JOIN = ACKNOWLEDGE_OFFSET + 1
 	ENVIRONMENT = ACKNOWLEDGE_OFFSET + 2
 end
-module Deny
-	DENY_OFFSET = 32
-	JOIN = DENY_OFFSET + 1
-	ENVIRONMENT = DENY_OFFSET + 2
-end
 
 
 module EnvironmentTransmitter
 
 
+	#The maximum allowed transmission size.
 	MAX_PACKET_SIZE = 65535
-	LENGTH_BYTE_COUNT = 2
+	#Number of seconds the listener thread should take to stop.
+	LISTENER_THREAD_STOP_DURATION = 1
+
 	
-	#sender_info array indices
-	DOMAIN = 0
-	PORT = 1
-	NAME = 2
-	ADDRESS = 3
-
-
 	#Listens for connections on the given port.
 	def start
 		@log.debug "Binding port #{@options[:listen_port]}."
@@ -70,15 +61,17 @@ module EnvironmentTransmitter
 			begin
 				while @running
 					@log.debug "Waiting for packet."
-					length, sender_info = @socket.recvfrom(LENGTH_BYTE_COUNT)
-					@log.debug "Receiving #{length} bytes from #{sender_info.join('/')}."
-					data, sender_info = @socket.recvfrom(length.to_i)
-					@log.debug "Got #{data}."
-					receive(data, sender_info)
+					data, sender_info = @socket.recvfrom(MAX_PACKET_SIZE)
+					@log.debug "Got #{data} from #{sender_info.join('/')}."
+					receive(data, sender_info[2], sender_info[1])
 				end
+			rescue IOError => exception
+				raise exception unless exception.message == "stream closed"
 			rescue Exception => exception
-				puts exception, exception.message, exception.backtrace.join("\n")
+				@log.warn exception
+				raise exception
 			end
+			@log.debug "Exiting listener thread."
 		end
 	end
 	
@@ -88,16 +81,55 @@ module EnvironmentTransmitter
 		@log.debug "Halting listener thread."
 		#Breaks out of listener loop.
 		@running = false
+		@log.debug "Closing @{socket}."
+		@socket.close
 	end
+
 	
+	private
+		
+		
+		#Parses incoming data and determines what to do with it.
+		def receive(data, sender, port)
+			begin
+				#Reject data unless sender has already joined server (or wants to join).
+				if sender_allowed?(sender)
+					Serializer.instance.deserialize(data).each do |object|
+						case object
+						when Request::ENVIRONMENT
+							send(@environment.objects.to_a + @environment.environmental_factors.to_a, sender, port)
+						when GameObject, EnvironmentalFactor
+							@environment << object
+						when Exception
+							@log.warn object
+						else
+							raise "Could not process #{object}."
+						end
+					end
+				#If sender wants to join, process request.
+				else
+					@log.debug "#{sender} not currently allowed."
+					if data.to_i == Request::JOIN
+						process_join_request(sender, port)
+					else
+						raise "#{sender} has not joined game but is transmitting data."
+					end
+				end
+			#Send exceptions back to sender.
+			rescue Exception => exception
+				@log.warn exception
+				send([exception], sender, port)
+			end
+		end
+
 	
-	#Sends data.
-	def send(data, host, port)
-		string = data.to_s
-		raise "#{string.length} is over maximum packet size of #{MAX_PACKET_SIZE}." if string.length > MAX_PACKET_SIZE
-		@log.debug "Sending '#{string}' to #{host} on #{port}."
-		UDPSocket.open.send(string, 0, host, port)
-	end
+		#Sends data.
+		def send(data, host, port)
+			string = data.to_s
+			raise "#{string.length} is over maximum packet size of #{MAX_PACKET_SIZE}." if string.length > MAX_PACKET_SIZE
+			@log.debug "Sending '#{string}' to #{host} on #{port}."
+			UDPSocket.open.send(string, 0, host, port)
+		end
 	
 	
 end
@@ -119,34 +151,23 @@ class EnvironmentServer
 			:listen_port => 9977
 		}.merge(options)
 		@log.debug "Hosting Environment #{@environment.object_id} with #{@options.inspect}."
+		#Hash with client host names as keys, ports as values.
+		@clients = {}
 	end
 	
+	#True if address is on client list.
+	def sender_allowed?(hostname)
+		@clients.include?(hostname)
+	end
 	
-	#Parses incoming data and determines what to do with it.
-	def receive(data, sender_info)
-		#Reject data unless sender has already joined server (or wants to join).
-		if @clients.include?(sender_info[ADDRESS])
-			Serializer.instance.deserialize(data).each do |object|
-				case object
-				when Request::ENVIRONMENT
-					send(@environment.objects.to_a + @environment.environmental_factors.to_a, sender_info[NAME], sender_info[PORT])
-				when GameObject, EnvironmentalFactor
-					@environment << object
-				when Exception
-					raise object
-				else
-					send(Exception.new("Could not process #{object}."), sender_info[NAME], sender_info[PORT])
-				end
-			end
-		#If sender wants to join, process request.
-		else
-			if data == Request::JOIN.to_s
-				add_client(sender_info)
-			end
-		end
+	#Add sender to client list and acknowledge.
+	def process_join_request(sender, port)
+		#TODO: Reject banned clients.
+		@log.debug "Adding #{sender} to client list with port #{port}."
+		@clients[sender] = port
+		send(Acknowledge::JOIN, sender, port)
 	end
 
-	
 end
 
 
@@ -178,6 +199,11 @@ class EnvironmentClient
 		send(Request::JOIN, @options[:host], @options[:host_port])
 	end
 	
+	#True if address matches host's.
+	def sender_allowed?(hostname)
+		hostname == @options[:host]
+	end
+
 end
 
 

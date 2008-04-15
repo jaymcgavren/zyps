@@ -16,9 +16,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-require 'zyps'
-require 'zyps/shapes'
-require 'zyps/views/canvas'
+gems_loaded = false
+begin
+	require 'spec'
+	require 'zyps'
+	require 'zyps/shapes'
+	require 'zyps/views/canvas'
+rescue LoadError
+	if gems_loaded == false
+		require 'rubygems'
+		gems_loaded = true
+		retry
+	else
+		raise
+	end
+end
 
 
 include Zyps

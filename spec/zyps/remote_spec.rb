@@ -16,8 +16,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-require 'spec'
-require 'zyps/remote'
+gems_loaded = false
+begin
+	require 'spec'
+	require 'zyps/remote'
+rescue LoadError
+	if gems_loaded == false
+		require 'rubygems'
+		gems_loaded = true
+		retry
+	else
+		raise
+	end
+end
 
 
 include Zyps
@@ -39,17 +50,16 @@ describe EnvironmentServer do
 	
 	it "allows a client to join" do
 		@server.start
-		@server.should_receive(:receive).with(Request::JOIN)
+		@server.should_receive(:receive).with(Request::JOIN.to_s, an_instance_of(String), an_instance_of(Integer))
 		@client.start
 		@client.connect
-		sleep 1
 	end
 	
 	it "acknowledges when a client has joined" do
 		@server.start
 		@client.start
+		@client.should_receive(:receive).with(Acknowledge::JOIN.to_s)
 		@client.connect
-		@client.should_receive(:receive).with(Acknowledge::JOIN)
 	end
 	
 	it "sends denial to rejected clients" do
