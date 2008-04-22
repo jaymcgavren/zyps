@@ -36,11 +36,13 @@ include Zyps
 
 describe EnvironmentServer do
 
+	CLIENT_LISTEN_PORT = 8989
+
 	before(:each) do
 		@server_environment = Environment.new
-		@server = EnvironmentServer.new(@environment)
+		@server = EnvironmentServer.new(@server_environment)
 		@client_environment = Environment.new
-		@client = EnvironmentClient.new(@environment, :host => 'localhost', :listen_port => 8989)
+		@client = EnvironmentClient.new(@client_environment, :host => 'localhost', :listen_port => CLIENT_LISTEN_PORT)
 	end
 	
 	after(:each) do
@@ -50,8 +52,11 @@ describe EnvironmentServer do
 	
 	it "allows a client to join" do
 		@server.open_socket
-		@server.should_receive(:receive).with(Request::JOIN.to_s, an_instance_of(String), an_instance_of(Integer))
 		@client.open_socket
+		@server.should_receive(:process_join_request).with(
+			an_instance_of(Request::Join),
+			an_instance_of(String)
+		)
 		@client.connect
 		@server.listen
 	end
@@ -59,26 +64,36 @@ describe EnvironmentServer do
 	it "acknowledges when a client has joined" do
 		@server.open_socket
 		@client.open_socket
-		@client.should_receive(:receive).with(Acknowledge::JOIN.to_s)
+		@client.should_receive(:process).with(
+			an_instance_of(Acknowledge::Join),
+			an_instance_of(String)
+		)
 		@client.connect
 		@server.listen
 		@client.listen
 	end
 	
-	it "sends denial to rejected clients" do
+	it "rejects banned clients" do
 		@server.open_socket
-		@server.ban("localhost")
 		@client.open_socket
+		@server.ban("localhost")
+		@server.should_receive(:receive).and_raise(BannedError)
 		@client.connect
-		@client.should_receive(:receive).with(Deny::JOIN)
+		@server.listen
 	end
 	
+	it "does not allow IP address if corresponding hostname is banned"
+	it "does not allow hostname if corresponding IP address is banned"
+	
 	it "sends objects that were already on server when a new client connects" do
+		@server.open_socket
+		@client.open_socket
 		server_object = GameObject.new
 		@server_environment << server_object
-		@server.open_socket
 		@client_environment.object_count.should == 0
-		@client.open_socket
+		@client.connect
+		@server.listen
+		@client.listen
 		@client_environment.object_count.should == 1
 	end
 	
