@@ -46,41 +46,27 @@ module EnvironmentTransmitter
 
 	#The maximum allowed transmission size.
 	MAX_PACKET_SIZE = 65535
-	#Number of seconds the listener thread should take to stop.
-	LISTENER_THREAD_STOP_DURATION = 1
 
 	
-	#Listens for connections on the given port.
-	def start
+	#Binds the given port.
+	def open_socket
 		@log.debug "Binding port #{@options[:listen_port]}."
 		@socket = UDPSocket.open
 		@socket.bind(nil, @options[:listen_port])
-		#Listen for incoming data until stop is called.
-		@running = true
-		Thread.new do
-			begin
-				while @running
-					@log.debug "Waiting for packet."
-					data, sender_info = @socket.recvfrom(MAX_PACKET_SIZE)
-					@log.debug "Got #{data} from #{sender_info.join('/')}."
-					receive(data, sender_info[2], sender_info[1])
-				end
-			rescue IOError => exception
-				raise exception unless exception.message == "stream closed"
-			rescue Exception => exception
-				@log.warn exception
-				raise exception
-			end
-			@log.debug "Exiting listener thread."
-		end
+	end
+	
+	
+	#Listen for an incoming packet, and process it.
+	def listen
+		@log.debug "Waiting for packet."
+		data, sender_info = @socket.recvfrom(MAX_PACKET_SIZE)
+		@log.debug "Got #{data} from #{sender_info.join('/')}."
+		receive(data, sender_info[2], sender_info[1])
 	end
 	
 	
 	#Closes connection port.
-	def stop
-		@log.debug "Halting listener thread."
-		#Breaks out of listener loop.
-		@running = false
+	def close_socket
 		@log.debug "Closing @{socket}."
 		@socket.close
 	end

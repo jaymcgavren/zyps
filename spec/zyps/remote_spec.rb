@@ -44,28 +44,31 @@ describe EnvironmentServer do
 	end
 	
 	after(:each) do
-		@server.stop
-		@client.stop
+		@server.close_socket
+		@client.close_socket
 	end
 	
 	it "allows a client to join" do
-		@server.start
+		@server.open_socket
 		@server.should_receive(:receive).with(Request::JOIN.to_s, an_instance_of(String), an_instance_of(Integer))
-		@client.start
+		@client.open_socket
 		@client.connect
+		@server.listen
 	end
 	
 	it "acknowledges when a client has joined" do
-		@server.start
-		@client.start
+		@server.open_socket
+		@client.open_socket
 		@client.should_receive(:receive).with(Acknowledge::JOIN.to_s)
 		@client.connect
+		@server.listen
+		@client.listen
 	end
 	
 	it "sends denial to rejected clients" do
-		@server.start
+		@server.open_socket
 		@server.ban("localhost")
-		@client.start
+		@client.open_socket
 		@client.connect
 		@client.should_receive(:receive).with(Deny::JOIN)
 	end
@@ -73,9 +76,9 @@ describe EnvironmentServer do
 	it "sends objects that were already on server when a new client connects" do
 		server_object = GameObject.new
 		@server_environment << server_object
-		@server.start
+		@server.open_socket
 		@client_environment.object_count.should == 0
-		@client.start
+		@client.open_socket
 		@client_environment.object_count.should == 1
 	end
 	
