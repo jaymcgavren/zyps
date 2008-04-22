@@ -46,7 +46,7 @@ include Zyps
 
 
 LOG_HANDLE = STDOUT
-LOG_LEVEL = Logger::WARN
+LOG_LEVEL = Logger::DEBUG
 
 
 #The Zyps GUI.
@@ -114,11 +114,7 @@ class Application < Wx::App
 		self.drawing_area = Wx::Window.new(@frame)
 		
 		@log.debug "Create a View for the Environment to update."
-		@view = TrailsView.new(
-			:width => @options[:width],
-			:height => @options[:height],
-			:canvas => WxCanvas.new
-		)
+		@view = TrailsView.new(:canvas => WxCanvas.new)
 		
 		@log.debug "Create menus."
 		self.menus = MenuSet.new(@frame)
@@ -161,9 +157,9 @@ class Application < Wx::App
 	#Update environment and view.
 	def on_timer
 		#Resize playfield if window has been resized.
-		if @view.height != @drawing_area.size.height || @view.width != @drawing_area.size.width
-			@view.height = @drawing_area.size.height
-			@view.width = @drawing_area.size.width
+		if @view.canvas.height != @drawing_area.size.height || @view.canvas.width != @drawing_area.size.width
+			@view.canvas.height = @drawing_area.size.height
+			@view.canvas.width = @drawing_area.size.width
 			@enclosure.top = @drawing_area.size.height
 			@enclosure.right = @drawing_area.size.width
 		end
@@ -238,8 +234,8 @@ class Application < Wx::App
 	def render(dc)
 		#Copy the buffer to the device context.
 		dc.draw_bitmap(@view.canvas.buffer, 0, 0, false)
-	end	
-		
+	end
+	
 	
 	#Let user choose an environment save file.
 	def on_open_menu(event)
@@ -887,5 +883,5 @@ rescue SystemExit
 	#No action.
 rescue Exception => exception
 	#Print error to STDERR and exit with an abnormal status.
-	abort "Error: " + exception.message
+	abort "Error: " + exception.message + exception.backtrace.join("\n")
 end

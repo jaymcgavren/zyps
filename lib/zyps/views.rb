@@ -59,9 +59,6 @@ class View
 		self.origin = options[:origin]
 		self.erase_flag = options[:erase_flag]
 		
-		#Set canvas's size to match view's.
-		resize if @canvas
-		
 	end
 	
 	
