@@ -118,7 +118,7 @@ class View
 	# by calling super and passing a block that performs the actual update
 	def update(environment)
 	
-		clear_view if @erase_flag
+		clear_view if erase_flag
 		
 		#For each GameObject in the environment:
 		#yields this object to the calling block

@@ -51,24 +51,17 @@ class TrailsView < View
 	#GameObject.size will be used as the line thickness at the object's head, diminishing to 1 at the tail.
 	def update(environment)
 	
-		#Clear view.
-		@canvas.draw_rectangle(
-			:color => Color.new(0, 0, 0),
-			:filled => true,
-			:x => 0, :y => 0,
-			:width => @width, :height => @height
-		)
-		
 		#For each GameObject in the environment:
 		super do |object|
 
 			object_radius = Math.sqrt(object.size / Math::PI)
 
 			#Add the object's current location to the list.
-			@locations[object.identifier] << drawing_coordinates(object.location)
+			@locations[object.identifier] << object.location.copy
+
 			#If the list is larger than the number of tail segments, delete the first position.
 			@locations[object.identifier].shift while @locations[object.identifier].length > @trail_length
-			
+
 			#For each location in this object's list:
 			@locations[object.identifier].each_with_index do |location, index|
 			
@@ -81,22 +74,20 @@ class TrailsView < View
 				#Get previous location so we can draw a line from it.
 				previous_location = @locations[object.identifier][index - 1]
 				
-				@canvas.draw_line(
+				draw_line(
 					:color => Color.new(
 						object.color.red * multiplier,
 						object.color.green * multiplier,
 						object.color.blue * multiplier
 					),
-					:width => drawing_width(object_radius * 2 * multiplier).ceil,
-					:x1 => previous_location[0], :y1 => previous_location[1],
-					:x2 => location[0], :y2 => location[1]
+					:width => (object_radius * 2 * multiplier).ceil,
+					:location_1 => previous_location,
+					:location_2 => location
 				)
 				
 			end
 			
 		end
-		
-		@canvas.render
 		
 	end
 

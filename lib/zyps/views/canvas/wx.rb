@@ -31,7 +31,7 @@ class WxCanvas < Canvas
 	#A Wx::Bitmap that will be painted on.
 	attr_reader :buffer
 	
-	def initialize
+	def initialize(width = 1, height = 1)
 
 		super
 

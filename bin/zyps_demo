@@ -73,13 +73,10 @@ class Demo < Wx::App
 		
 		say "Zyps environments are displayed using Views."
 		say "A TrailsView shows game objects with little light trails behind them."
-		view = TrailsView.new(
-			:width => WIDTH,
-			:height => HEIGHT
-		)
+		view = TrailsView.new
 		say "We also assign the View a Canvas to draw to."
 		say "Since our framework is wxWidgets, we'll use a WxCanvas."
-		view.canvas = WxCanvas.new
+		view.canvas = WxCanvas.new(WIDTH, HEIGHT)
 		
 		say "We need a place to draw our View to."
 		say "We'll add a Wx::Window to the Frame."
