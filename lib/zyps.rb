@@ -210,14 +210,14 @@ class GameObject
 	attr_accessor :location
 	#A Color that will be used to draw the object.
 	attr_accessor :color
+	#Radius of the object.
+	attr_accessor :size
 	#A Vector with the object's current speed and direction of travel.
 	attr_accessor :vector
 	#A String with the object's name.
 	attr_accessor :name
 	#An array of Strings with tags that determine how the object will be treated by Creature and EnvironmentalFactor objects in its environment.
 	attr_accessor :tags
-	#The object's Shape, which is used for drawing to Views and collision detection.
-	attr_accessor :shape
 	
 	#Takes a hash with these keys and defaults:
 	#	:name => nil,
@@ -225,25 +225,19 @@ class GameObject
 	#	:color => Color.new,
 	#	:vector => Vector.new,
 	#	:age => 0,
-	#	:shape => nil,
+	#	:size => 1,
 	#	:tags => []
 	def initialize (options = {})
 		options = {
-			:age => 0,
-			:color => Color.new,
-			:location => Location.new,
 			:name => nil,
-			:shape => nil,
-			:tags => [],
-			:vector => Vector.new
+			:location => Location.new,
+			:color => Color.new,
+			:vector => Vector.new,
+			:age => 0,
+			:size => 1,
+			:tags => []
 		}.merge(options)
-		self.age = options[:age]
-		self.color = options[:color]
-		self.name = options[:name]
-		self.shape = options[:shape]
-		self.tags = options[:tags]
-		self.vector = options[:vector]
-		self.location = options[:location]
+		self.name, self.location, self.color, self.vector, self.age, self.size, self.tags = options[:name], options[:location], options[:color], options[:vector], options[:age], options[:size], options[:tags]
 		@identifier = generate_identifier
 	end
 	
@@ -258,6 +252,9 @@ class GameObject
 		copy.name = @name ? "Copy of " + @name.to_s : nil
 		copy
 	end
+	
+	#Size must be positive.
+	def size=(v); v = 0 if v < 0; @size = v; end
 	
 	#Move according to vector over the given number of seconds.
 	def move (elapsed_time)
@@ -939,6 +936,14 @@ module Utility
 		reflection_angle
 	end
 
+	#Given two GameObjects, determine if the boundary of one crosses the boundary of the other.
+	def Utility.collided?(object1, object2)
+		object1_radius = Math.sqrt(object1.size / Math::PI)
+		object2_radius = Math.sqrt(object2.size / Math::PI)
+		return true if find_distance(object1.location, object2.location) < object1_radius + object2_radius
+		false
+	end
+	
 end
 
 
