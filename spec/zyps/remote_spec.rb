@@ -125,6 +125,7 @@ describe EnvironmentServer do
 	
 	it "removes objects from client as they're removed from server"
 	it "sends new environmental factors as they're added to server"
+	it "removes environmental factors from client as they're removed from server"
 	
 	it "has authority on object movement by default"
 	it "does not have authority on object movement when assigned to client"
