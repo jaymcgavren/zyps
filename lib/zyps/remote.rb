@@ -29,13 +29,17 @@ LOG_LEVEL = Logger::DEBUG
 module Zyps
 
 
+#Holds requests from a remote system.
 module Request
+	#A request to observe an Environment.
 	class Join
 		attr_accessor :listen_port
 		def initialize(listen_port); @listen_port = listen_port; end
 	end
+	#A request for all objects and environmental factors within an Environment.
 	class Environment; end
 end
+#Holds acknowledgements of requests from a remote system.
 module Acknowledge
 	class Join; end
 	class Environment; end
@@ -74,20 +78,52 @@ module EnvironmentTransmitter
 	end
 
 	
+	def allowed_hosts; @allowed_hosts ||= {}; end
 	#True if hostname is on allowed list.
 	def allowed?(host)
-		raise BannedError.new("#{host} is banned!") if banned?(host)
-		@listen_ports.include?(host)
+		raise BannedError.new if banned?(host)
+		allowed_hosts.include?(host)
+	end
+	#Add host and port to allowed list.
+	def allow(host, port)
+		allowed_hosts[host] = port
+	end
+	#Get listen port for host.
+	def port(host)
+		allowed_hosts[host]
 	end
 	
 	
+	def banned_hosts; @banned_hosts ||= []; end
 	#True if address is on banned list.
 	def banned?(host)
-		@banned_hosts.include?(host)
+		banned_hosts.include?(host)
 	end
 	#Add host to banned list.
 	def ban(host)
-		@banned_hosts << host
+		banned_hosts << host
+	end
+	
+	
+	def event_queue; @event_queue ||= []; end
+	#Queue events from environment.
+	def update(event)
+		@log.debug "Adding #{event} to queue."
+		event_queue << event
+	end
+	#Send updates to remote environments.
+	def send_updates
+		@log.debug "Sending events: #{event_queue}"
+		objects = []
+		event_queue.each do |event|
+			case event
+			when Event::NewObject
+				objects << event.object
+			else
+				raise "Could not process #{event}."
+			end
+		end
+		allowed_hosts.keys.each {|host| send(objects, host)}
 	end
 	
 	
@@ -129,6 +165,7 @@ module EnvironmentTransmitter
 			when Request::Environment
 				send(@environment.objects.to_a + @environment.environmental_factors.to_a, sender)
 			when GameObject, EnvironmentalFactor
+				@log.debug "Adding #{object} to environment."
 				@environment << object
 			when Exception
 				@log.warn object
@@ -142,8 +179,8 @@ module EnvironmentTransmitter
 		def send(data, host)
 			string = Serializer.instance.serialize(data)
 			raise "#{string.length} is over maximum packet size of #{MAX_PACKET_SIZE}." if string.length > MAX_PACKET_SIZE
-			@log.debug "Sending '#{string}' to #{host} on #{@listen_ports[host]}."
-			UDPSocket.open.send(string, 0, host, @listen_ports[host])
+			@log.debug "Sending '#{string}' to #{host} on #{allowed_hosts[host]}."
+			UDPSocket.open.send(string, 0, host, allowed_hosts[host])
 		end
 	
 	
@@ -164,22 +201,20 @@ class EnvironmentServer
 		@log.level = LOG_LEVEL
 		@log.progname = self
 		@environment = environment
+		@environment.add_observer(self)
 		@options = {
 			:listen_port => 9977
 		}.merge(options)
 		@log.debug "Hosting Environment #{@environment.object_id} with #{@options.inspect}."
-		@banned_hosts = []
-		#Hash with client host names as keys, ports as values.
-		@listen_ports = {}
 	end
 
 	
 	#Add sender to client list and acknowledge.
 	def process_join_request(request, sender)
-		raise BannedError.new("#{sender} is banned!") if banned?(sender)
+		raise BannedError.new if banned?(sender)
 		@log.debug "Adding #{sender} to client list with port #{request.listen_port}."
-		@listen_ports[sender] = request.listen_port
-		send([Acknowledge::Join.new], sender)
+		allow(sender, request.listen_port)
+		send([Acknowledge::Join.new, @environment.objects.to_a + @environment.environmental_factors.to_a].flatten, sender)
 	end
 
 
@@ -207,9 +242,9 @@ class EnvironmentClient
 			:host_port => 9977,
 			:listen_port => nil
 		}.merge(options)
-		@banned_hosts = []
+		@environment.add_observer(self)
 		#All transmissions to server should go to server's listen port.
-		@listen_ports = {@options[:host] => @options[:host_port]}
+		allowed_hosts[@options[:host]] = @options[:host_port]
 	end
 
 	

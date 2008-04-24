@@ -113,6 +113,35 @@ describe Environment do
 	
 	it "should update multiple areas of interest"
 	
+	it "should update observers when new object is added" do
+		object = GameObject.new
+		observer = mock("observer")
+		observer.should_receive(:update).with(Event::NewObject.new(object))
+		@environment.add_observer(observer)
+		@environment << object
+	end
+	
+	it "should update observers when an object moves" do
+		object = GameObject.new(:vector => Vector.new(1, 0))
+		@environment << object
+		observer = mock("observer")
+		observer.should_receive(:update).with(Event::ObjectMoved.new(object.identifier, object.location))
+		@environment.add_observer(observer)
+		@environment.interact
+	end
+	
+	it "should update observers when an object is removed" do
+		object = GameObject.new
+		@environment << object
+		observer = mock("observer")
+		observer.should_receive(:update).with(Event::ObjectRemoved.new(object.identifier))
+		@environment.add_observer(observer)
+		@environment.remove_object(object)
+	end
+
+	it "should update observers when new environmental factor is added"
+	it "should update observers when environmental factor is removed"
+	
 end
 
 
@@ -171,9 +200,7 @@ describe GameObject do
 		@object = GameObject.new
 	end
 
-	it "has no default shape" do
-		@object.shape.should be_nil
-	end
+	it "has no default shape"
 	
 	it "should pass calls to collided method on to its Shape object"
 

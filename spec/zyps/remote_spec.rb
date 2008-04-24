@@ -97,7 +97,35 @@ describe EnvironmentServer do
 		@client_environment.object_count.should == 1
 	end
 	
-	it "sends new objects as they're added to server"
+	it "sends environmental factors that were already on server when a new client connects" do
+		@server.open_socket
+		@client.open_socket
+		server_environmental_factor = SpeedLimit.new
+		@server_environment << server_environmental_factor
+		@client_environment.environmental_factor_count.should == 0
+		@client.connect
+		@server.listen
+		@client.listen
+		@client_environment.environmental_factor_count.should == 1
+	end
+	
+	it "sends new objects as they're added to server" do
+		@server.open_socket
+		@client.open_socket
+		server_object = GameObject.new
+		@client.connect
+		@server.listen
+		@client.listen
+		@client_environment.object_count.should == 0
+		@server_environment << server_object
+		@server.send_updates
+		@client.listen
+		@client_environment.object_count.should == 1
+	end
+	
+	it "removes objects from client as they're removed from server"
+	it "sends new environmental factors as they're added to server"
+	
 	it "has authority on object movement by default"
 	it "does not have authority on object movement when assigned to client"
 	it "has authority on object removal"

@@ -49,8 +49,6 @@ describe View do
 	it "erases between frames by default"
 	it "has a black background by default"
 	
-	it "clears the canvas before an update"
-	
 	it "corrects for scale when drawing rectangles to a Canvas" do
 		@view.scale = 0.5
 		@view.canvas = Canvas.new
