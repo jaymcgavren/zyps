@@ -52,13 +52,11 @@ class Environment
 	def add_object(object)
 		object.environment = self
 		@objects << object
-		changed; notify_observers(Event::NewObject.new(object))
 	end
 	#Remove a GameObject from this environment.
 	def remove_object(object)
 		object.environment = nil
 		@objects.delete(object)
-		changed; notify_observers(Event::ObjectRemoved.new(object.identifier))
 	end
 	#An Enumerable::Enumerator over each GameObject in the environment.
 	def objects; Enumerable::Enumerator.new(@objects, :each); end
@@ -117,7 +115,6 @@ class Environment
 			#Move each object according to its vector.
 			begin
 				object.move(elapsed_time)
-				changed; notify_observers(Event::ObjectMoved.new(object.identifier, object.location))
 			#Remove misbehaving objects.
 			rescue Exception => exception
 				puts exception, exception.backtrace
@@ -152,6 +149,12 @@ class Environment
 			end
 		end
 			
+		#Mark environment as changed.
+		changed
+
+		#Alert observers.
+		notify_observers(self)
+		
 	end
 	
 	
@@ -946,29 +949,6 @@ end
 #Returns GameObjects within its boundaries.
 #Can be set to return objects only after a certain number of updates, for limiting AI CPU usage or network bandwidth.
 class AreaOfInterest
-end
-
-
-#Classes within this module represent events within an Environment.
-module Event
-	#Represents the addition of a GameObject to an Environment.
-	class NewObject
-		attr_accessor :object
-		def initialize(object); self.object = object; end
-		def ==(other); self.object == other.object; end
-	end
-	#Represents a change in the Location for a GameObject.
-	class ObjectMoved
-		attr_accessor :identifier, :location
-		def initialize(identifier, location); self.identifier, self.location = identifier, location; end
-		def ==(other); self.identifier == other.identifier and self.location == other.location; end
-	end
-	#Represents the removal of a GameObject from an Environment.
-	class ObjectRemoved
-		attr_accessor :identifier
-		def initialize(identifier); self.identifier = identifier; end
-		def ==(other); self.identifier == other.identifier; end
-	end
 end
 
 
