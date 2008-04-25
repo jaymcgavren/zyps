@@ -64,10 +64,10 @@ module EnvironmentTransmitter
 	
 	#Listen for an incoming packet, and process it.
 	def listen
-		@log.debug "Waiting for packet."
+		@log.debug "Waiting for packet on port #{@socket.addr[1]}."
 		data, sender_info = @socket.recvfrom(MAX_PACKET_SIZE)
 		@log.debug "Got #{data} from #{sender_info.join('/')}."
-		receive(data, sender_info[2])
+		receive(data, sender_info[3])
 	end
 	
 	
@@ -79,7 +79,7 @@ module EnvironmentTransmitter
 
 	
 	def allowed_hosts; @allowed_hosts ||= {}; end
-	#True if hostname is on allowed list.
+	#True if host is on allowed list.
 	def allowed?(host)
 		raise BannedError.new if banned?(host)
 		allowed_hosts.include?(host)
@@ -244,6 +244,7 @@ class EnvironmentClient
 		}.merge(options)
 		@environment.add_observer(self)
 		#All transmissions to server should go to server's listen port.
+		@options[:host] = IPSocket.getaddress(@options[:host])
 		allowed_hosts[@options[:host]] = @options[:host_port]
 	end
 
