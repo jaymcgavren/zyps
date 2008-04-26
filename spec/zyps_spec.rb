@@ -113,35 +113,6 @@ describe Environment do
 	
 	it "should update multiple areas of interest"
 	
-	it "should update observers when new object is added" do
-		object = GameObject.new
-		observer = mock("observer")
-		observer.should_receive(:update).with(Event::NewObject.new(object))
-		@environment.add_observer(observer)
-		@environment << object
-	end
-	
-	it "should update observers when an object moves" do
-		object = GameObject.new(:vector => Vector.new(1, 0))
-		@environment << object
-		observer = mock("observer")
-		observer.should_receive(:update).with(Event::ObjectMoved.new(object.identifier, object.location))
-		@environment.add_observer(observer)
-		@environment.interact
-	end
-	
-	it "should update observers when an object is removed" do
-		object = GameObject.new
-		@environment << object
-		observer = mock("observer")
-		observer.should_receive(:update).with(Event::ObjectRemoved.new(object.identifier))
-		@environment.add_observer(observer)
-		@environment.remove_object(object)
-	end
-
-	it "should update observers when new environmental factor is added"
-	it "should update observers when environmental factor is removed"
-	
 end
 
 
@@ -220,8 +191,8 @@ end
 
 describe AreaOfInterest do
 
-	it "should report all GameObjects whose Locations intersect its Shape"
-	it "should filter out all GameObjects whose Locations do not intersect its Shape"
+	it "should report all GameObjects whose Locations are within its bounds"
+	it "should filter out all GameObjects whose Locations are not within its bounds"
 	it "should have a default evaluation frequency of 1"
 	it "should always report objects if its evaluation frequency is 1"
 	it "should report objects every other update if its evaluation frequency is 2"

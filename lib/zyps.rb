@@ -128,7 +128,7 @@ class Environment
 			if object.respond_to?(:act)
 				begin
 					#Have creature act on all GameObjects other than itself.
-					object.act(@objects.reject{|target| target.equal?(object)})
+					object.act(objects.reject{|target| target.equal?(object)})
 				#Remove misbehaving objects.
 				rescue Exception => exception
 					puts exception, exception.backtrace
@@ -188,7 +188,7 @@ class Environment
 	
 	#True if clock, all objects, and all environmental factors are the same.
 	def ==(other)
-		return false if @objects != other.objects.to_a
+		return false if self.objects.to_a != other.objects.to_a
 		return false if @environmental_factors != other.environmental_factors.to_a
 		return false if self.clock != other.clock
 		true
@@ -948,8 +948,7 @@ module Utility
 end
 
 
-#Returns GameObjects within its boundaries.
-#Can be set to return objects only after a certain number of updates, for limiting AI CPU usage or network bandwidth.
+#Tests whether a Location is within its boundaries.
 class AreaOfInterest
 end
 

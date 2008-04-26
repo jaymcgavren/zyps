@@ -125,6 +125,31 @@ class EnvironmentTransmitter
 	end
 	
 	
+	#Compare environment state to previous state and send updates to listeners.
+	def update(environment)
+		#For each area of interest for the environment:
+		areas_of_interest(environment).each do |area|
+			#If it is not this area's turn to be evaluated, skip to the next.
+			next unless evaluation_turn?(area)
+			#For each object this transmitter has movement authority over:
+			movable_objects(environment, area).each do |object|
+				#Get its location and vector for inclusion in movement update.
+			end
+			#For each object this transmitter has creation authority over:
+			created_objects(environment, area).each do |object|
+				#For each listener:
+					#Send each object not present in remote environment.
+			end
+			#For each object this transmitter has destruction authority over:
+			destructible_objects(environment, area).each do |object|
+				#For each listener:
+					#Remove objects that are in remote environment but not this one.
+			end
+		end
+		#Flush transmission buffers.
+	end
+	
+	
 	private
 		
 		
