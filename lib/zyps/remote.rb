@@ -33,11 +33,42 @@ module Zyps
 module Request
 	#A request to observe an Environment.
 	class Join
+		#The port the host will be listening on.
 		attr_accessor :listen_port
 		def initialize(listen_port); @listen_port = listen_port; end
 	end
+	#A request to update the object IDs already in the host's Environment.
+	class SetObjectIDs
+		#A list of GameObject identifiers.
+		attr_accessor :ids
+		def initialize(ids); @ids = ids; end
+	end
+	#A request to update the locations and vectors of specified objects.
+	class UpdateObjectMovement
+		#A hash with GameObject identifiers as keys and arrays with x coordinate, y coordinate, speed, and pitch as values.
+		attr_accessor :movement_data
+		def initialize(movement_data); @movement_data = movement_data; end
+	end
 	#A request for all objects and environmental factors within an Environment.
 	class Environment; end
+	#A request to add a specified object to an Environment.
+	class AddObject
+		#The object to add.
+		attr_accessor :object
+		def initialize(object); @object = object; end
+	end
+	#A request for a complete copy of a specified GameObject.
+	class GetObject
+		#Identifier of the object being requested.
+		attr_accessor :identifier
+		def initialize(identifier); @identifier = identifier; end
+	end
+	#A request to update all attributes of a specified GameObject.
+	class ModifyObject
+		#The object to update.
+		attr_accessor :object
+		def initialize(object); @object = object; end
+	end
 end
 #Holds acknowledgements of requests from a remote system.
 module Response
@@ -45,6 +76,21 @@ module Response
 	class Environment
 		attr_accessor :objects, :environmental_factors
 		def initialize(objects, environmental_factors); @objects, @environmental_factors = objects, environmental_factors; end
+	end
+	class AddObject
+		#Identifier of the object that was added.
+		attr_accessor :identifier
+		def initialize(identifier); @identifier = identifier; end
+	end
+	class GetObject
+		#The requested object.
+		attr_accessor :object
+		def initialize(object); @object = object; end
+	end
+	class ModifyObject
+		#Identifier of the object that was modified.
+		attr_accessor :identifier
+		def initialize(identifier); @identifier = identifier; end
 	end
 end
 class BannedError < Exception; end
@@ -139,11 +185,13 @@ class EnvironmentTransmitter
 			created_objects(environment, area).each do |object|
 				#For each listener:
 					#Send each object not present in remote environment.
+					#Add request to queue awaiting response.
 			end
 			#For each object this transmitter has destruction authority over:
 			destructible_objects(environment, area).each do |object|
 				#For each listener:
 					#Remove objects that are in remote environment but not this one.
+					#Add removal request to queue awaiting response.
 			end
 		end
 		#Flush transmission buffers.
@@ -202,10 +250,17 @@ class EnvironmentTransmitter
 			when Request::AddObject
 				@environment << transmission.object
 				send(Response::AddObject.new(transmission.object.identifier))
+			when Response::AddObject
+				response_received(transmission.identifier)
 			when Request::GetObject
 				send(Response::GetObject.new(@environment.get_object(transmission.identifier)))
 			when Response::GetObject
 				@environment << transmission.object
+				response_received(transmission.object.identifier)
+			when Request::ModifyObject
+				@environment.get_object(transmission.object.identifier) = transmission.object
+			when Response::ModifyObject
+				response_received(transmission.identifier)
 			when Exception
 				@log.warn transmission
 			else
