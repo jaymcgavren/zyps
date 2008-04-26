@@ -258,7 +258,7 @@ class EnvironmentTransmitter
 				@environment << transmission.object
 				response_received(transmission.object.identifier)
 			when Request::ModifyObject
-				@environment.get_object(transmission.object.identifier) = transmission.object
+				@environment.update_object(transmission.object.identifier, transmission.object)
 			when Response::ModifyObject
 				response_received(transmission.identifier)
 			when Exception

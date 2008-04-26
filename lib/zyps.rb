@@ -68,6 +68,8 @@ class Environment
 	def object_count; @objects.length; end
 	#Retrieve a GameObject by ID.
 	def get_object(identifier); @objects[identifier]; end
+	#Retrieve a GameObject by ID and modify it.
+	def update_object(identifier, value); @objects[identifier] = value; end
 	
 	
 	#Add an EnvironmentalFactor to this environment.
