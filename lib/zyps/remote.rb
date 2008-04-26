@@ -40,16 +40,37 @@ module Request
 	class Environment; end
 end
 #Holds acknowledgements of requests from a remote system.
-module Acknowledge
+module Response
 	class Join; end
-	class Environment; end
+	class Environment
+		attr_accessor :objects, :environmental_factors
+		def initialize(objects, environmental_factors); @objects, @environmental_factors = objects, environmental_factors; end
+	end
 end
 class BannedError < Exception; end
 
 
-module EnvironmentTransmitter
+class EnvironmentTransmitter
 
+	
+	#A list with the IPs of banned hosts.
+	attr_accessor :banned_hosts
+	#A hash with the IPs of allowed hosts as keys, and their listen ports as values.
+	attr_accessor :allowed_hosts
+	#A hash with the host IPs as keys, and lists of objects known to be in their environments as values.
+	attr_accessor :known_objects
 
+	#Takes the environment to serve.
+	def initialize(environment)
+		@log = Logger.new(LOG_HANDLE)
+		@log.level = LOG_LEVEL
+		@log.progname = self
+		@environment = environment
+		@environment.add_observer(self)
+		@banned_hosts = []
+		@allowed_hosts = {}
+	end
+	
 	#The maximum allowed transmission size.
 	MAX_PACKET_SIZE = 65535
 
@@ -78,7 +99,6 @@ module EnvironmentTransmitter
 	end
 
 	
-	def allowed_hosts; @allowed_hosts ||= {}; end
 	#True if host is on allowed list.
 	def allowed?(host)
 		raise BannedError.new if banned?(host)
@@ -94,36 +114,14 @@ module EnvironmentTransmitter
 	end
 	
 	
-	def banned_hosts; @banned_hosts ||= []; end
 	#True if address is on banned list.
 	def banned?(host)
 		banned_hosts.include?(host)
 	end
 	#Add host to banned list.
 	def ban(host)
-		banned_hosts << host
-	end
-	
-	
-	def event_queue; @event_queue ||= []; end
-	#Queue events from environment.
-	def update(event)
-		@log.debug "Adding #{event} to queue."
-		event_queue << event
-	end
-	#Send updates to remote environments.
-	def send_updates
-		@log.debug "Sending events: #{event_queue}"
-		objects = []
-		event_queue.each do |event|
-			case event
-			when Event::NewObject
-				objects << event.object
-			else
-				raise "Could not process #{event}."
-			end
-		end
-		allowed_hosts.keys.each {|host| send(objects, host)}
+		ip_address = (host =~ /^[\d\.]+$/ ? host : IPSocket.getaddress(host))
+		banned_hosts << ip_address
 	end
 	
 	
@@ -156,21 +154,37 @@ module EnvironmentTransmitter
 		
 		
 		#Determines what to do with a received object.
-		def process(object, sender)
-			case object
+		def process(transmission, sender)
+			case transmission
 			when Request::Join
-				process_join_request(object, sender)
-			when Acknowledge::Join
+				process_join_request(transmission, sender)
+			when Response::Join
 				#TODO
+			when Request::SetObjectIDs
+				known_objects[sender] += transmission.ids
+			when Request::UpdateObjectMovement
+				transmission.movement_data.each do |id, data|
+					object = @environment.get_object(id)
+					object.location.x, object.location.y = data[0], data[1]
+					object.vector.speed, object.vector.pitch = data[2], data[3]
+				end
 			when Request::Environment
-				send(@environment.objects.to_a + @environment.environmental_factors.to_a, sender)
-			when GameObject, EnvironmentalFactor
-				@log.debug "Adding #{object} to environment."
-				@environment << object
+				send(Response::Environment.new(@environment.objects.to_a, @environment.environmental_factors.to_a), sender)
+			when Response::Environment
+				@log.debug "Adding #{transmission} to environment."
+				transmission.objects.each {|o| @environment << o}
+				transmission.environmental_factors.each {|o| @environment << o}
+			when Request::AddObject
+				@environment << transmission.object
+				send(Response::AddObject.new(transmission.object.identifier))
+			when Request::GetObject
+				send(Response::GetObject.new(@environment.get_object(transmission.identifier)))
+			when Response::GetObject
+				@environment << transmission.object
 			when Exception
-				@log.warn object
+				@log.warn transmission
 			else
-				raise "Could not process #{object}."
+				raise "Could not process #{transmission}."
 			end
 		end
 
@@ -188,20 +202,13 @@ end
 
 
 #Updates remote EnvironmentClients.
-class EnvironmentServer
-
-
-	include EnvironmentTransmitter
+class EnvironmentServer < EnvironmentTransmitter
 	
 	
 	#Takes the environment to serve, and the following options:
 	#	:listen_port => 9977
 	def initialize(environment, options = {})
-		@log = Logger.new(LOG_HANDLE)
-		@log.level = LOG_LEVEL
-		@log.progname = self
-		@environment = environment
-		@environment.add_observer(self)
+		super(environment)
 		@options = {
 			:listen_port => 9977
 		}.merge(options)
@@ -214,7 +221,7 @@ class EnvironmentServer
 		raise BannedError.new if banned?(sender)
 		@log.debug "Adding #{sender} to client list with port #{request.listen_port}."
 		allow(sender, request.listen_port)
-		send([Acknowledge::Join.new, @environment.objects.to_a + @environment.environmental_factors.to_a].flatten, sender)
+		send([Response::Join.new, @environment.objects.to_a + @environment.environmental_factors.to_a].flatten, sender)
 	end
 
 
@@ -222,10 +229,7 @@ end
 
 
 #Updates local Environment based on instructions from EnvironmentServer.
-class EnvironmentClient
-
-
-	include EnvironmentTransmitter
+class EnvironmentClient < EnvironmentTransmitter
 
 	
 	#Takes a hash with the following keys and defaults:
@@ -233,10 +237,7 @@ class EnvironmentClient
 	#	:host_port => 9977,
 	#	:listen_port => nil,
 	def initialize(environment, options = {})
-		@log = Logger.new(LOG_HANDLE)
-		@log.level = LOG_LEVEL
-		@log.progname = self
-		@environment = environment
+		super(environment)
 		@options = {
 			:host => nil,
 			:host_port => 9977,

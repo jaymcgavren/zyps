@@ -65,7 +65,7 @@ describe EnvironmentServer do
 		@server.open_socket
 		@client.open_socket
 		@client.should_receive(:process).with(
-			an_instance_of(Acknowledge::Join),
+			an_instance_of(Response::Join),
 			an_instance_of(String)
 		)
 		@client.connect
@@ -85,47 +85,36 @@ describe EnvironmentServer do
 	it "does not allow IP address if corresponding hostname is banned"
 	it "does not allow hostname if corresponding IP address is banned"
 	
-	it "sends objects that were already on server when a new client connects" do
+	it "can send full serialized GameObject"
+	it "keeps requesting GameObject until remote system responds"
+	it "can send movement data for all GameObjects"
+	it "can send full environment"
+	
+	it "does not send objects known to already be in remote environment" do
+		object = GameObject.new
+		object2 = GameObject.new
+		@server_environment << object << object2
 		@server.open_socket
 		@client.open_socket
-		server_object = GameObject.new
-		@server_environment << server_object
-		@client_environment.object_count.should == 0
 		@client.connect
 		@server.listen
 		@client.listen
-		@client_environment.object_count.should == 1
-	end
-	
-	it "sends environmental factors that were already on server when a new client connects" do
-		@server.open_socket
-		@client.open_socket
-		server_environmental_factor = SpeedLimit.new
-		@server_environment << server_environmental_factor
-		@client_environment.environmental_factor_count.should == 0
-		@client.connect
+		@client.send(Request::SetObjectIDs.new([object.identifier]))
 		@server.listen
-		@client.listen
-		@client_environment.environmental_factor_count.should == 1
-	end
-	
-	it "sends new objects as they're added to server" do
-		@server.open_socket
-		@client.open_socket
-		server_object = GameObject.new
-		@client.connect
+		@client.send(Request::Environment.new)
 		@server.listen
-		@client.listen
-		@client_environment.object_count.should == 0
-		@server_environment << server_object
-		@server.send_updates
-		@client.listen
-		@client_environment.object_count.should == 1
+		@client.should_receive(:process).with(
+			Response::Environment.new([object2], [])
+		)
 	end
 	
+	it "sends objects that were already on server when a new client connects"	
+	it "sends environmental factors that were already on server when a new client connects"
+	it "sends new objects as they're added to server"
 	it "removes objects from client as they're removed from server"
 	it "sends new environmental factors as they're added to server"
 	it "removes environmental factors from client as they're removed from server"
+	
 	
 	it "has authority on object movement by default"
 	it "does not have authority on object movement when assigned to client"

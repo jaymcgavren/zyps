@@ -40,7 +40,7 @@ class Environment
 			:environmental_factors => [],
 			:clock => Clock.new
 		}.merge(options)
-		@objects = []
+		@objects = {}
 		@environmental_factors = []
 		options[:objects].each {|object| self.add_object(object)}
 		options[:environmental_factors].each {|environmental_factor| self.add_environmental_factor(environmental_factor)}
@@ -51,21 +51,23 @@ class Environment
 	#Add a GameObject to this environment.
 	def add_object(object)
 		object.environment = self
-		@objects << object
+		@objects[object.identifier] = object
 	end
 	#Remove a GameObject from this environment.
 	def remove_object(object)
 		object.environment = nil
-		@objects.delete(object)
+		@objects.delete(object.identifier)
 	end
 	#An Enumerable::Enumerator over each GameObject in the environment.
-	def objects; Enumerable::Enumerator.new(@objects, :each); end
+	def objects; Enumerable::Enumerator.new(@objects, :each_value); end
 	#Remove all GameObjects from this environment.
 	def clear_objects
-		@objects.clone.each {|object| self.remove_object(object)}
+		@objects.clone.each_value {|object| self.remove_object(object)}
 	end
 	#Number of GameObjects in this environment.
 	def object_count; @objects.length; end
+	#Retrieve a GameObject by ID.
+	def get_object(identifier); @objects[identifier]; end
 	
 	
 	#Add an EnvironmentalFactor to this environment.
