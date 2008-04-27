@@ -35,19 +35,19 @@ module Request
 	class Join
 		#The port the host will be listening on.
 		attr_accessor :listen_port
-		def initialize(listen_port); @listen_port = listen_port; end
+		def initialize(listen_port = nil); @listen_port = listen_port; end
 	end
 	#A request to update the object IDs already in the host's Environment.
 	class SetObjectIDs
 		#A list of GameObject identifiers.
 		attr_accessor :ids
-		def initialize(ids); @ids = ids; end
+		def initialize(ids = nil); @ids = ids; end
 	end
 	#A request to update the locations and vectors of specified objects.
 	class UpdateObjectMovement
 		#A hash with GameObject identifiers as keys and arrays with x coordinate, y coordinate, speed, and pitch as values.
 		attr_accessor :movement_data
-		def initialize(movement_data); @movement_data = movement_data; end
+		def initialize(movement_data = {}); @movement_data = movement_data; end
 	end
 	#A request for all objects and environmental factors within an Environment.
 	class Environment; end
@@ -55,19 +55,19 @@ module Request
 	class AddObject
 		#The object to add.
 		attr_accessor :object
-		def initialize(object); @object = object; end
+		def initialize(object = nil); @object = object; end
 	end
 	#A request for a complete copy of a specified GameObject.
 	class GetObject
 		#Identifier of the object being requested.
 		attr_accessor :identifier
-		def initialize(identifier); @identifier = identifier; end
+		def initialize(identifier = nil); @identifier = identifier; end
 	end
 	#A request to update all attributes of a specified GameObject.
 	class ModifyObject
 		#The object to update.
 		attr_accessor :object
-		def initialize(object); @object = object; end
+		def initialize(object = nil); @object = object; end
 	end
 end
 #Holds acknowledgements of requests from a remote system.
@@ -75,22 +75,22 @@ module Response
 	class Join; end
 	class Environment
 		attr_accessor :objects, :environmental_factors
-		def initialize(objects, environmental_factors); @objects, @environmental_factors = objects, environmental_factors; end
+		def initialize(objects = [], environmental_factors = []); @objects, @environmental_factors = objects, environmental_factors; end
 	end
 	class AddObject
 		#Identifier of the object that was added.
 		attr_accessor :identifier
-		def initialize(identifier); @identifier = identifier; end
+		def initialize(identifier = nil); @identifier = identifier; end
 	end
 	class GetObject
 		#The requested object.
 		attr_accessor :object
-		def initialize(object); @object = object; end
+		def initialize(object = nil); @object = object; end
 	end
 	class ModifyObject
 		#Identifier of the object that was modified.
 		attr_accessor :identifier
-		def initialize(identifier); @identifier = identifier; end
+		def initialize(identifier = nil); @identifier = identifier; end
 	end
 end
 class BannedError < Exception; end
@@ -174,28 +174,37 @@ class EnvironmentTransmitter
 	
 	#Compare environment state to previous state and send updates to listeners.
 	def update(environment)
+	
+		movement_data = {}
+	
 		#For each area of interest for the environment:
 		areas_of_interest(environment).each do |area|
+
 			#If it is not this area's turn to be evaluated, skip to the next.
 			next unless evaluation_turn?(area)
+			
 			#For each object this transmitter has movement authority over:
 			movable_objects(environment, area).each do |object|
+				@log.debug "Adding #{object} to movement update."
 				#Get its location and vector for inclusion in movement update.
+				movement_data[object.identifier] = [
+					object.location.x,
+					object.location.y,
+					object.vector.speed,
+					object.vector.pitch
+				]
 			end
-			#For each object this transmitter has creation authority over:
-			created_objects(environment, area).each do |object|
-				#For each listener:
-					#Send each object not present in remote environment.
-					#Add request to queue awaiting response.
-			end
-			#For each object this transmitter has destruction authority over:
-			destructible_objects(environment, area).each do |object|
-				#For each listener:
-					#Remove objects that are in remote environment but not this one.
-					#Add removal request to queue awaiting response.
-			end
+			
 		end
+		
+		#Send movement data to each host.
+		allowed_hosts.keys.each do |host|
+			send(Request::UpdateObjectMovement.new(movement_data), host)
+		end
+
 		#Flush transmission buffers.
+		#TODO.
+		
 	end
 	
 	
@@ -284,8 +293,20 @@ class EnvironmentTransmitter
 				raise "Could not process #{transmission}."
 			end
 		end
-
-	
+		
+		
+		#TODO: Implement.
+		def evaluation_turn?(dummy); true; end
+		
+		#TODO: Implement.
+		def areas_of_interest(environment); ["dummy"]; end
+		
+		#TODO: Implement.
+		def movable_objects(environment, dummy); environment.objects; end
+		def sendable_objects(environment, dummy); environment.objects; end
+		def destructible_objects(environment, dummy); environment.objects; end
+		
+			
 end
 
 

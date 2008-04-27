@@ -19,6 +19,8 @@
 gems_loaded = false
 begin
 	require 'spec'
+	require 'zyps'
+	require 'zyps/environmental_factors'
 	require 'zyps/remote'
 rescue LoadError
 	if gems_loaded == false
@@ -85,41 +87,6 @@ describe EnvironmentServer do
 	it "does not allow IP address if corresponding hostname is banned"
 	it "does not allow hostname if corresponding IP address is banned"
 	
-	it "can send movement data for all GameObjects"
-	it "can request full Environment"
-	it "keeps requesting Environment until remote system responds"
-	it "can add GameObject to remote Environment"
-	it "keeps sending request to add GameObject until remote system responds"
-	it "can request full serialized GameObject"
-	it "keeps requesting GameObject until remote system responds"
-	it "can modify GameObject in remote Environment"
-	it "keeps sending GameObject modification request until remote system responds"
-	
-	it "does not send objects known to already be in remote environment" do
-		object = GameObject.new
-		object2 = GameObject.new
-		@server_environment << object << object2
-		@server.open_socket
-		@client.open_socket
-		@client.connect
-		@server.listen
-		@client.listen
-		@client.send(Request::SetObjectIDs.new([object.identifier]), "127.0.0.1")
-		@server.listen
-		@client.send(Request::Environment.new, "127.0.0.1")
-		@server.listen
-		@client.should_receive(:process).with(
-			Response::Environment.new([object2], [])
-		)
-		@client.listen
-	end
-	
-	it "sends objects that were already on server when a new client connects"	
-	it "sends environmental factors that were already on server when a new client connects"
-	it "sends new objects as they're added to server"
-	it "removes objects from client as they're removed from server"
-	it "sends new environmental factors as they're added to server"
-	it "removes environmental factors from client as they're removed from server"
 	
 	
 	it "has authority on object movement by default"
@@ -142,6 +109,84 @@ describe EnvironmentServer do
 end
 
 
+describe EnvironmentServer do
+
+	CLIENT_LISTEN_PORT = 8989
+
+	before(:each) do
+		@server_environment = Environment.new
+		@server = EnvironmentServer.new(@server_environment)
+		@client_environment = Environment.new
+		@client = EnvironmentClient.new(@client_environment, :host => '127.0.0.1', :listen_port => CLIENT_LISTEN_PORT)
+		@server.open_socket
+		@client.open_socket
+		@client.connect
+		@server.listen
+		@client.listen
+	end
+	
+	after(:each) do
+		@server.close_socket
+		@client.close_socket
+	end
+
+	it "can send movement data for all GameObjects" do
+		object = GameObject.new(:location => Location.new(1, 2), :vector => Vector.new(10, 45))
+		@server_environment << object
+		@client.should_receive(:process).with(
+			Request::UpdateObjectMovement.new(
+				{object.identifier => [1, 2, 10, 45]}
+			),
+			'127.0.0.1'
+		)
+		@server.update(@server_environment)
+		@client.listen
+	end
+	
+	it "can request full Environment" do
+		object = GameObject.new
+		environmental_factor = SpeedLimit.new(1)
+		@client_environment << object << environmental_factor
+		@client.send(Request::Environment.new, '127.0.0.1')
+		@server.listen
+		@client.should_receive(:process).with(
+			Response::Environment.new([object], [environmental_factor]),
+			'127.0.0.1'
+		)
+		@client.listen
+	end
+	
+	it "keeps requesting Environment until remote system responds"
+	it "can add GameObject to remote Environment"
+	it "keeps sending request to add GameObject until remote system responds"
+	it "can request full serialized GameObject"
+	it "keeps requesting GameObject until remote system responds"
+	it "can modify GameObject in remote Environment"
+	it "keeps sending GameObject modification request until remote system responds"
+	
+	it "does not send objects known to already be in remote environment" do
+		object = GameObject.new
+		object2 = GameObject.new
+		@server_environment << object << object2
+		@client.send(Request::SetObjectIDs.new([object.identifier]), "127.0.0.1")
+		@server.listen
+		@client.send(Request::Environment.new, "127.0.0.1")
+		@server.listen
+		@client.should_receive(:process).with(
+			Response::Environment.new([object2], [])
+		)
+		@client.listen
+	end
+	
+	it "sends objects that were already on server when a new client connects"	
+	it "sends environmental factors that were already on server when a new client connects"
+	it "sends new objects as they're added to server"
+	it "removes objects from client as they're removed from server"
+	it "sends new environmental factors as they're added to server"
+	it "removes environmental factors from client as they're removed from server"
+	
+end
+	
 describe EnvironmentClient do
 
 	before(:each) do
