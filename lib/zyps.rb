@@ -96,7 +96,7 @@ class Environment
 	def copy
 		copy = self.clone #Currently, we overwrite everything anyway, but we may add some clonable attributes later.
 		#Make a deep copy of all objects.
-		copy.instance_eval {@objects = []}
+		copy.instance_eval {@objects = {}}
 		self.objects.each {|object| copy.add_object(object.copy)}
 		#Make a deep copy of all environmental_factors.
 		copy.clear_environmental_factors
