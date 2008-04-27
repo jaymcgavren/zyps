@@ -42,7 +42,7 @@ describe EnvironmentServer do
 		@server_environment = Environment.new
 		@server = EnvironmentServer.new(@server_environment)
 		@client_environment = Environment.new
-		@client = EnvironmentClient.new(@client_environment, :host => 'localhost', :listen_port => CLIENT_LISTEN_PORT)
+		@client = EnvironmentClient.new(@client_environment, :host => '127.0.0.1', :listen_port => CLIENT_LISTEN_PORT)
 	end
 	
 	after(:each) do
@@ -76,7 +76,7 @@ describe EnvironmentServer do
 	it "rejects banned clients" do
 		@server.open_socket
 		@client.open_socket
-		@server.ban("localhost")
+		@server.ban("127.0.0.1")
 		@server.should_receive(:receive).and_raise(BannedError)
 		@client.connect
 		@server.listen
@@ -85,10 +85,15 @@ describe EnvironmentServer do
 	it "does not allow IP address if corresponding hostname is banned"
 	it "does not allow hostname if corresponding IP address is banned"
 	
-	it "can send full serialized GameObject"
-	it "keeps requesting GameObject until remote system responds"
 	it "can send movement data for all GameObjects"
-	it "can send full environment"
+	it "can request full Environment"
+	it "keeps requesting Environment until remote system responds"
+	it "can add GameObject to remote Environment"
+	it "keeps sending request to add GameObject until remote system responds"
+	it "can request full serialized GameObject"
+	it "keeps requesting GameObject until remote system responds"
+	it "can modify GameObject in remote Environment"
+	it "keeps sending GameObject modification request until remote system responds"
 	
 	it "does not send objects known to already be in remote environment" do
 		object = GameObject.new
@@ -99,13 +104,14 @@ describe EnvironmentServer do
 		@client.connect
 		@server.listen
 		@client.listen
-		@client.send(Request::SetObjectIDs.new([object.identifier]))
+		@client.send(Request::SetObjectIDs.new([object.identifier]), "127.0.0.1")
 		@server.listen
-		@client.send(Request::Environment.new)
+		@client.send(Request::Environment.new, "127.0.0.1")
 		@server.listen
 		@client.should_receive(:process).with(
 			Response::Environment.new([object2], [])
 		)
+		@client.listen
 	end
 	
 	it "sends objects that were already on server when a new client connects"	

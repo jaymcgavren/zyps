@@ -115,6 +115,7 @@ class EnvironmentTransmitter
 		@environment.add_observer(self)
 		@banned_hosts = []
 		@allowed_hosts = {}
+		@known_objects = Hash.new {|h, k| h[k] = []}
 	end
 	
 	#The maximum allowed transmission size.
@@ -198,6 +199,15 @@ class EnvironmentTransmitter
 	end
 	
 	
+	#Sends data.
+	def send(data, host)
+		string = Serializer.instance.serialize(data.respond_to?(:each) ? data : [data])
+		raise "#{string.length} is over maximum packet size of #{MAX_PACKET_SIZE}." if string.length > MAX_PACKET_SIZE
+		@log.debug "Sending '#{string}' to #{host} on #{port(host)}."
+		UDPSocket.open.send(string, 0, host, port(host))
+	end
+	
+	
 	private
 		
 		
@@ -211,7 +221,7 @@ class EnvironmentTransmitter
 				#If sender wants to join, process request.
 				else
 					@log.debug "#{sender} not currently allowed."
-					object = Serializer.instance.deserialize(data)
+					object = Serializer.instance.deserialize(data).last
 					if object.instance_of?(Request::Join)
 						process(object, sender)
 					else
@@ -242,7 +252,14 @@ class EnvironmentTransmitter
 					object.vector.speed, object.vector.pitch = data[2], data[3]
 				end
 			when Request::Environment
-				send(Response::Environment.new(@environment.objects.to_a, @environment.environmental_factors.to_a), sender)
+				@log.debug "Found objects #{@environment.objects.map{|o| o.identifier}.join(', ')}, omitting #{known_objects[sender].join(', ')}."
+				send(
+					Response::Environment.new(
+						@environment.objects.reject{|o| known_objects[sender].include?(o.identifier)},
+						@environment.environmental_factors.to_a
+					),
+					sender
+				)
 			when Response::Environment
 				@log.debug "Adding #{transmission} to environment."
 				transmission.objects.each {|o| @environment << o}
@@ -269,15 +286,6 @@ class EnvironmentTransmitter
 		end
 
 	
-		#Sends data.
-		def send(data, host)
-			string = Serializer.instance.serialize(data)
-			raise "#{string.length} is over maximum packet size of #{MAX_PACKET_SIZE}." if string.length > MAX_PACKET_SIZE
-			@log.debug "Sending '#{string}' to #{host} on #{allowed_hosts[host]}."
-			UDPSocket.open.send(string, 0, host, allowed_hosts[host])
-		end
-	
-	
 end
 
 
@@ -301,7 +309,7 @@ class EnvironmentServer < EnvironmentTransmitter
 		raise BannedError.new if banned?(sender)
 		@log.debug "Adding #{sender} to client list with port #{request.listen_port}."
 		allow(sender, request.listen_port)
-		send([Response::Join.new, @environment.objects.to_a + @environment.environmental_factors.to_a].flatten, sender)
+		send(Response::Join.new, sender)
 	end
 
 
