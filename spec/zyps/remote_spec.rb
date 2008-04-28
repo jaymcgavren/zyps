@@ -233,8 +233,41 @@ describe EnvironmentServer do
 		@client.listen
 	end
 	
-	it "can modify GameObject in remote Environment"
-	it "keeps sending GameObject modification request until remote system responds"
+	it "can modify GameObject in remote Environment" do
+		server_object = GameObject.new
+		@server_environment << server_object
+		@server.send(Request::AddObject.new(server_object), LOCAL_HOST_ADDRESS)
+		@client.listen
+		server_object.size = 21
+		server_object.color = Color.blue
+		server_object.name = 'Mikey'
+		server_object.tags << 'foo'
+		client_object = @client_environment.get_object(server_object.identifier)
+		client_object.size.should_not == server_object.size
+		client_object.color.should_not == server_object.color
+		client_object.name.should_not == server_object.name
+		client_object.tags.should_not == server_object.tags
+		@server.send(Request::ModifyObject.new(server_object), LOCAL_HOST_ADDRESS)
+		@client.listen
+		client_object = @client_environment.get_object(server_object.identifier)
+		client_object.size.should == server_object.size
+		client_object.color.should == server_object.color
+		client_object.name.should == server_object.name
+		client_object.tags.should == server_object.tags
+	end
+	
+	it "keeps sending GameObject modification request until remote system responds" do
+		object = GameObject.new
+		@server_environment << object
+		@client_environment << object
+		@client.stub!(:send) #Prevent client from responding.
+		request = Request::ModifyObject.new(object)
+		@server.send(request, LOCAL_HOST_ADDRESS)
+		@client.listen
+		@server.resend_requests
+		@client.should_receive(:process).with(request, LOCAL_HOST_ADDRESS)
+		@client.listen
+	end
 	
 	it "does not send objects known to already be in remote environment" do
 		object = GameObject.new

@@ -324,6 +324,9 @@ class EnvironmentTransmitter
 				@log.debug "Adding #{transmission.object} to environment."
 				@environment << transmission.object
 			when Request::ModifyObject
+				old_object = @environment.get_object(transmission.object.identifier)
+				raise ObjectNotFoundError.new(transmission.object.identifier) unless old_object
+				@log.debug "Changing #{old_object} to #{transmission.object}."
 				@environment.update_object(transmission.object.identifier, transmission.object)
 			when Response::ModifyObject
 			when Exception
