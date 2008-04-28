@@ -31,8 +31,14 @@ module Zyps
 
 #Holds requests from a remote system.
 module Request
+	#Descendents of this class should be re-sent until acknowledged.
+	class GuaranteedRequest
+		attr_accessor :guarantee_id
+		def initialize; @guarantee_id = rand(99999999); end
+		def ==(other); self.guarantee_id == other.guarantee_id rescue false; end
+	end
 	#A request to observe an Environment.
-	class Join
+	class Join < GuaranteedRequest
 		#The port the host will be listening on.
 		attr_accessor :listen_port
 		def initialize(listen_port = nil); @listen_port = listen_port; end
@@ -48,23 +54,24 @@ module Request
 		#A hash with GameObject identifiers as keys and arrays with x coordinate, y coordinate, speed, and pitch as values.
 		attr_accessor :movement_data
 		def initialize(movement_data = {}); @movement_data = movement_data; end
+		def ==(other); self.movement_data == other.movement_data rescue false; end
 	end
 	#A request for all objects and environmental factors within an Environment.
-	class Environment; end
+	class Environment < GuaranteedRequest; end
 	#A request to add a specified object to an Environment.
-	class AddObject
+	class AddObject < GuaranteedRequest
 		#The object to add.
 		attr_accessor :object
 		def initialize(object = nil); @object = object; end
 	end
 	#A request for a complete copy of a specified GameObject.
-	class GetObject
+	class GetObject < GuaranteedRequest
 		#Identifier of the object being requested.
 		attr_accessor :identifier
 		def initialize(identifier = nil); @identifier = identifier; end
 	end
 	#A request to update all attributes of a specified GameObject.
-	class ModifyObject
+	class ModifyObject < GuaranteedRequest
 		#The object to update.
 		attr_accessor :object
 		def initialize(object = nil); @object = object; end
@@ -72,28 +79,37 @@ module Request
 end
 #Holds acknowledgements of requests from a remote system.
 module Response
-	class Join; end
-	class Environment
+	#When a descendent of this class is received, re-sending of the corresponding request should be halted.
+	class GuaranteedResponse
+		attr_accessor :response_id
+		def ==(other); self.response_id == other.response_id rescue false; end
+	end
+	class Join < GuaranteedResponse; end
+	class Environment < GuaranteedResponse
 		attr_accessor :objects, :environmental_factors
 		def initialize(objects = [], environmental_factors = []); @objects, @environmental_factors = objects, environmental_factors; end
+		def ==(other); self.objects == other.objects and self.environmental_factors == other.environmental_factors rescue false; end
 	end
-	class AddObject
-		#Identifier of the object that was added.
-		attr_accessor :identifier
-		def initialize(identifier = nil); @identifier = identifier; end
-	end
-	class GetObject
+	class AddObject < GuaranteedResponse; end
+	class GetObject < GuaranteedResponse
 		#The requested object.
 		attr_accessor :object
 		def initialize(object = nil); @object = object; end
+		def ==(other); self.object == other.object rescue false; end
 	end
-	class ModifyObject
-		#Identifier of the object that was modified.
-		attr_accessor :identifier
-		def initialize(identifier = nil); @identifier = identifier; end
-	end
+	class ModifyObject < GuaranteedResponse; end
 end
 class BannedError < Exception; end
+class ObjectNotFoundError < Exception
+	attr_accessor :identifier
+	def initialize(identifier); @identifier = identifier; end
+	def ==(other); self.identifier == other.identifier rescue false; end
+end
+class DuplicateObjectError < Exception
+	attr_accessor :identifier
+	def initialize(identifier); @identifier = identifier; end
+	def ==(other); self.identifier == other.identifier rescue false; end
+end
 
 
 class EnvironmentTransmitter
@@ -116,6 +132,7 @@ class EnvironmentTransmitter
 		@banned_hosts = []
 		@allowed_hosts = {}
 		@known_objects = Hash.new {|h, k| h[k] = []}
+		@unanswered_requests = Hash.new {|h, k| h[k] = {}}
 	end
 	
 	#The maximum allowed transmission size.
@@ -208,10 +225,23 @@ class EnvironmentTransmitter
 	end
 	
 	
+	#Re-send requests for which no response has been received.
+	def resend_requests
+		@log.debug "Unanswered requests: #{@unanswered_requests}"
+		@unanswered_requests.each do |host, transmissions|
+			transmissions.values.each {|transmission| send(transmission, host)}
+		end
+	end
+		
+	
 	#Sends data.
 	def send(data, host)
+		#If data needs guaranteed delivery, save it for re-sending if no response received.
+		@unanswered_requests[host][data.guarantee_id] = data if data.respond_to?(:guarantee_id)
+		#Convert data to string.
 		string = Serializer.instance.serialize(data.respond_to?(:each) ? data : [data])
 		raise "#{string.length} is over maximum packet size of #{MAX_PACKET_SIZE}." if string.length > MAX_PACKET_SIZE
+		#Send string to host.
 		@log.debug "Sending '#{string}' to #{host} on #{port(host)}."
 		UDPSocket.open.send(string, 0, host, port(host))
 	end
@@ -247,6 +277,8 @@ class EnvironmentTransmitter
 		
 		#Determines what to do with a received object.
 		def process(transmission, sender)
+			#If this is a response to a guaranteed request, stop re-sending request.
+			@unanswered_requests[sender].delete(transmission.response_id) if transmission.respond_to?(:response_id)
 			case transmission
 			when Request::Join
 				process_join_request(transmission, sender)
@@ -262,31 +294,38 @@ class EnvironmentTransmitter
 				end
 			when Request::Environment
 				@log.debug "Found objects #{@environment.objects.map{|o| o.identifier}.join(', ')}, omitting #{known_objects[sender].join(', ')}."
-				send(
-					Response::Environment.new(
-						@environment.objects.reject{|o| known_objects[sender].include?(o.identifier)},
-						@environment.environmental_factors.to_a
-					),
-					sender
+				response = Response::Environment.new(
+					@environment.objects.reject{|o| known_objects[sender].include?(o.identifier)},
+					@environment.environmental_factors.to_a
 				)
+				response.response_id = transmission.guarantee_id
+				send(response, sender)
 			when Response::Environment
-				@log.debug "Adding #{transmission} to environment."
+				@log.debug "Adding #{transmission.objects} to environment."
 				transmission.objects.each {|o| @environment << o}
 				transmission.environmental_factors.each {|o| @environment << o}
 			when Request::AddObject
+				if @environment.objects.any?{|o| o.identifier = transmission.object.identifier}
+					raise DuplicateObjectError.new(transmission.object.identifier)
+				end
+				@log.debug "Adding #{transmission.object} to environment."
 				@environment << transmission.object
-				send(Response::AddObject.new(transmission.object.identifier))
+				response = Response::AddObject.new
+				response.response_id = transmission.guarantee_id
+				send(response, sender)
 			when Response::AddObject
-				response_received(transmission.identifier)
 			when Request::GetObject
-				send(Response::GetObject.new(@environment.get_object(transmission.identifier)))
+				object = @environment.get_object(transmission.identifier)
+				raise ObjectNotFoundError.new(transmission.identifier) unless object
+				response = Response::GetObject.new(object)
+				response.response_id = transmission.guarantee_id
+				send(response, sender)
 			when Response::GetObject
+				@log.debug "Adding #{transmission.object} to environment."
 				@environment << transmission.object
-				response_received(transmission.object.identifier)
 			when Request::ModifyObject
 				@environment.update_object(transmission.object.identifier, transmission.object)
 			when Response::ModifyObject
-				response_received(transmission.identifier)
 			when Exception
 				@log.warn transmission
 			else

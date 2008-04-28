@@ -36,15 +36,17 @@ end
 include Zyps
 
 
-describe EnvironmentServer do
+CLIENT_LISTEN_PORT = 8989
+LOCAL_HOST_ADDRESS = '127.0.0.1'
 
-	CLIENT_LISTEN_PORT = 8989
+
+describe EnvironmentServer do
 
 	before(:each) do
 		@server_environment = Environment.new
 		@server = EnvironmentServer.new(@server_environment)
 		@client_environment = Environment.new
-		@client = EnvironmentClient.new(@client_environment, :host => '127.0.0.1', :listen_port => CLIENT_LISTEN_PORT)
+		@client = EnvironmentClient.new(@client_environment, :host => LOCAL_HOST_ADDRESS, :listen_port => CLIENT_LISTEN_PORT)
 	end
 	
 	after(:each) do
@@ -78,7 +80,7 @@ describe EnvironmentServer do
 	it "rejects banned clients" do
 		@server.open_socket
 		@client.open_socket
-		@server.ban("127.0.0.1")
+		@server.ban(LOCAL_HOST_ADDRESS)
 		@server.should_receive(:receive).and_raise(BannedError)
 		@client.connect
 		@server.listen
@@ -111,13 +113,11 @@ end
 
 describe EnvironmentServer do
 
-	CLIENT_LISTEN_PORT = 8989
-
 	before(:each) do
 		@server_environment = Environment.new
 		@server = EnvironmentServer.new(@server_environment)
 		@client_environment = Environment.new
-		@client = EnvironmentClient.new(@client_environment, :host => '127.0.0.1', :listen_port => CLIENT_LISTEN_PORT)
+		@client = EnvironmentClient.new(@client_environment, :host => LOCAL_HOST_ADDRESS, :listen_port => CLIENT_LISTEN_PORT)
 		@server.open_socket
 		@client.open_socket
 		@client.connect
@@ -137,7 +137,7 @@ describe EnvironmentServer do
 			Request::UpdateObjectMovement.new(
 				{object.identifier => [1, 2, 10, 45]}
 			),
-			'127.0.0.1'
+			LOCAL_HOST_ADDRESS
 		)
 		@server.update(@server_environment)
 		@client.listen
@@ -147,20 +147,92 @@ describe EnvironmentServer do
 		object = GameObject.new
 		environmental_factor = SpeedLimit.new(1)
 		@client_environment << object << environmental_factor
-		@client.send(Request::Environment.new, '127.0.0.1')
-		@server.listen
-		@client.should_receive(:process).with(
+		@server.send(Request::Environment.new, LOCAL_HOST_ADDRESS)
+		@client.listen
+		@server.should_receive(:process).with(
 			Response::Environment.new([object], [environmental_factor]),
-			'127.0.0.1'
+			LOCAL_HOST_ADDRESS
 		)
+		@server.listen
+	end
+	
+	it "keeps requesting Environment until remote system responds" do
+		@client.stub!(:send) #Prevent client from responding.
+		request = Request::Environment.new
+		@server.send(request, LOCAL_HOST_ADDRESS)
+		@client.listen
+		@server.resend_requests
+		@client.should_receive(:process).with(request, LOCAL_HOST_ADDRESS)
 		@client.listen
 	end
 	
-	it "keeps requesting Environment until remote system responds"
-	it "can add GameObject to remote Environment"
-	it "keeps sending request to add GameObject until remote system responds"
-	it "can request full serialized GameObject"
-	it "keeps requesting GameObject until remote system responds"
+	it "stops requesting Environment once response is received" do
+		request = Request::Environment.new
+		@server.send(request, LOCAL_HOST_ADDRESS)
+		@client.listen
+		@server.listen
+		@server.should_not_receive(:send)
+		@server.resend_requests
+	end
+	
+	it "can add GameObject to remote Environment" do
+		object = GameObject.new(:location => Location.new(1, 2), :vector => Vector.new(10, 45))
+		@server_environment << object
+		@server.send(Request::AddObject.new(object), LOCAL_HOST_ADDRESS)
+		@client_environment.object_count.should == 0
+		@client.listen
+		@client_environment.object_count.should == 1
+	end
+	
+	it "keeps sending request to add GameObject until remote system responds" do
+		@client.stub!(:send) #Prevent client from responding.
+		request = Request::AddObject.new(GameObject.new)
+		@server.send(request, LOCAL_HOST_ADDRESS)
+		@client.listen
+		@server.resend_requests
+		@client.should_receive(:process).with(request, LOCAL_HOST_ADDRESS)
+		@client.listen
+	end
+	
+	it "returns an exception if added GameObject already exists in local environment" do
+		object = GameObject.new
+		@server_environment << object
+		@client_environment << object
+		@client.send(Request::AddObject.new(object), LOCAL_HOST_ADDRESS)
+		@server.listen
+		lambda{@client.listen}.should raise_error(DuplicateObjectError)
+	end
+	
+	it "modifies remote object instead if add fails because it already exists"
+	
+	it "can request full serialized GameObject" do
+		object = GameObject.new
+		@client_environment << object
+		@server.send(Request::GetObject.new(object.identifier), LOCAL_HOST_ADDRESS)
+		@client.listen
+		@server.listen
+		@server_environment.objects.should include(object)
+	end
+	
+	it "keeps requesting GameObject until remote system responds" do
+		object = GameObject.new
+		@client_environment << object
+		@client.stub!(:send) #Prevent client from responding.
+		request = Request::GetObject.new(object.identifier)
+		@server.send(request, LOCAL_HOST_ADDRESS)
+		@client.listen
+		@server.resend_requests
+		@client.should_receive(:process).with(request, LOCAL_HOST_ADDRESS)
+		@client.listen
+	end
+	
+	it "returns an exception if requested GameObject does not exist in local environment" do
+		@client.send(Request::GetObject.new(1234567), LOCAL_HOST_ADDRESS)
+		@server.listen
+		@client.should_receive(:process).with(ObjectNotFoundError.new(1234567), LOCAL_HOST_ADDRESS)
+		@client.listen
+	end
+	
 	it "can modify GameObject in remote Environment"
 	it "keeps sending GameObject modification request until remote system responds"
 	
@@ -168,12 +240,13 @@ describe EnvironmentServer do
 		object = GameObject.new
 		object2 = GameObject.new
 		@server_environment << object << object2
-		@client.send(Request::SetObjectIDs.new([object.identifier]), "127.0.0.1")
+		@client.send(Request::SetObjectIDs.new([object.identifier]), LOCAL_HOST_ADDRESS)
 		@server.listen
-		@client.send(Request::Environment.new, "127.0.0.1")
+		@client.send(Request::Environment.new, LOCAL_HOST_ADDRESS)
 		@server.listen
 		@client.should_receive(:process).with(
-			Response::Environment.new([object2], [])
+			Response::Environment.new([object2], []),
+			LOCAL_HOST_ADDRESS
 		)
 		@client.listen
 	end
@@ -191,6 +264,10 @@ describe EnvironmentClient do
 
 	before(:each) do
 	end
+	
+	it "keeps requesting to join server until response is received"
+	it "stops join requests once response is received"
+	it "stops join requests if banned"
 	
 	it "should send objects that were already on client when it connects to a server"
 	it "should send new objects as they're added to client"
