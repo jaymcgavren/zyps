@@ -54,22 +54,23 @@ class Environment
 		@objects[object.identifier] = object
 	end
 	#Remove a GameObject from this environment.
-	def remove_object(object)
-		object.environment = nil
-		@objects.delete(object.identifier)
+	def remove_object(identifier)
+		raise "Object #{identifier} not found." unless @objects[identifier]
+		@objects[identifier].environment = nil
+		@objects.delete(identifier)
 	end
 	#An Enumerable::Enumerator over each GameObject in the environment.
 	def objects; Enumerable::Enumerator.new(@objects, :each_value); end
 	#Remove all GameObjects from this environment.
 	def clear_objects
-		@objects.clone.each_value {|object| self.remove_object(object)}
+		@objects.clone.each_key {|identifier| self.remove_object(identifier)}
 	end
 	#Number of GameObjects in this environment.
 	def object_count; @objects.length; end
 	#Retrieve a GameObject by ID.
 	def get_object(identifier); @objects[identifier]; end
 	#Retrieve a GameObject by ID and modify it.
-	def update_object(identifier, value); @objects[identifier] = value; end
+	def update_object(object); @objects[object.identifier] = object; end
 	
 	
 	#Add an EnvironmentalFactor to this environment.

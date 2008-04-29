@@ -76,6 +76,12 @@ module Request
 		attr_accessor :object
 		def initialize(object = nil); @object = object; end
 	end
+	#A request to remove a specified GameObject.
+	class RemoveObject < GuaranteedRequest
+		#Identifier of the object being removed.
+		attr_accessor :identifier
+		def initialize(identifier = nil); @identifier = identifier; end
+	end
 end
 #Holds acknowledgements of requests from a remote system.
 module Response
@@ -98,7 +104,9 @@ module Response
 		def ==(other); self.object == other.object rescue false; end
 	end
 	class ModifyObject < GuaranteedResponse; end
+	class RemoveObject < GuaranteedResponse; end
 end
+class RemoteError < Exception; end
 class BannedError < Exception; end
 class ObjectNotFoundError < Exception
 	attr_accessor :identifier
@@ -267,72 +275,88 @@ class EnvironmentTransmitter
 						raise "#{sender} has not joined game but is transmitting data."
 					end
 				end
-			#Send exceptions back to sender.
-			rescue RuntimeError => exception
-				@log.warn exception
-				send([exception], sender)
+			#Send remote errors back to sender.
+			rescue RemoteError => exception
+				send(exception.message, sender)
 			end
 		end
 		
 		
 		#Determines what to do with a received object.
 		def process(transmission, sender)
-			#If this is a response to a guaranteed request, stop re-sending request.
-			@unanswered_requests[sender].delete(transmission.response_id) if transmission.respond_to?(:response_id)
-			case transmission
-			when Request::Join
-				process_join_request(transmission, sender)
-			when Response::Join
-				#TODO
-			when Request::SetObjectIDs
-				known_objects[sender] += transmission.ids
-			when Request::UpdateObjectMovement
-				transmission.movement_data.each do |id, data|
-					object = @environment.get_object(id)
-					object.location.x, object.location.y = data[0], data[1]
-					object.vector.speed, object.vector.pitch = data[2], data[3]
-				end
-			when Request::Environment
-				@log.debug "Found objects #{@environment.objects.map{|o| o.identifier}.join(', ')}, omitting #{known_objects[sender].join(', ')}."
-				response = Response::Environment.new(
-					@environment.objects.reject{|o| known_objects[sender].include?(o.identifier)},
-					@environment.environmental_factors.to_a
-				)
-				response.response_id = transmission.guarantee_id
-				send(response, sender)
-			when Response::Environment
-				@log.debug "Adding #{transmission.objects} to environment."
-				transmission.objects.each {|o| @environment << o}
-				transmission.environmental_factors.each {|o| @environment << o}
-			when Request::AddObject
-				if @environment.objects.any?{|o| o.identifier = transmission.object.identifier}
-					raise DuplicateObjectError.new(transmission.object.identifier)
-				end
-				@log.debug "Adding #{transmission.object} to environment."
-				@environment << transmission.object
-				response = Response::AddObject.new
-				response.response_id = transmission.guarantee_id
-				send(response, sender)
-			when Response::AddObject
-			when Request::GetObject
-				object = @environment.get_object(transmission.identifier)
-				raise ObjectNotFoundError.new(transmission.identifier) unless object
-				response = Response::GetObject.new(object)
-				response.response_id = transmission.guarantee_id
-				send(response, sender)
-			when Response::GetObject
-				@log.debug "Adding #{transmission.object} to environment."
-				@environment << transmission.object
-			when Request::ModifyObject
-				old_object = @environment.get_object(transmission.object.identifier)
-				raise ObjectNotFoundError.new(transmission.object.identifier) unless old_object
-				@log.debug "Changing #{old_object} to #{transmission.object}."
-				@environment.update_object(transmission.object.identifier, transmission.object)
-			when Response::ModifyObject
-			when Exception
+			if transmission.kind_of?(Exception)
 				@log.warn transmission
-			else
-				raise "Could not process #{transmission}."
+				raise transmission
+			end
+			begin
+				#If this is a response to a guaranteed request, stop re-sending request.
+				@unanswered_requests[sender].delete(transmission.response_id) if transmission.respond_to?(:response_id)
+				case transmission
+				when Request::Join
+					process_join_request(transmission, sender)
+				when Response::Join
+					#TODO
+				when Request::SetObjectIDs
+					known_objects[sender] += transmission.ids
+				when Request::UpdateObjectMovement
+					transmission.movement_data.each do |id, data|
+						object = @environment.get_object(id)
+						object.location.x, object.location.y = data[0], data[1]
+						object.vector.speed, object.vector.pitch = data[2], data[3]
+					end
+				when Request::Environment
+					@log.debug "Found objects #{@environment.objects.map{|o| o.identifier}.join(', ')}, omitting #{known_objects[sender].join(', ')}."
+					response = Response::Environment.new(
+						@environment.objects.reject{|o| known_objects[sender].include?(o.identifier)},
+						@environment.environmental_factors.to_a
+					)
+					response.response_id = transmission.guarantee_id
+					send(response, sender)
+				when Response::Environment
+					@log.debug "Adding #{transmission.objects} to environment."
+					transmission.objects.each {|o| @environment << o}
+					transmission.environmental_factors.each {|o| @environment << o}
+				when Request::AddObject
+					if @environment.objects.any?{|o| o.identifier = transmission.object.identifier}
+						raise DuplicateObjectError.new(transmission.object.identifier)
+					end
+					@log.debug "Adding #{transmission.object} to environment."
+					@environment << transmission.object
+					response = Response::AddObject.new
+					response.response_id = transmission.guarantee_id
+					send(response, sender)
+				when Response::AddObject
+				when Request::GetObject
+					object = @environment.get_object(transmission.identifier)
+					raise ObjectNotFoundError.new(transmission.identifier) unless object
+					response = Response::GetObject.new(object)
+					response.response_id = transmission.guarantee_id
+					send(response, sender)
+				when Response::GetObject
+					@log.debug "Adding #{transmission.object} to environment."
+					@environment << transmission.object
+				when Request::ModifyObject
+					old_object = @environment.get_object(transmission.object.identifier)
+					raise ObjectNotFoundError.new(transmission.object.identifier) unless old_object
+					@log.debug "Changing #{old_object} to #{transmission.object}."
+					@environment.update_object(transmission.object)
+					response = Response::ModifyObject.new
+					response.response_id = transmission.guarantee_id
+					send(response, sender)
+				when Response::ModifyObject
+				when Request::RemoveObject
+					@log.debug "Removing #{@environment.get_object(transmission.identifier)} from environment."
+					@environment.remove_object(transmission.identifier) or raise ObjectNotFoundError.new(transmission.identifier)
+					response = Response::RemoveObject.new
+					response.response_id = transmission.guarantee_id
+					send(response, sender)
+				when Response::RemoveObject
+				else
+					raise RuntimeError.new("Could not process #{transmission}.")
+				end
+			rescue Exception => exception
+				@log.warn exception
+				raise RemoteError.new(exception)
 			end
 		end
 		

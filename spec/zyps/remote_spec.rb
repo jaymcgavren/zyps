@@ -81,9 +81,9 @@ describe EnvironmentServer do
 		@server.open_socket
 		@client.open_socket
 		@server.ban(LOCAL_HOST_ADDRESS)
-		@server.should_receive(:receive).and_raise(BannedError)
 		@client.connect
 		@server.listen
+		lambda{@client.listen}.should raise_error(BannedError)
 	end
 	
 	it "does not allow IP address if corresponding hostname is banned"
@@ -175,6 +175,8 @@ describe EnvironmentServer do
 		@server.resend_requests
 	end
 	
+	it "stops requesting Environment when exception is received"
+	
 	it "can add GameObject to remote Environment" do
 		object = GameObject.new(:location => Location.new(1, 2), :vector => Vector.new(10, 45))
 		@server_environment << object
@@ -193,6 +195,10 @@ describe EnvironmentServer do
 		@client.should_receive(:process).with(request, LOCAL_HOST_ADDRESS)
 		@client.listen
 	end
+	
+	it "stops sending add request once response is received"
+
+	it "stops sending add request when exception is received"
 	
 	it "returns an exception if added GameObject already exists in local environment" do
 		object = GameObject.new
@@ -225,6 +231,10 @@ describe EnvironmentServer do
 		@client.should_receive(:process).with(request, LOCAL_HOST_ADDRESS)
 		@client.listen
 	end
+	
+	it "stops sending object request once response is received"
+	
+	it "stops sending object request when exception is received"
 	
 	it "returns an exception if requested GameObject does not exist in local environment" do
 		@client.send(Request::GetObject.new(1234567), LOCAL_HOST_ADDRESS)
@@ -267,6 +277,63 @@ describe EnvironmentServer do
 		@server.resend_requests
 		@client.should_receive(:process).with(request, LOCAL_HOST_ADDRESS)
 		@client.listen
+	end
+	
+	it "stops sending modification request once response is received" do
+		object = GameObject.new
+		@client_environment << object
+		@server.send(Request::ModifyObject.new(object), LOCAL_HOST_ADDRESS)
+		@client.listen
+		@server.listen
+		@server.should_not_receive(:send)
+		@server.resend_requests
+	end
+	
+	it "stops sending modification request when exception is received"
+	
+	it "returns an exception if GameObject to be modified does not exist in local environment" do
+		@client.send(Request::ModifyObject.new(GameObject.new), LOCAL_HOST_ADDRESS)
+		@server.listen
+		lambda{@client.listen}.should raise_error(ObjectNotFoundError)
+	end
+	
+	it "can remove GameObject from remote Environment" do
+		object = GameObject.new
+		@client_environment << object
+		@client_environment.object_count.should == 1
+		@server.send(Request::RemoveObject.new(object.identifier), LOCAL_HOST_ADDRESS)
+		@client.listen
+		@client_environment.object_count.should == 0
+	end
+	
+	it "keeps sending object removal request until remote system responds" do
+		object = GameObject.new
+		@client_environment << object
+		@client.stub!(:send) #Prevent client from responding.
+		request = Request::RemoveObject.new(object.identifier)
+		@server.send(request, LOCAL_HOST_ADDRESS)
+		@client.listen
+		@server.resend_requests
+		@client.should_receive(:process).with(request, LOCAL_HOST_ADDRESS)
+		@client.listen
+	end
+	
+	it "stops sending removal request once response is received" do
+		object = GameObject.new
+		@client_environment << object
+		@server.send(Request::RemoveObject.new(object.identifier), LOCAL_HOST_ADDRESS)
+		@client.listen
+		@server.listen
+		@server.should_not_receive(:send)
+		@server.resend_requests
+	end
+	
+	it "stops sending removal request when exception is received"
+	
+	it "returns an exception if item for deletion does not exist in local environment" do
+		@client.send(Request::RemoveObject.new(6545641), LOCAL_HOST_ADDRESS)
+		@server.listen
+		lambda{@client.listen}.should raise_error(ObjectNotFoundError)
 	end
 	
 	it "does not send objects known to already be in remote environment" do
