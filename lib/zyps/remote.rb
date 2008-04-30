@@ -346,7 +346,12 @@ class EnvironmentTransmitter
 				when Response::ModifyObject
 				when Request::RemoveObject
 					@log.debug "Removing #{@environment.get_object(transmission.identifier)} from environment."
-					@environment.remove_object(transmission.identifier) or raise ObjectNotFoundError.new(transmission.identifier)
+					begin
+						@environment.remove_object(transmission.identifier)
+					rescue RuntimeError => exception
+						@log.warn exception
+						raise ObjectNotFoundError.new(transmission.identifier)
+					end
 					response = Response::RemoveObject.new
 					response.response_id = transmission.guarantee_id
 					send(response, sender)

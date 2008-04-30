@@ -82,8 +82,7 @@ describe EnvironmentServer do
 		@client.open_socket
 		@server.ban(LOCAL_HOST_ADDRESS)
 		@client.connect
-		@server.listen
-		lambda{@client.listen}.should raise_error(BannedError)
+		lambda{@server.listen}.should raise_error(BannedError)
 	end
 	
 	it "does not allow IP address if corresponding hostname is banned"
