@@ -106,7 +106,9 @@ module Response
 	class ModifyObject < GuaranteedResponse; end
 	class RemoveObject < GuaranteedResponse; end
 end
-class RemoteError < Exception; end
+class RemoteException < Exception
+	attr_accessor :response_id
+end
 class BannedError < Exception; end
 class ObjectNotFoundError < Exception
 	attr_accessor :identifier
@@ -222,13 +224,18 @@ class EnvironmentTransmitter
 			
 		end
 		
-		#Send movement data to each host.
+		#For each host:
 		allowed_hosts.keys.each do |host|
+			#Send movement data.
 			send(Request::UpdateObjectMovement.new(movement_data), host)
+			#Send new objects.
+			objects_to_send = environment.objects.reject{|o| known_objects[host].include?(o.identifier)}
+			objects_to_send.each do |object|
+				zzz
+			end
 		end
 
-		#Flush transmission buffers.
-		#TODO.
+		
 		
 	end
 	
@@ -276,16 +283,17 @@ class EnvironmentTransmitter
 					end
 				end
 			#Send remote errors back to sender.
-			rescue RemoteError => exception
-				send(exception.message, sender)
+			rescue RemoteException => exception
+				send(exception, sender)
 			end
 		end
 		
 		
 		#Determines what to do with a received object.
 		def process(transmission, sender)
-			if transmission.kind_of?(Exception)
+			if transmission.kind_of?(RemoteException)
 				@log.warn transmission
+				@unanswered_requests[sender].delete(transmission.response_id)
 				raise transmission
 			end
 			begin
@@ -361,7 +369,7 @@ class EnvironmentTransmitter
 				end
 			rescue Exception => exception
 				@log.warn exception
-				raise RemoteError.new(exception)
+				raise RemoteException.new(exception)
 			end
 		end
 		

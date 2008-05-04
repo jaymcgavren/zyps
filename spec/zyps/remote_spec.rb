@@ -174,7 +174,21 @@ describe EnvironmentServer do
 		@server.resend_requests
 	end
 	
-	it "stops requesting Environment when exception is received"
+	it "stops requesting Environment when exception is received" do
+		request = Request::Environment.new
+		exception = RemoteException.new(Exception.new)
+		exception.response_id = request.guarantee_id
+		@client.stub!(:process).and_raise(exception)
+		begin
+			@server.send(request, LOCAL_HOST_ADDRESS)
+			@client.listen
+			@server.listen
+		#Receiver should throw wrapped Exception; discard it for test.
+		rescue Exception
+		end
+		@server.should_not_receive(:send)
+		@server.resend_requests
+	end
 	
 	it "can add GameObject to remote Environment" do
 		object = GameObject.new(:location => Location.new(1, 2), :vector => Vector.new(10, 45))
@@ -350,12 +364,22 @@ describe EnvironmentServer do
 		@client.listen
 	end
 	
-	it "sends objects that were already on server when a new client connects"	
+	it "update sends objects that were already on server when a new client connects" do
+		object = GameObject.new
+		object2 = GameObject.new
+		@server_environment << object << object2
+		@server.update(@server_environment)
+		@client.listen
+		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier = object.identifier}}
+		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier = object2.identifier}}
+	end
+	
 	it "sends environmental factors that were already on server when a new client connects"
 	it "sends new objects as they're added to server"
 	it "removes objects from client as they're removed from server"
 	it "sends new environmental factors as they're added to server"
 	it "removes environmental factors from client as they're removed from server"
+	it "can buffer requests to be sent in a single transmission"
 	
 end
 	
