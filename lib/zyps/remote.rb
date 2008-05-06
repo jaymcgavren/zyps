@@ -34,7 +34,7 @@ module Request
 	#Descendents of this class should be re-sent until acknowledged.
 	class GuaranteedRequest
 		attr_accessor :guarantee_id
-		def initialize; @guarantee_id = rand(99999999); end
+		def initialize(*args); @guarantee_id = rand(99999999); end
 		def ==(other); self.guarantee_id == other.guarantee_id rescue false; end
 	end
 	#A request to observe an Environment.
@@ -62,25 +62,26 @@ module Request
 	class AddObject < GuaranteedRequest
 		#The object to add.
 		attr_accessor :object
-		def initialize(object = nil); @object = object; end
+		def initialize(object = nil); super; @object = object; end
+		def to_s; [self.class, self.guarantee_id, self.object].join(' '); end
 	end
 	#A request for a complete copy of a specified GameObject.
 	class GetObject < GuaranteedRequest
 		#Identifier of the object being requested.
 		attr_accessor :identifier
-		def initialize(identifier = nil); @identifier = identifier; end
+		def initialize(identifier = nil); super; @identifier = identifier; end
 	end
 	#A request to update all attributes of a specified GameObject.
 	class ModifyObject < GuaranteedRequest
 		#The object to update.
 		attr_accessor :object
-		def initialize(object = nil); @object = object; end
+		def initialize(object = nil); super; @object = object; end
 	end
 	#A request to remove a specified GameObject.
 	class RemoveObject < GuaranteedRequest
 		#Identifier of the object being removed.
 		attr_accessor :identifier
-		def initialize(identifier = nil); @identifier = identifier; end
+		def initialize(identifier = nil); super; @identifier = identifier; end
 	end
 end
 #Holds acknowledgements of requests from a remote system.
@@ -143,6 +144,7 @@ class EnvironmentTransmitter
 		@allowed_hosts = {}
 		@known_objects = Hash.new {|h, k| h[k] = []}
 		@unanswered_requests = Hash.new {|h, k| h[k] = {}}
+		@queued_transmissions = Hash.new {|h, k| h[k] = []}
 	end
 	
 	#The maximum allowed transmission size.
@@ -226,16 +228,15 @@ class EnvironmentTransmitter
 		
 		#For each host:
 		allowed_hosts.keys.each do |host|
-			#Send movement data.
-			send(Request::UpdateObjectMovement.new(movement_data), host)
-			#Send new objects.
+			#Queue new objects.
 			objects_to_send = environment.objects.reject{|o| known_objects[host].include?(o.identifier)}
-			objects_to_send.each do |object|
-				zzz
-			end
+			objects_to_send.each {|object| queue(Request::AddObject.new(object), host)}
+			#Queue movement data.
+			#This should be done AFTER adding objects so reference objects exist in target environment.
+			queue(Request::UpdateObjectMovement.new(movement_data), host)
+			#Send queued data.
+			flush_queue(host)
 		end
-
-		
 		
 	end
 	
@@ -262,6 +263,22 @@ class EnvironmentTransmitter
 	end
 	
 	
+	#Queues data for later sending.
+	def queue(data, host)
+		@queued_transmissions[host] << data
+	end
+	
+	#Sends all queued transmissions for host and removes them from queue.
+	def flush_queue(host)
+		transmissions = @queued_transmissions.delete(host)
+		transmissions.each do |data|
+			#If data needs guaranteed delivery, save it for re-sending if no response received.
+			@unanswered_requests[host][data.guarantee_id] = data if data.respond_to?(:guarantee_id)
+		end
+		send(transmissions, host)
+	end
+		
+		
 	private
 		
 		
@@ -291,6 +308,7 @@ class EnvironmentTransmitter
 		
 		#Determines what to do with a received object.
 		def process(transmission, sender)
+			@log.debug "Processing #{transmission} from #{sender}."
 			if transmission.kind_of?(RemoteException)
 				@log.warn transmission
 				@unanswered_requests[sender].delete(transmission.response_id)
@@ -325,10 +343,11 @@ class EnvironmentTransmitter
 					transmission.objects.each {|o| @environment << o}
 					transmission.environmental_factors.each {|o| @environment << o}
 				when Request::AddObject
-					if @environment.objects.any?{|o| o.identifier = transmission.object.identifier}
+					if @environment.objects.any?{|o| o.identifier == transmission.object.identifier}
+						@log.warn "Duplicate for #{transmission.object} exists in #{@environment}."
 						raise DuplicateObjectError.new(transmission.object.identifier)
 					end
-					@log.debug "Adding #{transmission.object} to environment."
+					@log.debug "Adding #{transmission.object} to #{@environment}."
 					@environment << transmission.object
 					response = Response::AddObject.new
 					response.response_id = transmission.guarantee_id

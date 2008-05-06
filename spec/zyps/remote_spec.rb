@@ -372,6 +372,7 @@ describe EnvironmentServer do
 		@client.listen
 		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier = object.identifier}}
 		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier = object2.identifier}}
+		puts @client_environment
 	end
 	
 	it "sends environmental factors that were already on server when a new client connects"
@@ -379,7 +380,15 @@ describe EnvironmentServer do
 	it "removes objects from client as they're removed from server"
 	it "sends new environmental factors as they're added to server"
 	it "removes environmental factors from client as they're removed from server"
-	it "can buffer requests to be sent in a single transmission"
+	
+	it "can buffer requests to be sent in a single transmission" do
+		@server.queue(Request::Environment.new, LOCAL_HOST_ADDRESS)
+		@server.queue(Request::SetObjectIDs.new([1111]), LOCAL_HOST_ADDRESS)
+		@server.flush_queue(LOCAL_HOST_ADDRESS)
+		@client.should_receive(:process).with(an_instance_of(Request::Environment), LOCAL_HOST_ADDRESS)
+		@client.should_receive(:process).with(an_instance_of(Request::SetObjectIDs), LOCAL_HOST_ADDRESS)
+		@client.listen
+	end
 	
 end
 	
