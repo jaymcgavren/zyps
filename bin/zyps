@@ -27,7 +27,6 @@ begin
 	require 'zyps/actions'
 	require 'zyps/conditions'
 	require 'zyps/environmental_factors'
-	require 'zyps/remote'
 	require 'zyps/serializer'
 	require 'zyps/views/trails'
 	require 'zyps/views/canvas/wx'
@@ -64,8 +63,6 @@ class Application < Wx::App
 	#	:max_population => 100
 	#	:fps => 60
 	#	:enclosure => true
-	#	:client_uri => nil
-	#	:server_uri => nil
 	#	:object_file => nil
 	def initialize(options = {})
 	
@@ -82,8 +79,6 @@ class Application < Wx::App
 			:max_population => 50,
 			:fps => 30,
 			:enclosure => true,
-			:client_uri => nil,
-			:server_uri => nil,
 			:object_file => nil,
 		}.merge(options)
 		@log.debug "options: #{@options.inspect}"
@@ -421,13 +416,6 @@ EOD
 			end
 			@environment.add_environmental_factor SpeedLimit.new(@options[:max_speed]) if @options[:max_speed]
 			@environment.add_environmental_factor PopulationLimit.new(@options[:max_population]) if @options[:max_population]
-			
-			if @options[:client_uri]
-				@log.debug "Start a network service at #{@options[:client_uri]}."
-				server = EnvironmentServer.new(@environment, @options[:client_uri])
-				server.start
-				$SAFE = 1
-			end
 			
 		end
 		
