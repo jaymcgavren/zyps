@@ -334,6 +334,16 @@ EOD
 	end
 	
 	
+	def on_start_server_menu
+		server = EnvironmentServer.new(@environment)
+	end
+	
+	
+	def on_stop_server_menu
+		@server_started = false
+	end
+	
+	
 	#Load environment's game objects from file.
 	def load_game_objects(path)
 		stored_objects = IO.read(path)
@@ -417,6 +427,11 @@ EOD
 			@environment.add_environmental_factor SpeedLimit.new(@options[:max_speed]) if @options[:max_speed]
 			@environment.add_environmental_factor PopulationLimit.new(@options[:max_population]) if @options[:max_population]
 			
+			if @server
+				@log.debug "Set up #{server}."
+				@server.environment = @environment
+			end
+			
 		end
 		
 		
@@ -432,7 +447,7 @@ EOD
 			@drawing_area.evt_left_down {|event| on_mouse_press(event)}
 			@drawing_area.evt_left_up {|event| on_mouse_release(event)}
 			
-			#Whenever the drawing area needs updating, copy the view's buffer over.
+			@log.debug "Whenever the drawing area needs updating, copy the view's buffer over."
 			@drawing_area.evt_paint {|event| @drawing_area.paint {|dc| render(dc)}}
 			
 		end
@@ -463,6 +478,35 @@ EOD
 				Clock.speed = @controls.speed_slider.value.to_f / 5.0
 			end
 			@frame.sizer.add(@controls, 0, Wx::GROW)
+		end
+		
+		
+		#Set up a server.
+		def server=(value)
+		
+			@server = value
+			
+			@log.debug "Link #{@server} to #{@environment}."
+			@server.environment = @environment
+			
+			@log.debug "Set up listener thread."
+			@server.open_socket
+			@server_started = true
+			Thread.new do
+				@server.listen while @server_started
+			end
+			
+		end
+		
+		
+		#Set up a client.
+		def client=(value)
+		
+			@client = value
+			
+			@log.debug "Link #{@client} to #{environment}."
+			@log.debug "Set up listener thread."
+			
 		end
 
 
