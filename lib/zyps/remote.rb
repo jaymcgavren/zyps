@@ -132,6 +132,8 @@ class EnvironmentTransmitter
 	attr_accessor :allowed_hosts
 	#A hash with the host IPs as keys, and lists of objects known to be in their environments as values.
 	attr_accessor :known_objects
+	#The port number to listen for transmissions on.
+	attr_accessor :listen_port
 
 	#Takes the environment to serve.
 	def initialize(environment)
@@ -437,6 +439,12 @@ end
 
 #Updates local Environment based on instructions from EnvironmentServer.
 class EnvironmentClient < EnvironmentTransmitter
+
+
+	#The address of the host to connect to.
+	attr_accessor :host
+	#The port to connect to on the host.
+	attr_accessor :host_port
 
 	
 	#Takes a hash with the following keys and defaults:

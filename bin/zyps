@@ -349,12 +349,46 @@ EOD
 	
 	
 	def on_start_server_menu
-		server = EnvironmentServer.new(@environment)
+		server = EnvironmentServer.new(
+			@environment,
+			:listen_port => options[:server_listen_port]
+		)
+		@log.debug "Set up a timer to update the server."
+		milliseconds_per_update = (1.0 / 10.0 * 1000).to_int
+		@log.debug "Timer will fire every #{milliseconds_per_update} milliseconds."
+		timer_id = Wx::ID_HIGHEST + 1
+		@server_timer = Wx::Timer.new(self, timer_id)
+		evt_timer(timer_id) {on_server_update_timer}
+		@server_timer.start(milliseconds_per_update)
 	end
 	
 	
 	def on_stop_server_menu
 		@server_started = false
+		@server_timer.stop
+	end
+	
+	
+	def on_start_client_menu
+		client = EnvironmentClient.new(
+			@environment,
+			:host => options[:host],
+			:host_port => options[:host_port],
+			:listen_port => options[:client_listen_port]
+		)
+		@log.debug "Set up a timer to update the client."
+		milliseconds_per_update = (1.0 / 10.0 * 1000).to_int
+		@log.debug "Timer will fire every #{milliseconds_per_update} milliseconds."
+		timer_id = Wx::ID_HIGHEST + 1
+		@client_timer = Wx::Timer.new(self, timer_id)
+		evt_timer(timer_id) {on_client_update_timer}
+		@client_timer.start(milliseconds_per_update)
+	end
+	
+	
+	def on_stop_client_menu
+		@client_started = false
+		@client_timer.stop
 	end
 	
 	
