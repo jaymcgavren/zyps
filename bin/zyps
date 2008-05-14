@@ -184,6 +184,20 @@ class Application < Wx::App
 	end
 	
 	
+	#Update server.
+	def on_server_update_timer
+		@log.debug "Refreshing server."
+		@server.update(@environment)
+	end
+	
+	
+	#Update server.
+	def on_client_update_timer
+		@log.debug "Refreshing client."
+		@client.update(@environment)
+	end
+	
+	
 	#Shut down.
 	def on_exit
 		Configuration.save_object(self.options_file, @options) if self.options_file
@@ -505,7 +519,14 @@ EOD
 			@client = value
 			
 			@log.debug "Link #{@client} to #{environment}."
+			@client.environment = @environment
+			
 			@log.debug "Set up listener thread."
+			@client.open_socket
+			@client_started = true
+			Thread.new do
+				@client.listen while @client_started
+			end
 			
 		end
 
