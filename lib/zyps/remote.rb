@@ -134,6 +134,8 @@ class EnvironmentTransmitter
 	attr_accessor :known_objects
 	#The port number to listen for transmissions on.
 	attr_accessor :listen_port
+	#The environment to maintain.
+	attr_accessor :environment
 
 	#Takes the environment to serve.
 	def initialize(environment)
