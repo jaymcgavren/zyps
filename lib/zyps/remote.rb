@@ -55,6 +55,7 @@ module Request
 		attr_accessor :movement_data
 		def initialize(movement_data = {}); @movement_data = movement_data; end
 		def ==(other); self.movement_data == other.movement_data rescue false; end
+		def to_s; [self.class, self.movement_data.inspect].join(' '); end
 	end
 	#A request for all objects and environmental factors within an Environment.
 	class Environment < GuaranteedRequest; end
@@ -97,7 +98,11 @@ module Response
 		def initialize(objects = [], environmental_factors = []); @objects, @environmental_factors = objects, environmental_factors; end
 		def ==(other); self.objects == other.objects and self.environmental_factors == other.environmental_factors rescue false; end
 	end
-	class AddObject < GuaranteedResponse; end
+	class AddObject < GuaranteedResponse
+		#Identifier of the object that was added.
+		attr_accessor :identifier
+		def initialize(identifier = nil); @identifier = identifier; end
+	end
 	class GetObject < GuaranteedResponse
 		#The requested object.
 		attr_accessor :object
@@ -232,6 +237,7 @@ class EnvironmentTransmitter
 		#For each host:
 		allowed_hosts.keys.each do |host|
 			#Queue new objects.
+			@log.debug "Excluding #{known_objects[host]} from transmission to #{host}."
 			objects_to_send = environment.objects.reject{|o| known_objects[host].include?(o.identifier)}
 			objects_to_send.each {|object| queue(Request::AddObject.new(object), host)}
 			#Queue movement data.
@@ -248,7 +254,8 @@ class EnvironmentTransmitter
 	def resend_requests
 		@log.debug "Unanswered requests: #{@unanswered_requests}"
 		@unanswered_requests.each do |host, transmissions|
-			transmissions.values.each {|transmission| send(transmission, host)}
+			transmissions.values.each {|transmission| queue(transmission, host)}
+			flush_queue(host)
 		end
 	end
 		
@@ -268,12 +275,13 @@ class EnvironmentTransmitter
 	
 	#Queues data for later sending.
 	def queue(data, host)
+		@log.debug "Queueing #{data} for sending to #{host}."
 		@queued_transmissions[host] << data
 	end
 	
 	#Sends all queued transmissions for host and removes them from queue.
 	def flush_queue(host)
-		transmissions = @queued_transmissions.delete(host)
+		transmissions = @queued_transmissions.delete(host) or return
 		transmissions.each do |data|
 			#If data needs guaranteed delivery, save it for re-sending if no response received.
 			@unanswered_requests[host][data.guarantee_id] = data if data.respond_to?(:guarantee_id)
@@ -315,11 +323,14 @@ class EnvironmentTransmitter
 			if transmission.kind_of?(RemoteException)
 				@log.warn transmission
 				@unanswered_requests[sender].delete(transmission.response_id)
-				raise transmission
+				raise transmission.message
 			end
 			begin
 				#If this is a response to a guaranteed request, stop re-sending request.
-				@unanswered_requests[sender].delete(transmission.response_id) if transmission.respond_to?(:response_id)
+				if transmission.respond_to?(:response_id)
+					@unanswered_requests[sender].delete(transmission.response_id)
+					@log.debug "Unanswered requests for #{sender}: #{@unanswered_requests[sender]}"
+				end
 				case transmission
 				when Request::Join
 					process_join_request(transmission, sender)
@@ -346,16 +357,18 @@ class EnvironmentTransmitter
 					transmission.objects.each {|o| @environment << o}
 					transmission.environmental_factors.each {|o| @environment << o}
 				when Request::AddObject
+					known_objects[sender] << transmission.object.identifier
 					if @environment.objects.any?{|o| o.identifier == transmission.object.identifier}
 						@log.warn "Duplicate for #{transmission.object} exists in #{@environment}."
 						raise DuplicateObjectError.new(transmission.object.identifier)
 					end
 					@log.debug "Adding #{transmission.object} to #{@environment}."
 					@environment << transmission.object
-					response = Response::AddObject.new
+					response = Response::AddObject.new(transmission.object.identifier)
 					response.response_id = transmission.guarantee_id
 					send(response, sender)
 				when Response::AddObject
+					known_objects[sender] << transmission.identifier
 				when Request::GetObject
 					object = @environment.get_object(transmission.identifier)
 					raise ObjectNotFoundError.new(transmission.identifier) unless object
@@ -390,8 +403,10 @@ class EnvironmentTransmitter
 					raise RuntimeError.new("Could not process #{transmission}.")
 				end
 			rescue Exception => exception
-				@log.warn exception
-				raise RemoteException.new(exception)
+				@log.warn [exception.message, exception.backtrace].join("\n")
+				remote_exception = RemoteException.new(exception)
+				remote_exception.response_id = transmission.guarantee_id if transmission.respond_to?(:guarantee_id)
+				raise remote_exception
 			end
 		end
 		
@@ -470,6 +485,13 @@ class EnvironmentClient < EnvironmentTransmitter
 		@log.debug "Sending join request to #{@options[:host]}."
 		send(Request::Join.new(@options[:listen_port]), @options[:host])
 	end
+
+
+	private
+	
+
+		#TODO: Implement.
+		def movable_objects(environment, dummy); []; end
 
 	
 end

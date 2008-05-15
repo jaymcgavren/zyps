@@ -132,13 +132,13 @@ describe EnvironmentServer do
 	it "can send movement data for all GameObjects" do
 		object = GameObject.new(:location => Location.new(1, 2), :vector => Vector.new(10, 45))
 		@server_environment << object
+		@server.update(@server_environment)
 		@client.should_receive(:process).with(
 			Request::UpdateObjectMovement.new(
 				{object.identifier => [1, 2, 10, 45]}
 			),
 			LOCAL_HOST_ADDRESS
 		)
-		@server.update(@server_environment)
 		@client.listen
 	end
 	
@@ -209,9 +209,26 @@ describe EnvironmentServer do
 		@client.listen
 	end
 	
-	it "stops sending add request once response is received"
+	it "stops sending add request once response is received" do
+		object = GameObject.new
+		@server_environment << object
+		@server.send(Request::AddObject.new(object), LOCAL_HOST_ADDRESS)
+		@client.listen
+		@server.listen
+		@server.should_not_receive(:queue).with(an_instance_of(Request::AddObject), LOCAL_HOST_ADDRESS)
+		@server.update(@server_environment)
+	end
 
-	it "stops sending add request when exception is received"
+	it "stops sending add request when exception is received" do
+		object = GameObject.new
+		@server_environment << object
+		@client_environment << object
+		@server.update(@server_environment)
+		@client.listen
+		@server.listen
+		@server.should_not_receive(:queue).with(an_instance_of(Request::AddObject), LOCAL_HOST_ADDRESS)
+		@server.update(@server_environment)
+	end
 	
 	it "returns an exception if added GameObject already exists in local environment" do
 		object = GameObject.new
@@ -223,6 +240,15 @@ describe EnvironmentServer do
 	end
 	
 	it "modifies remote object instead if add fails because it already exists"
+	
+	it "does not send back objects that were added by client" do
+		object = GameObject.new
+		@client_environment << object
+		@client.send(Request::AddObject.new(object), LOCAL_HOST_ADDRESS)
+		@server.listen
+		@server.should_not_receive(:queue).with(an_instance_of(Request::AddObject), LOCAL_HOST_ADDRESS)
+		@server.update(@server_environment)
+	end
 	
 	it "can request full serialized GameObject" do
 		object = GameObject.new
