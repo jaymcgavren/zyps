@@ -192,26 +192,14 @@ class Application < Wx::App
 	#Update server.
 	def on_server_update_timer
 		@log.debug "Refreshing #{@server}."
-		begin
-			@server.update(@environment)
-		rescue Exception => exception
-			@log.warn exception.message
-			@log.debug exception.backtrace
-			raise
-		end
+		@server.update(@environment)
 	end
 	
 	
-	#Update server.
+	#Update client.
 	def on_client_update_timer
 		@log.debug "Refreshing #{@client}."
-		begin
-			@client.update(@environment)
-		rescue Exception => exception
-			@log.warn exception.message
-			@log.debug exception.backtrace
-			raise
-		end
+		@client.update(@environment)
 	end
 	
 	
@@ -373,9 +361,17 @@ EOD
 		@log.debug "Set up a timer to update #{@server}."
 		milliseconds_per_update = 1000
 		@log.debug "Timer will fire every #{milliseconds_per_update} milliseconds."
-		timer_id = Wx::ID_HIGHEST + 1
+		timer_id = Wx::ID_HIGHEST + 2
 		@server_timer = Wx::Timer.new(self, timer_id)
-		evt_timer(timer_id) {on_server_update_timer}
+		evt_timer(timer_id) do
+			begin
+				on_server_update_timer
+			rescue Exception => exception
+				@log.warn exception.message
+				@log.debug exception.backtrace
+				raise
+			end
+		end
 		@server_timer.start(milliseconds_per_update)
 	end
 	
@@ -396,9 +392,17 @@ EOD
 		@log.debug "Set up a timer to update the client."
 		milliseconds_per_update = 1000
 		@log.debug "Timer will fire every #{milliseconds_per_update} milliseconds."
-		timer_id = Wx::ID_HIGHEST + 1
+		timer_id = Wx::ID_HIGHEST + 3
 		@client_timer = Wx::Timer.new(self, timer_id)
-		evt_timer(timer_id) {on_client_update_timer}
+		evt_timer(timer_id) do
+			begin
+				on_client_update_timer
+			rescue Exception => exception
+				@log.warn exception.message
+				@log.debug exception.backtrace
+				raise
+			end
+		end
 		@client_timer.start(milliseconds_per_update)
 	end
 	
@@ -574,6 +578,7 @@ EOD
 			
 			@log.debug "Set up listener thread."
 			@client.open_socket
+			@client.connect
 			@client_started = true
 			Thread.new do
 				@client.listen while @client_started
