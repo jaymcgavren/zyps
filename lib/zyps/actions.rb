@@ -328,7 +328,7 @@ class ExplodeAction < SpawnAction
 	#Also removes actor from environment.
 	def do(actor, targets)
 		super
-		actor.environment.remove_object(actor)
+		actor.environment.remove_object(actor.identifier)
 	end
 	#Calls super method.
 	#Also adds actor's vector to child's.

@@ -285,7 +285,7 @@ class PopulationLimit < EnvironmentalFactor
 				objects_for_removal << object
 				break if objects_for_removal.length >= excess
 			end
-			objects_for_removal.each {|object| environment.remove_object(object)}
+			objects_for_removal.each {|object| environment.remove_object(object.identifier)}
 		end
 	end
 	
