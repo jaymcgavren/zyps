@@ -41,11 +41,10 @@ class TestActions < Test::Unit::TestCase
 	def setup
 		@actor = Creature.new(:name => 'actor', :location => Location.new(0, 0))
 		@target1 = Creature.new(:name => 'target1', :location => Location.new(1, 1))
-		@target2 = Creature.new(:name => 'target2', :location => Location.new(-2, -2))
 		#Create an environment, and add the objects.
 		@environment = Environment.new
 		#Order is important - we want to act on target 1 first.
-		@environment << @actor << @target1 << @target2
+		@environment << @actor << @target1
 	end
 	
 	#Add a new behavior to a creature with the given action.
@@ -121,8 +120,7 @@ class TestActions < Test::Unit::TestCase
 		#Act.
 		@environment.interact
 		#Verify targets are removed from environment.
-		environment_object = nil
-		assert(! @environment.objects.include?(@target2))
+		assert(! @environment.objects.include?(@target1))
 	end
 	
 	
@@ -132,14 +130,12 @@ class TestActions < Test::Unit::TestCase
 		add_action(EatAction.new, @actor)
 		#Act.
 		@actor.size = 1
-		@target1.size = 1
-		@target2.size = 2
+		@target1.size = 2
 		@environment.interact
 		#Verify targets are removed from environment.
 		assert(! @environment.objects.include?(@target1))
-		assert(! @environment.objects.include?(@target2))
 		#Verify creature has grown by the appropriate amount.
-		assert_in_delta(4, @actor.size, REQUIRED_ACCURACY)
+		assert_in_delta(3, @actor.size, REQUIRED_ACCURACY)
 	end
 	
 	
@@ -222,8 +218,8 @@ class TestActions < Test::Unit::TestCase
 		@environment.interact #Act twice to trigger action on actor (and only actor).
 		#Find children.
 		children = @environment.objects.find_all {|o| o.name == "Copy of actor"}
-		#One child should have been spawned per target.
-		assert_equal(2, children.length)
+		#One child should have been spawned with target.
+		assert_equal(1, children.length)
 		#Ensure child's color is a mix of parents'.
 		assert_equal(Color.new(0.5, 0.5, 0.5), children[0].color)
 		#Ensure child's behaviors combine the parents'.
@@ -240,7 +236,6 @@ class TestActions < Test::Unit::TestCase
 		)
 		#Ensure child appears at actor's location.
 		assert_equal(@actor.location, children[0].location)
-		assert_equal(@actor.location, children[1].location)
 	end
 	
 	
@@ -253,7 +248,7 @@ class TestActions < Test::Unit::TestCase
 		#Interact.
 		@environment.interact
 		#All children should be spawned.
-		assert_equal(5, @environment.object_count)
+		assert_equal(4, @environment.object_count)
 		creature_copy = @environment.objects.find{|o| o.name == 'Copy of creature'}
 		object_copy = @environment.objects.find{|o| o.name == 'Copy of object'}
 		#Childrens' starting location should match actor's.
@@ -275,7 +270,7 @@ class TestActions < Test::Unit::TestCase
 		#Actor should be removed from environment.
 		assert(! @environment.objects.include?(@actor))
 		#All children should be spawned.
-		assert_equal(4, @environment.object_count)
+		assert_equal(3, @environment.object_count)
 		creature_copy = @environment.objects.find{|o| o.name == 'Copy of creature'}
 		object_copy = @environment.objects.find{|o| o.name == 'Copy of object'}
 		#Spawned objects' vectors should be sum of originals' plus actor's.
@@ -288,24 +283,24 @@ class TestActions < Test::Unit::TestCase
 		prototypes[0][0].vector.pitch = 5
 		#Add prototypes to new ShootAction.
 		add_action(ShootAction.new(prototypes), @actor)
-		#Interact with both targets.
+		#Interact with target.
 		@environment.interact
 		#Both objects in first group should have been spawned.
-		assert_equal(5, @environment.object_count)
+		assert_equal(4, @environment.object_count)
 		creature_copy = @environment.objects.find{|o| o.name == 'Copy of creature'}
 		object_copy = @environment.objects.find{|o| o.name == 'Copy of object'}
-		#First spawned object's vector should match angle to first target plus prototype's vector angle.
+		#First spawned object's vector should match angle to target plus prototype's vector angle.
 		assert_equal(45 + 5, creature_copy.vector.pitch)
-		#Second spawned object's vector should match angle to first target.
+		#Second spawned object's vector should match angle to target.
 		assert_equal(45, object_copy.vector.pitch)
 		#Fire second set of bullets.
 		@environment.interact
 		#Only second set should have been spawned.
-		assert_equal(6, @environment.object_count)
+		assert_equal(5, @environment.object_count)
 		creature_2_copy = @environment.objects.find{|o| o.name == 'Copy of 2'}
-		assert_not_nil(creature_copy)
-		#Spawned object should be aimed at second target.
-		assert_equal(225, creature_2_copy.vector.pitch)
+		assert_not_nil(creature_2_copy)
+		#Spawned object should be aimed at target.
+		assert_equal(45, creature_2_copy.vector.pitch)
 	end
 	
 end
