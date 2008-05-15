@@ -154,7 +154,7 @@ class DestroyAction < Action
 	#Remove the target from the environment.
 	def do(actor, targets)
 		targets.each do |target|
-			target.environment.remove_object(target)
+			target.environment.remove_object(target.identifier)
 		end
 	end
 end
