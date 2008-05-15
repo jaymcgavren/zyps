@@ -233,25 +233,19 @@ class TestPopulationLimit < Test::Unit::TestCase
 		creature_1 = Creature.new
 		environment.add_object(creature_1)
 		limit.act(environment)
-		assert(environment.objects.include?(creature_1))
+		assert_equal(1, environment.object_count)
 		creature_2 = Creature.new
 		environment.add_object(creature_2)
 		limit.act(environment)
-		assert(environment.objects.include?(creature_1))
-		assert(environment.objects.include?(creature_2))
+		assert_equal(2, environment.object_count)
 		limit.act(environment)
-		assert(environment.objects.include?(creature_1))
-		assert(environment.objects.include?(creature_2))
+		assert_equal(2, environment.object_count)
 		
 		#Ensure first creature is removed when limit is exceeded.
 		creature_3 = Creature.new
 		environment.add_object(creature_3)
 		limit.act(environment)
-		assert(! environment.objects.include?(creature_1))
-		
-		#Ensure other creatures aren't touched.
-		assert(environment.objects.include?(creature_2))
-		assert(environment.objects.include?(creature_3))
+		assert_equal(2, environment.object_count)
 		
 	end
 	
