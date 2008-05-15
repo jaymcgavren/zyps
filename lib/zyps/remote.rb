@@ -143,7 +143,6 @@ class EnvironmentTransmitter
 		@log.level = LOG_LEVEL
 		@log.progname = self
 		@environment = environment
-		@environment.add_observer(self)
 		@banned_hosts = []
 		@allowed_hosts = {}
 		@known_objects = Hash.new {|h, k| h[k] = []}
@@ -460,7 +459,6 @@ class EnvironmentClient < EnvironmentTransmitter
 			:host_port => 9977,
 			:listen_port => nil
 		}.merge(options)
-		@environment.add_observer(self)
 		#All transmissions to server should go to server's listen port.
 		@options[:host] = IPSocket.getaddress(@options[:host])
 		allowed_hosts[@options[:host]] = @options[:host_port]
