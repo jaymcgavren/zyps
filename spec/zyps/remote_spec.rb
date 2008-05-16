@@ -133,6 +133,9 @@ describe EnvironmentServer do
 		object = GameObject.new(:location => Location.new(1, 2), :vector => Vector.new(10, 45))
 		@server_environment << object
 		@server.update(@server_environment)
+		@client.listen
+		@server.listen
+		@server.update(@server_environment)
 		@client.should_receive(:process).with(
 			Request::UpdateObjectMovement.new(
 				{object.identifier => [1, 2, 10, 45]}
@@ -176,7 +179,8 @@ describe EnvironmentServer do
 	
 	it "stops requesting Environment when exception is received" do
 		request = Request::Environment.new
-		exception = RemoteException.new(Exception.new)
+		exception = RemoteException.new
+		exception.cause = Exception.new
 		exception.response_id = request.guarantee_id
 		@client.stub!(:process).and_raise(exception)
 		begin
@@ -281,8 +285,7 @@ describe EnvironmentServer do
 	it "returns an exception if requested GameObject does not exist in local environment" do
 		@client.send(Request::GetObject.new(1234567), LOCAL_HOST_ADDRESS)
 		@server.listen
-		@client.should_receive(:process).and_raise(ObjectNotFoundError)
-		@client.listen
+		lambda {@client.listen}.should raise_error(ObjectNotFoundError)
 	end
 	
 	it "can modify GameObject in remote Environment" do
