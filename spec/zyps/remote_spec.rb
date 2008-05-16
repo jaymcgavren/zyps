@@ -225,7 +225,10 @@ describe EnvironmentServer do
 		@client_environment << object
 		@server.update(@server_environment)
 		@client.listen
-		@server.listen
+		begin
+			@server.listen
+		rescue DuplicateObjectError
+		end
 		@server.should_not_receive(:queue).with(an_instance_of(Request::AddObject), LOCAL_HOST_ADDRESS)
 		@server.update(@server_environment)
 	end
@@ -278,7 +281,7 @@ describe EnvironmentServer do
 	it "returns an exception if requested GameObject does not exist in local environment" do
 		@client.send(Request::GetObject.new(1234567), LOCAL_HOST_ADDRESS)
 		@server.listen
-		@client.should_receive(:process).with(ObjectNotFoundError.new(1234567), LOCAL_HOST_ADDRESS)
+		@client.should_receive(:process).and_raise(ObjectNotFoundError)
 		@client.listen
 	end
 	

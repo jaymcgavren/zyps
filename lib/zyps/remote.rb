@@ -114,6 +114,7 @@ module Response
 end
 class RemoteException < Exception
 	attr_accessor :response_id
+	attr_accessor :cause
 end
 class BannedError < Exception; end
 class ObjectNotFoundError < Exception
@@ -320,10 +321,16 @@ class EnvironmentTransmitter
 		#Determines what to do with a received object.
 		def process(transmission, sender)
 			@log.debug "Processing #{transmission} from #{sender}."
-			if transmission.kind_of?(RemoteException)
-				@log.warn transmission
-				@unanswered_requests[sender].delete(transmission.response_id)
-				raise transmission.message
+			begin
+				if transmission.kind_of?(RemoteException)
+					@log.warn [transmission.cause.message, transmission.cause.backtrace].join("\n")
+					@log.debug "Deleting #{transmission.response_id} from #{@unanswered_requests[sender].keys}."
+					@unanswered_requests[sender].delete(transmission.response_id)
+					raise transmission.cause
+				end
+			rescue DuplicateObjectError => exception
+				known_objects[sender] << exception.identifier
+				raise
 			end
 			begin
 				#If this is a response to a guaranteed request, stop re-sending request.
@@ -404,7 +411,8 @@ class EnvironmentTransmitter
 				end
 			rescue Exception => exception
 				@log.warn [exception.message, exception.backtrace].join("\n")
-				remote_exception = RemoteException.new(exception)
+				remote_exception = RemoteException.new
+				remote_exception.cause = exception
 				remote_exception.response_id = transmission.guarantee_id if transmission.respond_to?(:guarantee_id)
 				raise remote_exception
 			end
