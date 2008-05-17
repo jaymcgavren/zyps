@@ -95,19 +95,16 @@ describe EnvironmentServer do
 		@server.open_socket
 		@client.open_socket
 		@client.connect
+		@server.listen
+		@client.listen
 		@server.update(@server_environment)
 		@client.listen
-		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier = object.identifier}}
-		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier = object2.identifier}}
-		puts @client_environment
+		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier == object.identifier}}
+		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier == object2.identifier}}
 	end
 	
-	it "sends environmental factors that were already on server when a new client connects"
+	it "sends environmental factors that were already on server when a new client connects"	
 	
-	
-	it "has authority on object movement by default"
-	it "does not have authority on object movement when assigned to client"
-	it "has authority on object removal"
 	it "keeps updating other clients if one disconnects"
 	it "lets new clients connect and get world if others are already connected"
 	it "doesn't send new object to client if a rule tells it not to"
@@ -451,7 +448,21 @@ describe EnvironmentServer do
 		@client.listen
 	end
 	
-	it "sends new objects as they're added to server"
+	it "sends new objects as they're added to server" do
+		object = GameObject.new
+		@server_environment << object
+		@server.update(@server_environment)
+		@client.listen
+		@server.listen
+		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier == object.identifier}}
+		object2 = GameObject.new
+		@server_environment << object2
+		@server.update(@server_environment)
+		@client.listen
+		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier == object.identifier}}
+		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier == object2.identifier}}
+	end
+	
 	it "removes objects from client as they're removed from server"
 	it "sends new environmental factors as they're added to server"
 	it "removes environmental factors from client as they're removed from server"
@@ -464,6 +475,10 @@ describe EnvironmentServer do
 		@client.should_receive(:process).with(an_instance_of(Request::SetObjectIDs), LOCAL_HOST_ADDRESS)
 		@client.listen
 	end
+	
+	it "has authority on object movement by default"
+	it "does not have authority on object movement when assigned to client"
+	it "has authority on object removal"
 	
 end
 	
