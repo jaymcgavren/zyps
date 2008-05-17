@@ -463,7 +463,19 @@ describe EnvironmentServer do
 		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier == object2.identifier}}
 	end
 	
-	it "removes objects from client as they're removed from server"
+	it "removes objects from client as they're removed from server" do
+		object = GameObject.new
+		@server_environment << object
+		@server.update(@server_environment)
+		@client.listen
+		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier == object.identifier}}
+		@server.listen
+		@server_environment.remove_object(object.identifier)
+		@server.update(@server_environment)
+		@client.listen
+		@client_environment.should_not satisfy {|e| e.objects.any?{|o| o.identifier == object.identifier}}
+	end
+	
 	it "sends new environmental factors as they're added to server"
 	it "removes environmental factors from client as they're removed from server"
 	
