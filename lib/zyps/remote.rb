@@ -239,18 +239,32 @@ class EnvironmentTransmitter
 			
 		end
 		
+		#Objects that have been removed since previous update should be removed from remote environments.
+		object_ids = environment.objects.map{|o| o.identifier}
+		objects_to_remove = []
+		if defined?(@prior_update_object_ids)
+			objects_to_remove = (@prior_update_object_ids - object_ids)
+			@log.debug "Objects missing since prior update: #{objects_to_remove}"
+			objects_to_remove = objects_to_remove.find_all{|o| destructible_objects(environment).include?(o)}
+		end
+		
 		#For each host:
 		allowed_hosts.keys.each do |host|
-			#Queue new objects.
+			#Update objects.
 			@log.debug "Excluding #{known_objects[host]} from transmission to #{host}."
 			objects_to_send = environment.objects.reject{|o| known_objects[host].include?(o.identifier)}
 			objects_to_send.each {|object| queue(Request::AddObject.new(object), host)}
+			@log.debug "Objects to remove from remote environments: #{objects_to_remove}"
+			objects_to_remove.each {|id| queue(Request::RemoveObject.new(id), host)}
 			#Queue movement data.
 			#This should be done AFTER adding objects so reference objects exist in target environment.
 			queue(Request::UpdateObjectMovement.new(movement_data), host)
 			#Send queued data.
 			flush_queue(host)
 		end
+		
+		#Note object IDs so we can see if any are missing next update.
+		@prior_update_object_ids = object_ids
 		
 	end
 	
@@ -433,7 +447,7 @@ class EnvironmentTransmitter
 		#TODO: Implement.
 		def movable_objects(environment, dummy); environment.objects; end
 		def sendable_objects(environment, dummy); environment.objects; end
-		def destructible_objects(environment, dummy); environment.objects; end
+		def destructible_objects(environment); environment.objects; end
 		
 			
 end
