@@ -278,9 +278,29 @@ describe EnvironmentServer do
 		@client.listen
 	end
 	
-	it "stops sending object request once response is received"
+	it "stops sending object request once response is received" do
+		object = GameObject.new
+		@client_environment << object
+		request = Request::GetObject.new(object.identifier)
+		@server.send(request, LOCAL_HOST_ADDRESS)
+		@client.listen
+		@server.listen
+		@server.should_not_receive(:send)
+		@server.resend_requests
+	end
 	
-	it "stops sending object request when exception is received"
+	it "stops sending object request when exception is received" do
+		request = Request::GetObject.new(999999)
+		begin
+			@server.send(request, LOCAL_HOST_ADDRESS)
+			@client.listen
+			@server.listen
+		#Receiver should throw Exception; discard it for test.
+		rescue ObjectNotFoundError
+		end
+		@server.should_not_receive(:send)
+		@server.resend_requests
+	end
 	
 	it "returns an exception if requested GameObject does not exist in local environment" do
 		@client.send(Request::GetObject.new(1234567), LOCAL_HOST_ADDRESS)
@@ -334,7 +354,17 @@ describe EnvironmentServer do
 		@server.resend_requests
 	end
 	
-	it "stops sending modification request when exception is received"
+	it "stops sending modification request when exception is received" do
+		begin
+			@server.send(Request::ModifyObject.new(GameObject.new), LOCAL_HOST_ADDRESS)
+			@client.listen
+			@server.listen
+		#Receiver should throw Exception; discard it for test.
+		rescue ObjectNotFoundError
+		end
+		@server.should_not_receive(:send)
+		@server.resend_requests
+	end
 	
 	it "returns an exception if GameObject to be modified does not exist in local environment" do
 		@client.send(Request::ModifyObject.new(GameObject.new), LOCAL_HOST_ADDRESS)
@@ -373,7 +403,17 @@ describe EnvironmentServer do
 		@server.resend_requests
 	end
 	
-	it "stops sending removal request when exception is received"
+	it "stops sending removal request when exception is received" do
+		begin
+			@server.send(Request::RemoveObject.new(999999), LOCAL_HOST_ADDRESS)
+			@client.listen
+			@server.listen
+		#Receiver should throw Exception; discard it for test.
+		rescue ObjectNotFoundError
+		end
+		@server.should_not_receive(:send)
+		@server.resend_requests
+	end
 	
 	it "returns an exception if item for deletion does not exist in local environment" do
 		@client.send(Request::RemoveObject.new(6545641), LOCAL_HOST_ADDRESS)

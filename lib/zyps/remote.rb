@@ -110,7 +110,11 @@ module Response
 		def ==(other); self.object == other.object rescue false; end
 	end
 	class ModifyObject < GuaranteedResponse; end
-	class RemoveObject < GuaranteedResponse; end
+	class RemoveObject < GuaranteedResponse
+		#Identifier of the object that was removed.
+		attr_accessor :identifier
+		def initialize(identifier = nil); @identifier = identifier; end
+	end
 end
 class RemoteException < Exception
 	attr_accessor :response_id
@@ -406,6 +410,7 @@ class EnvironmentTransmitter
 					response.response_id = transmission.guarantee_id
 					send(response, sender)
 				when Response::RemoveObject
+					known_objects[sender].delete(transmission.identifier)
 				else
 					raise RuntimeError.new("Could not process #{transmission}.")
 				end
