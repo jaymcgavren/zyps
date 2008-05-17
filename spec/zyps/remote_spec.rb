@@ -88,6 +88,21 @@ describe EnvironmentServer do
 	it "does not allow IP address if corresponding hostname is banned"
 	it "does not allow hostname if corresponding IP address is banned"
 	
+	it "sends objects that were already on server when a new client connects" do
+		object = GameObject.new
+		object2 = GameObject.new
+		@server_environment << object << object2
+		@server.open_socket
+		@client.open_socket
+		@client.connect
+		@server.update(@server_environment)
+		@client.listen
+		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier = object.identifier}}
+		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier = object2.identifier}}
+		puts @client_environment
+	end
+	
+	it "sends environmental factors that were already on server when a new client connects"
 	
 	
 	it "has authority on object movement by default"
@@ -436,18 +451,6 @@ describe EnvironmentServer do
 		@client.listen
 	end
 	
-	it "update sends objects that were already on server when a new client connects" do
-		object = GameObject.new
-		object2 = GameObject.new
-		@server_environment << object << object2
-		@server.update(@server_environment)
-		@client.listen
-		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier = object.identifier}}
-		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier = object2.identifier}}
-		puts @client_environment
-	end
-	
-	it "sends environmental factors that were already on server when a new client connects"
 	it "sends new objects as they're added to server"
 	it "removes objects from client as they're removed from server"
 	it "sends new environmental factors as they're added to server"
