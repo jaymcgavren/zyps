@@ -97,7 +97,7 @@ describe EnvironmentServer do
 		@client.connect
 		@server.listen
 		@client.listen
-		@server.update(@server_environment)
+		@server.update
 		@client.listen
 		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier == object.identifier}}
 		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier == object2.identifier}}
@@ -144,10 +144,10 @@ describe EnvironmentServer do
 	it "can send movement data for all GameObjects" do
 		object = GameObject.new(:location => Location.new(1, 2), :vector => Vector.new(10, 45))
 		@server_environment << object
-		@server.update(@server_environment)
+		@server.update
 		@client.listen
 		@server.listen
-		@server.update(@server_environment)
+		@server.update
 		@client.should_receive(:process).with(
 			Request::UpdateObjectMovement.new(
 				{object.identifier => [1, 2, 10, 45]}
@@ -232,21 +232,21 @@ describe EnvironmentServer do
 		@client.listen
 		@server.listen
 		@server.should_not_receive(:queue).with(an_instance_of(Request::AddObject), LOCAL_HOST_ADDRESS)
-		@server.update(@server_environment)
+		@server.update
 	end
 
 	it "stops sending add request when exception is received" do
 		object = GameObject.new
 		@server_environment << object
 		@client_environment << object
-		@server.update(@server_environment)
+		@server.update
 		@client.listen
 		begin
 			@server.listen
 		rescue DuplicateObjectError
 		end
 		@server.should_not_receive(:queue).with(an_instance_of(Request::AddObject), LOCAL_HOST_ADDRESS)
-		@server.update(@server_environment)
+		@server.update
 	end
 	
 	it "returns an exception if added GameObject already exists in local environment" do
@@ -266,7 +266,7 @@ describe EnvironmentServer do
 		@client.send(Request::AddObject.new(object), LOCAL_HOST_ADDRESS)
 		@server.listen
 		@server.should_not_receive(:queue).with(an_instance_of(Request::AddObject), LOCAL_HOST_ADDRESS)
-		@server.update(@server_environment)
+		@server.update
 	end
 	
 	it "can request full serialized GameObject" do
@@ -451,13 +451,13 @@ describe EnvironmentServer do
 	it "sends new objects as they're added to server" do
 		object = GameObject.new
 		@server_environment << object
-		@server.update(@server_environment)
+		@server.update
 		@client.listen
 		@server.listen
 		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier == object.identifier}}
 		object2 = GameObject.new
 		@server_environment << object2
-		@server.update(@server_environment)
+		@server.update
 		@client.listen
 		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier == object.identifier}}
 		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier == object2.identifier}}
@@ -466,12 +466,12 @@ describe EnvironmentServer do
 	it "removes objects from client as they're removed from server" do
 		object = GameObject.new
 		@server_environment << object
-		@server.update(@server_environment)
+		@server.update
 		@client.listen
 		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier == object.identifier}}
 		@server.listen
 		@server_environment.remove_object(object.identifier)
-		@server.update(@server_environment)
+		@server.update
 		@client.listen
 		@client_environment.should_not satisfy {|e| e.objects.any?{|o| o.identifier == object.identifier}}
 	end

@@ -192,14 +192,14 @@ class Application < Wx::App
 	#Update server.
 	def on_server_update_timer
 		@log.debug "Refreshing #{@server}."
-		@server.update(@environment)
+		@server.update
 	end
 	
 	
 	#Update client.
 	def on_client_update_timer
 		@log.debug "Refreshing #{@client}."
-		@client.update(@environment)
+		@client.update
 	end
 	
 	

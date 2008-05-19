@@ -215,7 +215,7 @@ class EnvironmentTransmitter
 	
 	
 	#Compare environment state to previous state and send updates to listeners.
-	def update(environment)
+	def update
 	
 		movement_data = {}
 	
@@ -523,7 +523,7 @@ class EnvironmentClient < EnvironmentTransmitter
 	
 
 		#TODO: Implement.
-		def movable_objects(environment, dummy); []; end
+		def movable?(object); false; end
 
 	
 end
