@@ -220,21 +220,25 @@ class EnvironmentTransmitter
 		movement_data = {}
 	
 		#For each area of interest for the environment:
-		areas_of_interest(environment).each do |area|
+		areas_of_interest.each do |area|
 
 			#If it is not this area's turn to be evaluated, skip to the next.
 			next unless evaluation_turn?(area)
 			
-			#For each object this transmitter has movement authority over:
-			movable_objects(environment, area).each do |object|
-				@log.debug "Adding #{object} to movement update."
-				#Get its location and vector for inclusion in movement update.
-				movement_data[object.identifier] = [
-					object.location.x,
-					object.location.y,
-					object.vector.speed,
-					object.vector.pitch
-				]
+			#For each object in the area:
+			objects(area).each do |object|
+				@log.debug "Processing #{object}."
+				#If transmitter has movement authority over object:
+				if movable?(object)
+					@log.debug "Adding to movement update."
+					#Get its location and vector for inclusion in movement update.
+					movement_data[object.identifier] = [
+						object.location.x,
+						object.location.y,
+						object.vector.speed,
+						object.vector.pitch
+					]
+				end
 			end
 			
 		end
@@ -245,7 +249,7 @@ class EnvironmentTransmitter
 		if defined?(@prior_update_object_ids)
 			objects_to_remove = (@prior_update_object_ids - object_ids)
 			@log.debug "Objects missing since prior update: #{objects_to_remove}"
-			objects_to_remove = objects_to_remove.find_all{|o| destructible_objects(environment).include?(o)}
+			objects_to_remove = objects_to_remove.find_all{|o| destructible?(o)}
 		end
 		
 		#For each host:
@@ -442,12 +446,13 @@ class EnvironmentTransmitter
 		def evaluation_turn?(dummy); true; end
 		
 		#TODO: Implement.
-		def areas_of_interest(environment); ["dummy"]; end
+		def areas_of_interest; ["dummy"]; end
 		
 		#TODO: Implement.
-		def movable_objects(environment, dummy); environment.objects; end
-		def sendable_objects(environment, dummy); environment.objects; end
-		def destructible_objects(environment); environment.objects; end
+		def objects(area); environment.objects; end
+		def movable?(object); true; end
+		def sendable?(object); true; end
+		def destructible?(object); true; end
 		
 			
 end
