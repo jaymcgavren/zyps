@@ -529,4 +529,80 @@ class EnvironmentClient < EnvironmentTransmitter
 end
 
 
+
+#Communicates with a remote host.
+class Transmitter
+
+
+	#The address to connect to.
+	attr_accessor :remote_host
+	#The port to connect to.
+	attr_accessor :remote_port
+	#The local port to listen on.
+	attr_accessor :local_port
+
+
+	#The maximum allowed transmission size.
+	MAX_PACKET_SIZE = 65535
+
+	
+	def initialize(options = {})
+		@log = Logger.new(LOG_HANDLE)
+		@log.level = LOG_LEVEL
+		@log.progname = self
+		@remote_host = options[:remote_host]
+		@remote_port = options[:remote_port]
+		@local_port = options[:local_port]
+	end
+
+	
+	#Binds the listen port.
+	def open_socket
+		@log.debug "Binding port #{@local_port}."
+		@socket = UDPSocket.open
+		@socket.bind(nil, @local_port)
+	end
+	
+	
+	#Listen for an incoming packet, and process it.
+	def listen
+		@log.debug "Waiting for packet on port #{@socket.addr[1]}."
+		packet, sender_info = @socket.recvfrom(MAX_PACKET_SIZE)
+		guaranteed, data = packet.unpack('Ca*')
+		@log.debug "Got #{data} from #{sender_info.join('/')}."
+		receive(data, sender_info[3], sender_info[1], guaranteed == 1)
+	end
+	
+	
+	#Closes connection port.
+	def close_socket
+		@log.debug "Closing #{@socket}."
+		@socket.close
+	end
+
+
+	#Sends data.
+	def send(data, host, port, guaranteed = false)
+		if guaranteed
+			@log.debug "Saving data for re-sending if no acknowledgement received."
+			@unanswered_requests[host][port] << data
+		end
+		packet = [guaranteed ? 1 : 0, data].pack('Ca*')
+		raise "#{packet.length} is over maximum packet size of #{MAX_PACKET_SIZE}." if packet.length > MAX_PACKET_SIZE
+		@log.debug "Sending #{packet} to #{host} on #{port}."
+		UDPSocket.open.send(packet, 0, host, port)
+	end
+	
+	
+	private
+		
+		
+		#Accepts or rejects incoming data.
+		def receive(data, sender, port, guaranteed = false)
+		end
+		
+		
+end
+
+
 end #module Zyps
