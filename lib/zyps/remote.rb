@@ -534,6 +534,9 @@ end
 class Transmitter
 
 
+	CONNECT = 'connect'
+
+
 	#The address to connect to.
 	attr_accessor :remote_host
 	#The port to connect to.
@@ -553,6 +556,7 @@ class Transmitter
 		@remote_host = options[:remote_host]
 		@remote_port = options[:remote_port]
 		@local_port = options[:local_port]
+		@unanswered_requests = Hash.new {|h, k| h[k] = Hash.new {|h2, k2| h2[k2] = {}}}
 	end
 
 	
@@ -568,9 +572,9 @@ class Transmitter
 	def listen
 		@log.debug "Waiting for packet on port #{@socket.addr[1]}."
 		packet, sender_info = @socket.recvfrom(MAX_PACKET_SIZE)
-		guaranteed, data = packet.unpack('Ca*')
+		guarantee_id, data = packet.unpack('Ia*')
 		@log.debug "Got #{data} from #{sender_info.join('/')}."
-		receive(data, sender_info[3], sender_info[1], guaranteed == 1)
+		receive(data, sender_info[3], sender_info[1], guarantee_id)
 	end
 	
 	
@@ -583,14 +587,23 @@ class Transmitter
 
 	#Sends data.
 	def send(data, host, port, guaranteed = false)
+		guarantee_id = nil
 		if guaranteed
+			guarantee_id = rand(4228250624) + 1
 			@log.debug "Saving data for re-sending if no acknowledgement received."
-			@unanswered_requests[host][port] << data
+			@unanswered_requests[host][port][guarantee_id] << data
 		end
-		packet = [guaranteed ? 1 : 0, data].pack('Ca*')
+		packet = [(guarantee_id || 0), data].pack('Ia*')
 		raise "#{packet.length} is over maximum packet size of #{MAX_PACKET_SIZE}." if packet.length > MAX_PACKET_SIZE
 		@log.debug "Sending #{packet} to #{host} on #{port}."
 		UDPSocket.open.send(packet, 0, host, port)
+	end
+	
+	
+	#Requests connection from host.
+	def connect(host, port)
+		@log.debug "Connecting to #{host} on #{port}."
+		send(CONNECT, host, port)
 	end
 	
 	
@@ -598,7 +611,7 @@ class Transmitter
 		
 		
 		#Accepts or rejects incoming data.
-		def receive(data, sender, port, guaranteed = false)
+		def receive(data, sender, port, guarantee_id = 0)
 		end
 		
 		

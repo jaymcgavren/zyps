@@ -561,13 +561,13 @@ describe Transmitter do
 
 	it "can send data to a given host and port" do
 		@server.send("Mr. Watson, come here!", client_address, client_port)
-		@client.should_receive(:receive).with("Mr. Watson, come here!", server_address, an_instance_of(Numeric), false)
+		@client.should_receive(:receive).with("Mr. Watson, come here!", server_address, an_instance_of(Numeric), 0)
 		@client.listen
 	end
 	
 	it "allows a host to connect" do
 		@client.connect(server_address, server_port)
-		@server.should_receive(:receive).with(Transmitter::CONNECT, client_address, an_instance_of(Numeric), true)
+		@server.should_receive(:receive).with(Transmitter::CONNECT, client_address, an_instance_of(Numeric), an_instance_of(Numeric))
 		@server.listen
 	end
 	
