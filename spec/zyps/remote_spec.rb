@@ -572,6 +572,10 @@ describe Transmitter do
 	end
 	
 	it "acknowledges when a host has connected"
+		@client.connect(server_address, server_port)
+		@server.listen
+		@client.should_receive(
+	end
 
 	it "ignores anything but a connect request from a host that hasn't completed connection cycle"
 	

@@ -571,10 +571,9 @@ class Transmitter
 	#Listen for an incoming packet, and process it.
 	def listen
 		@log.debug "Waiting for packet on port #{@socket.addr[1]}."
-		packet, sender_info = @socket.recvfrom(MAX_PACKET_SIZE)
-		guarantee_id, data = packet.unpack('Ia*')
+		data, sender_info = @socket.recvfrom(MAX_PACKET_SIZE)
 		@log.debug "Got #{data} from #{sender_info.join('/')}."
-		receive(data, sender_info[3], sender_info[1], guarantee_id)
+		receive(data, sender_info[3], sender_info[1])
 	end
 	
 	
@@ -586,17 +585,10 @@ class Transmitter
 
 
 	#Sends data.
-	def send(data, host, port, guaranteed = false)
-		guarantee_id = nil
-		if guaranteed
-			guarantee_id = rand(4228250624) + 1
-			@log.debug "Saving data for re-sending if no acknowledgement received."
-			@unanswered_requests[host][port][guarantee_id] << data
-		end
-		packet = [(guarantee_id || 0), data].pack('Ia*')
-		raise "#{packet.length} is over maximum packet size of #{MAX_PACKET_SIZE}." if packet.length > MAX_PACKET_SIZE
-		@log.debug "Sending #{packet} to #{host} on #{port}."
-		UDPSocket.open.send(packet, 0, host, port)
+	def send(data, host, port)
+		raise "#{data.length} is over maximum packet size of #{MAX_PACKET_SIZE}." if data.length > MAX_PACKET_SIZE
+		@log.debug "Sending #{data} to #{host} on #{port}."
+		UDPSocket.open.send(data, 0, host, port)
 	end
 	
 	
@@ -611,7 +603,30 @@ class Transmitter
 		
 		
 		#Accepts or rejects incoming data.
-		def receive(data, sender, port, guarantee_id = 0)
+		def receive(data, sender, port)
+			if connected?(sender, port)
+				process(data, sender, port)
+			else
+				case data
+				#On connect request, send token for acknowledgement.
+				when CONNECT
+					token = rand(65535).to_s
+					tokens[sender] = token
+					send(token, sender, port)
+				#On token for acknowledgement, respond with same token.
+				when /^(\d+)$/
+					send($1, sender, port)
+				#On acknowledgement, if tokens match, connect sender.
+				when /^ack(\d+)$/
+					if tokens.delete(sender) == $1
+						add_host(sender, port)
+					else
+						raise "Host #{sender} responded with invalid token."
+					end
+				else
+					raise "Host #{sender} is not connected, but is transmitting data."
+				end
+			end
 		end
 		
 		
