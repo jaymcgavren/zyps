@@ -85,6 +85,9 @@ describe EnvironmentServer do
 		lambda{@server.listen}.should raise_error(BannedError)
 	end
 	
+	it "does not allow IP address if corresponding hostname is banned"
+	it "does not allow hostname if corresponding IP address is banned"
+	
 	it "sends objects that were already on server when a new client connects" do
 		object = GameObject.new
 		object2 = GameObject.new
@@ -486,21 +489,21 @@ describe EnvironmentServer do
 	it "does not have authority on object movement when assigned to client"
 	it "has authority on object removal"
 	
-	it "lets new clients connect and get world if others are already connected" #do
-# 		object = GameObject.new
-# 		@server_environment << object
-# 		@server.update
-# 		@client.listen
-# 		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier == object.identifier}}
-# 		client2_environment = Environment.new
-# 		client2 = EnvironmentClient.new(client2_environment, :host => LOCAL_HOST_ADDRESS, :listen_port => CLIENT_LISTEN_PORT + 1)
-# 		client2.open_socket
-# 		client2.connect
-# 		@server.listen
-# 		@server.update
-# 		client2.listen
-# 		client2_environment.should satisfy {|e| e.objects.any?{|o| o.identifier == object.identifier}}
-# 	end
+	it "lets new clients connect and get world if others are already connected" do
+		object = GameObject.new
+		@server_environment << object
+		@server.update
+		@client.listen
+		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier == object.identifier}}
+		client2_environment = Environment.new
+		client2 = EnvironmentClient.new(client2_environment, :host => LOCAL_HOST_ADDRESS, :listen_port => CLIENT_LISTEN_PORT + 1)
+		client2.open_socket
+		client2.connect
+		@server.listen
+		@server.update
+		client2.listen
+		client2_environment.should satisfy {|e| e.objects.any?{|o| o.identifier == object.identifier}}
+	end
 
 	it "keeps updating other clients if one disconnects"
 	it "allows forced disconnection of clients"
@@ -528,73 +531,4 @@ describe EnvironmentClient do
 	it "allows a client to have more than one AreaOfInterest"
 	it "allows different clients to have a different AreaOfInterest"
 	
-end
-
-
-describe Transmitter do
-
-	local_host_address = '127.0.0.1'
-	server_address = local_host_address
-	client_address = local_host_address
-	server_port = 9977
-	client_port = 8989
-
-	before(:each) do
-		@server = Transmitter.new(
-			:remote_host => local_host_address,
-			:remote_port => client_port,
-			:local_port => server_port
-		)
-		@server.open_socket
-		@client = Transmitter.new(
-			:remote_host => local_host_address,
-			:remote_port => server_port,
-			:local_port => client_port
-		)
-		@client.open_socket
-	end
-	
-	after(:each) do
-		@server.close_socket
-		@client.close_socket
-	end
-
-	it "can send data to a given host and port" do
-		@server.send("Mr. Watson, come here!", client_address, client_port)
-		@client.should_receive(:receive).with("Mr. Watson, come here!", server_address, an_instance_of(Numeric), 0)
-		@client.listen
-	end
-	
-	it "allows a host to connect" do
-		@client.connect(server_address, server_port)
-		@server.should_receive(:receive).with(Transmitter::CONNECT, client_address, an_instance_of(Numeric), an_instance_of(Numeric))
-		@server.listen
-	end
-	
-	it "acknowledges when a host has connected"
-		@client.connect(server_address, server_port)
-		@server.listen
-		@client.should_receive(
-	end
-
-	it "ignores anything but a connect request from a host that hasn't completed connection cycle"
-	
-	it "does not accept other transmissions before a token is acknowledged"
-	
-	it "considers connection complete once token is acknowledged" do
-		@server.connected_hosts.should include([client_address, client_port])
-	end
-	
-	it "allows banning of hosts by address (but not by port)"
-	it "responds with an error to connect requests from banned hosts"
-	
-	it "allows additional hosts to connect when one has already connected"
-	it "allows multiple connections from the same host on different ports"
-	it "responds with an error to connections from the same host on the same port"
-	
-	it "can send a request without needing acknowledgment"
-	it "can continue sending a request until it is acknowledged"
-	it "stops sending a request when it is acknowledged"
-	
-
 end
