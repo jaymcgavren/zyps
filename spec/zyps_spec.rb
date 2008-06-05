@@ -170,7 +170,71 @@ describe GameObject do
 	before(:each) do
 		@object = GameObject.new
 	end
-
+	
+	it "should use size of zero when assigned size of less than zero" do
+		@object.size = -1
+		@object.size.should == 0
+	end
+	
+	it "should copy Vector when copying self" do
+		@object.copy.vector.should_not equal(@object.vector)
+	end
+	it "should share Vector attributes with copy" do
+		@object.vector = Vector.new(1, 1)
+		@object.copy.vector.x.should == @object.vector.x
+		@object.copy.vector.y.should == @object.vector.y
+	end
+	it "should copy Location when copying self" do
+		@object.copy.location.should_not equal(@object.location)
+	end
+	it "should share Location attributes with copy" do
+		@object.location = Location.new(1, 1)
+		@object.copy.location.x.should == @object.location.x
+		@object.copy.location.y.should == @object.location.y
+	end
+	it "should copy Color when copying self" do
+		@object.copy.color.should_not equal(@object.color)
+	end
+	it "should share Color attributes with copy" do
+		@object.color = Color.new(1, 1, 1)
+		@object.copy.color.red.should == @object.color.red
+		@object.copy.color.green.should == @object.color.green
+		@object.copy.color.blue.should == @object.color.blue
+	end
+	it "should copy Tags when copying self" do
+		@object.copy.tags.should_not equal(@object.tags)
+	end
+	it "should share Tags attributes with copy" do
+		@object.tags = ["1", "2"]
+		@object.copy.tags[0].should == @object.tags[0]
+		@object.copy.tags[1].should == @object.tags[1]
+	end
+	
+	it "has a default Location of 0, 0" do
+		@object.location.should == Location.new(0, 0)
+	end
+	it "has a default Color of white" do
+		@object.color.should == Color.white
+	end
+	it "has a default speed of 0" do
+		@object.vector.speed.should == 0
+	end
+	it "has a default pitch of 0" do
+		@object.vector.pitch.should == 0
+	end
+	it "has a default name of nil" do
+		@object.name.should == nil
+	end
+	it "has a default size of 1" do
+		@object.size.should == 1
+	end
+	it "has no tags by default" do
+		@object.tags.should be_empty
+	end
+	it "has a unique identifier by default" do
+		@object.identifier.should_not == GameObject.new.identifier
+	end
+	
 	it "has no default shape"
 	
 	it "should pass calls to collided method on to its Shape object"
@@ -178,7 +242,38 @@ describe GameObject do
 end
 
 
+#Tests for constructor.
+describe GameObject do
+	it "takes a :name key in its constructor" do
+		GameObject.new(:name => "foo").name.should == "foo"
+	end
+	it "takes a :location key in its constructor" do
+		GameObject.new(:location => Location.new(1, 1)).location.should == Location.new(1, 1)
+	end
+	it "takes a :color key in its constructor" do
+		GameObject.new(:color => Color.blue).color.should == Color.blue
+	end
+	it "takes a :age key in its constructor" do
+		GameObject.new(:age => 100).age.should == 100
+	end
+	it "takes a :size key in its constructor" do
+		GameObject.new(:size => 3).size.should == 3
+	end
+	it "takes a :tags key in its constructor" do
+		GameObject.new(:tags => ["blue team"]).tags.should == ["blue team"]
+	end
+end
+
+
 describe Creature do
+	
+	before(:each) do
+		@creature = Creature.new
+	end
+	
+	it "has no behaviors by default" do
+		@creature.behavior_count.should == 0
+	end
 	
 	it "should have no area of interest by default"
 	it "should act on all objects if no area of interest is defined"
@@ -186,6 +281,14 @@ describe Creature do
 	it "should act on all objects inside its area of interest"
 	it "should allow multiple areas of interest"
 	
+end
+
+
+#Tests for constructor.
+describe Creature do
+	it "takes a :behaviors key in its constructor" do
+		Creature.new(:behaviors => [Behavior.new]).behaviors.should include(Behavior.new)
+	end
 end
 
 

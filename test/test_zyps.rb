@@ -33,93 +33,9 @@ class Clock
 end
 
 
-class TestGameObject < Test::Unit::TestCase
-
-
-	def test_constraints
-		#Test at initialization.
-		object = GameObject.new(:size => -1)
-		assert_equal(0, object.size)
-		#Test accessors.
-		object = GameObject.new
-		object.size = -1
-		assert_equal(0, object.size)
-	end
-
-
-	def test_copy
-		object = GameObject.new
-		object.vector = Vector.new(1, 1)
-		object.color = Color.new(0.5, 0.5, 0.5)
-		object.location = Location.new(3, 3)
-		object.tags = ["1", "2"]
-		object.name = "name"
-		copy = object.copy
-		assert_not_same(object.vector, copy.vector, "Copy's vector should not be same object.")
-		assert_equal(object.vector.x, copy.vector.x, "Copy's vector should share attributes.")
-		assert_not_same(object.color, copy.color, "Copy's color should not be same object.")
-		assert_equal(object.color.red, copy.color.red, "Copy's color should share attributes.")
-		assert_not_same(object.location, copy.location, "Copy's location should not be same object.")
-		assert_equal(object.location.x, copy.location.x, "Copy's location should share attributes.")
-		assert_not_same(object.tags, copy.tags, "Copy's tag list should not be same object.")
-		assert_equal(object.tags[0], copy.tags[0], "Copy's tag list should share attributes.")
-		assert_not_equal(object.identifier, copy.identifier, "Copy's identifier should not be identical.")
-		assert_not_equal(object.name, copy.name, "Copy's name should not be identical.")
-	end
-
-
-end
-
-
 class TestCreature < Test::Unit::TestCase
 
 
-	def test_default_initialization
-		creature = Creature.new
-		assert_not_nil(creature.identifier)
-		assert_equal(0, creature.location.x)
-		assert_equal(0, creature.location.y)
-		assert_equal(1, creature.color.red)
-		assert_equal(1, creature.color.green)
-		assert_equal(1, creature.color.blue)
-		assert_equal(0, creature.vector.speed)
-		assert_equal(0, creature.vector.pitch)
-		assert_equal(nil, creature.name)
-		assert_equal(1, creature.size)
-		assert_equal([], creature.tags)
-		assert_equal(0, creature.behavior_count)
-		#Identifiers should be unique.
-		assert_not_equal(creature.identifier, Creature.new.identifier)
-	end
-	
-	
-	def test_explicit_initialization
-		behavior = Behavior.new
-		creature = Creature.new(
-			:name => "name",
-			:location => Location.new(10, -3),
-			:color => Color.new(0.5, 0.6, 0.7),
-			:vector => Vector.new(1.5, 225),
-			:age => 2.001,
-			:size => 5.0, #Size.
-			:tags => ["predator", "blue team"],
-			:behaviors => [behavior]
-		)
-		assert_equal("name", creature.name)
-		assert_equal(10, creature.location.x)
-		assert_equal(-3, creature.location.y)
-		assert_equal(0.5, creature.color.red)
-		assert_equal(0.6, creature.color.green)
-		assert_equal(0.7, creature.color.blue)
-		assert_equal(1.5, creature.vector.speed)
-		assert_equal(225, creature.vector.pitch)
-		assert_equal(5.0, creature.size)
-		assert(creature.tags.include?("predator"))
-		assert(creature.tags.include?("blue team"))
-		assert(creature.behaviors.include?(behavior))
-	end
-	
-	
 	def test_copy
 		creature = Creature.new
 		behavior1 = Behavior.new
