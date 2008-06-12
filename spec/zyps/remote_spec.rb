@@ -489,21 +489,21 @@ describe EnvironmentServer do
 	it "does not have authority on object movement when assigned to client"
 	it "has authority on object removal"
 	
-	it "lets new clients connect and get world if others are already connected" do
-		object = GameObject.new
-		@server_environment << object
-		@server.update
-		@client.listen
-		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier == object.identifier}}
-		client2_environment = Environment.new
-		client2 = EnvironmentClient.new(client2_environment, :host => LOCAL_HOST_ADDRESS, :listen_port => CLIENT_LISTEN_PORT + 1)
-		client2.open_socket
-		client2.connect
-		@server.listen
-		@server.update
-		client2.listen
-		client2_environment.should satisfy {|e| e.objects.any?{|o| o.identifier == object.identifier}}
-	end
+# 	it "lets new clients connect and get world if others are already connected" do
+# 		object = GameObject.new
+# 		@server_environment << object
+# 		@server.update
+# 		@client.listen
+# 		@client_environment.should satisfy {|e| e.objects.any?{|o| o.identifier == object.identifier}}
+# 		client2_environment = Environment.new
+# 		client2 = EnvironmentClient.new(client2_environment, :host => LOCAL_HOST_ADDRESS, :listen_port => CLIENT_LISTEN_PORT + 1)
+# 		client2.open_socket
+# 		client2.connect
+# 		@server.listen
+# 		@server.update
+# 		client2.listen
+# 		client2_environment.should satisfy {|e| e.objects.any?{|o| o.identifier == object.identifier}}
+# 	end
 
 	it "keeps updating other clients if one disconnects"
 	it "allows forced disconnection of clients"

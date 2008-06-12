@@ -64,7 +64,13 @@ describe Environment do
 		copy.should == @environment
 	end
 
-	it "should clone attributes when copying"
+	it "should copy GameObjects when copying self" do
+		@environment << GameObject.new << GameObject.new
+		@environment.objects.each do |object|
+			@environment.copy.object_count.should == 2 #Equal...
+			@environment.copy.objects.should_not satisfy {|objects| objects.any?{|o| o.equal?(object)}} #...but not identical.
+		end
+	end
 	
 	it "should move all objects on update" do
 		object = GameObject.new(:vector => Vector.new(1, 0))
@@ -275,6 +281,14 @@ describe Creature do
 		@creature.behavior_count.should == 0
 	end
 	
+	it "should copy Behaviors when copying self" do
+		@creature << Behavior.new << Behavior.new
+		@creature.behaviors.each do |behavior|
+			@creature.copy.behaviors.should include(behavior) #Equal...
+			@creature.copy.behaviors.should_not satisfy {|behaviors| behaviors.any?{|b| b.equal?(behavior)}} #...but not identical.
+		end
+	end
+	
 	it "should have no area of interest by default"
 	it "should act on all objects if no area of interest is defined"
 	it "should not act on an object outside its area of interest"
@@ -289,6 +303,23 @@ describe Creature do
 	it "takes a :behaviors key in its constructor" do
 		Creature.new(:behaviors => [Behavior.new]).behaviors.should include(Behavior.new)
 	end
+end
+
+
+describe Behavior do
+
+	before(:each) do
+		@behavior = Behavior.new
+	end
+	
+	it "should copy Actions when copying self" do
+		@behavior << TagAction.new << TagAction.new
+		@behavior.actions.each do |action|
+			@behavior.copy.actions.should include(action) #Equal...
+			@behavior.copy.actions.should_not satisfy {|actions| actions.any?{|a| a.equal?(action)}} #...but not identical.
+		end
+	end
+	
 end
 
 

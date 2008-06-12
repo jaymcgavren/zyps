@@ -26,32 +26,6 @@ require 'test/unit'
 include Zyps
 
 
-#Redefine Clock to return a predictable time.
-ELAPSED_TIME = 0.1
-class Clock
-	def elapsed_time; ELAPSED_TIME * speed * Clock.speed; end
-end
-
-
-class TestCreature < Test::Unit::TestCase
-
-
-	def test_copy
-		creature = Creature.new
-		behavior1 = Behavior.new
-		behavior2 = Behavior.new
-		creature << behavior1 << behavior2
-		copy = creature.copy
-		creature.behaviors.each do |behavior|
-			assert(! copy.behaviors.find {|o| o.equal?(behavior)}, "Behaviors in list should not be same objects.")
-		end
-	end
-	
-	
-end
-
-
-
 class TestColor < Test::Unit::TestCase
 	
 	def test_default_initialization
@@ -292,22 +266,6 @@ class TestBehavior < Test::Unit::TestCase
 		@other = Creature.new(:name => 'other')
 		@targets = []
 		@targets << @target << @other
-	end
-	
-	
-	def test_copy
-		original = Behavior.new
-		action = TagAction.new("tag")
-		original.add_action action
-		condition = TagCondition.new("tag")
-		original.add_condition condition
-		copy = original.copy
-		original.actions.each do |action|
-			assert(! copy.actions.find {|a| a.equal?(action)}, "Actions in list should not be same objects.")
-		end
-		original.conditions.each do |condition|
-			assert(! copy.conditions.find {|a| a.equal?(condition)}, "Conditions in list should not be same objects.")
-		end
 	end
 	
 	

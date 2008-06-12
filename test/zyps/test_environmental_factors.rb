@@ -168,58 +168,6 @@ class TestSpeedLimit < Test::Unit::TestCase
 end
 
 
-
-class TestAccelerator < Test::Unit::TestCase
-
-	def test_standing_start
-		creature = Creature.new
-		environment = Environment.new(:objects => [creature])
-		creature.vector = Vector.new(0, 0)
-		#Create an accelerator that pushes downwards by 1 unit/sec.
-		accelerator = Accelerator.new(Vector.new(1, 270))
-		#Act on a creature, and ensure its vector is modified appropriately.
-		accelerator.act(environment)
-		assert_equal(ELAPSED_TIME, creature.vector.speed)
-		assert_equal(270, creature.vector.pitch)
-	end
-
-
-	def test_cancellation
-		creature = Creature.new
-		environment = Environment.new(:objects => [creature])
-		creature.vector = Vector.new(1, 45)
-		#Create an accelerator pushing opposite to the creature's direction of travel.
-		accelerator = Accelerator.new(Vector.new(0.5, 225))
-		#Act on a creature, and ensure its vector is modified appropriately.
-		accelerator.act(environment)
-		assert_equal(0.95, creature.vector.speed)
-		assert_equal(45, creature.vector.pitch)
-	end
-
-end
-
-
-class TestFriction < Test::Unit::TestCase
-
-	STARTING_SPEED = 1
-
-	def test_slowing
-		creature = Creature.new
-		environment = Environment.new(:objects => [creature])
-		creature.vector = Vector.new(STARTING_SPEED, 0)
-		#Create friction that slows objects by 1 unit/sec.
-		friction = Friction.new(1)
-		#Act on a creature, and ensure its vector is modified appropriately.
-		friction.act(environment)
-		assert_equal(STARTING_SPEED - ELAPSED_TIME, creature.vector.speed)
-		#Test cumulative effect.
-		friction.act(environment)
-		assert_equal(STARTING_SPEED - ELAPSED_TIME * 2, creature.vector.speed)
-	end
-
-end
-
-
 class TestPopulationLimit < Test::Unit::TestCase
 	
 	def test_limit

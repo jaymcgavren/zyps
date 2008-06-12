@@ -368,7 +368,7 @@ class Creature < GameObject
 	#See GameObject#<<.
 	#Adds ability to stream in behaviors as well.
 	def <<(item)
-		if(item.kind_of? Zyps::Behavior)
+		if item.kind_of? Zyps::Behavior
 			self.add_behavior item
 		else
 			super
@@ -422,13 +422,13 @@ class Action
 		@started = true
 	end
 	
-	def do(actor, target)
+	def do(actor, targets)
 		raise NotImplementedError.new("Action subclasses must implement a do(actor, target) instance method.")
 	end
 	
 	#Stop the action.
 	#Overriding subclasses must either call "super" or set the @started attribute to false.
-	def stop(actor, target)
+	def stop(actor, targets)
 		@started = false
 	end
 	
@@ -588,7 +588,6 @@ class Behavior
 			end
 		end
 		
-		
 	end
 
 	
@@ -605,10 +604,9 @@ class Behavior
 	#list or assign it to the correct attribute.
 	#Assignment is done based on item's class or a parent class of item.
 	def <<(item)
-		case item
-		when Condition
+		if item.kind_of? Condition
 			add_condition(item)
-		when Action
+		elsif item.kind_of? Action
 			add_action(item)
 		else
 			raise "Invalid item: #{item.class}"

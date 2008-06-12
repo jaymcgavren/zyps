@@ -365,7 +365,7 @@ class ShootAction < SpawnAction
 			end
 		#Otherwise copy the single prototype.
 		else
-			actor.environment.add_object(generate_child(actor, prototypes[@prototype_index], targets[@target_index]))
+			targets[@target_index].environment.add_object(generate_child(actor, prototypes[@prototype_index], targets[@target_index]))
 		end
 		#Move to next target and prototype group, wrapping to start of array if need be.
 		@target_index = (@target_index + 1) % targets.length
