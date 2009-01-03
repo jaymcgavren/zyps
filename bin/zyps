@@ -919,7 +919,10 @@ class CreatureGenerator
 			color = color ? color + Color.indigo : Color.indigo
 			creature.add_behavior Behavior.new(
 				:actions => [PullAction.new(@pull_strength)],
-				:conditions => [ProximityCondition.new(options[:action_proximity] * 0.75)],
+				:conditions => [
+				  ProximityCondition.new(options[:action_proximity] * 0.75),
+				  SingleCondition.new
+				],
 				:condition_frequency => 7
 			)
 		end

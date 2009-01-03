@@ -259,8 +259,8 @@ describe GameObject do
 	it "takes a :color key in its constructor" do
 		GameObject.new(:color => Color.blue).color.should == Color.blue
 	end
-	it "takes a :age key in its constructor" do
-		GameObject.new(:age => 100).age.should == 100
+	it "takes an :age key in its constructor" do
+    GameObject.new(:age => 100).age.should be_close(100, 0.1)
 	end
 	it "takes a :size key in its constructor" do
 		GameObject.new(:size => 3).size.should == 3

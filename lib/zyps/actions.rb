@@ -78,7 +78,7 @@ class FaceAction < Action
 	#Set the actor's heading to point directly at first target.
 	def do(actor, targets)
 		return if targets.empty?
-		actor.vector.pitch = Utility.find_angle(actor.location, targets[0].location)
+		actor.vector.pitch = Utility.find_angle(actor.location, random_target(targets).location)
 	end
 end
 
@@ -129,7 +129,7 @@ class ApproachAction < TimedAction
 		#Apply thrust to the creature's movement vector, adjusted by elapsed time.
 		actor.vector += Vector.new(
 			delta,
-			Utility.find_angle(actor.location, targets[0].location)
+			Utility.find_angle(actor.location, random_target(targets).location)
 		)
 	end
 end
@@ -143,7 +143,7 @@ class FleeAction < TimedAction
 		#Apply thrust to the creature's movement vector, adjusted by elapsed time.
 		actor.vector += Vector.new(
 			delta,
-			Utility.find_angle(actor.location, targets[0].location) + 180
+			Utility.find_angle(actor.location, random_target(targets).location) + 180
 		)
 	end
 end

@@ -439,6 +439,11 @@ class Action
 	#Subclasses should extend or override this method.
 	def ==(other); self.class == other.class and self.started == other.started; end
 	
+	#Choose a random target from a group.
+  def random_target(targets)
+    targets[rand(targets.length)]
+  end
+
 end
 
 

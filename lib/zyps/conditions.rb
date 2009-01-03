@@ -21,6 +21,16 @@ require 'zyps'
 module Zyps
 
 
+#Select a single target.
+class SingleCondition < Condition
+	#Returns an array of targets which have the assigned tag.
+	def select(actor, targets)
+	  return [] if targets.empty?
+    [targets[rand(targets.length)]]
+	end
+end
+
+
 #Select objects with the correct tag.
 class TagCondition < Condition
 	#The tag to look for on the target.
