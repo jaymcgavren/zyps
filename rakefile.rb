@@ -83,6 +83,19 @@ rescue LoadError => exception
 end
 
 
+begin
+	require 'flay'
+	desc "Run duplicate code analyzer"
+	task :flay do
+		output = `flay #{FileList["lib/**/*.rb"].join(' ')}`
+		fail "Error #{$?}: #{output}" unless $? == 0
+		puts output
+	end
+rescue LoadError => exception
+	warn "Could not load flay - it might not be installed."
+end
+
+
 desc "Run a demonstration"
 task :demo do
 	ruby "-I lib bin/zyps_demo"
