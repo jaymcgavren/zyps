@@ -15,24 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
-gems_loaded = false
-begin
-	require 'spec'
-	require 'zyps'
-	require 'zyps/actions'
-	require 'zyps/conditions'
-	require 'zyps/environmental_factors'
-rescue LoadError
-	if gems_loaded == false
-		require 'rubygems'
-		gems_loaded = true
-		retry
-	else
-		raise
-	end
-end
-
+require File.expand_path(File.join(File.dirname(__FILE__), 'spec_helper'))
 
 include Zyps
 
@@ -332,4 +315,20 @@ describe AreaOfInterest do
 	it "should report objects every other update if its evaluation frequency is 2"
 	it "should report objects every three updates if its evaluation frequency is 3"
 
+end
+
+
+describe Color do
+  
+  it "has a default color of white" do
+    @it = Color.new
+    @it.red.should == 1.0
+    @it.green.should == 1.0
+    @it.blue.should == 1.0
+  end
+  
+  
+  it "accepts red, green, and blue values for contructor"
+  it "constrains values between 0 and 1"
+  
 end
