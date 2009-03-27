@@ -237,44 +237,5 @@ class TestActions < Test::Unit::TestCase
 		#Ensure child appears at actor's location.
 		assert_equal(@actor.location, children[0].location)
 	end
-	
-	
-	def test_spawn_action
-		#Set up prototypes.
-		prototypes = [Creature.new(:name => 'creature'), GameObject.new(:name => 'object')]
-		prototypes[0].vector = Vector.new(1, 45)
-		#Add prototypes to new SpawnAction.
-		add_action(SpawnAction.new(prototypes), @actor)
-		#Interact.
-		@environment.interact
-		#All children should be spawned.
-		assert_equal(4, @environment.object_count)
-		creature_copy = @environment.objects.find{|o| o.name == 'Copy of creature'}
-		object_copy = @environment.objects.find{|o| o.name == 'Copy of object'}
-		#Childrens' starting location should match actor's.
-		assert_equal(object_copy.location, @actor.location)
-		#Spawned objects should be copy of originals.
-		assert_not_same(prototypes[0], creature_copy)
-		#Spawned objects' vectors should be same as originals'.
-		assert_equal(prototypes[0].vector, creature_copy.vector)
-	end
-	
-	def test_explode_action
-		#Set up prototypes.
-		prototypes = [Creature.new(:name => 'creature'), GameObject.new(:name => 'object')]
-		prototypes[0].vector = Vector.new(1, 45)
-		#Add prototypes to new ExplodeAction.
-		add_action(ExplodeAction.new(prototypes), @actor)
-		#Interact.
-		@environment.interact
-		#Actor should be removed from environment.
-		assert(! @environment.objects.include?(@actor))
-		#All children should be spawned.
-		assert_equal(3, @environment.object_count)
-		creature_copy = @environment.objects.find{|o| o.name == 'Copy of creature'}
-		object_copy = @environment.objects.find{|o| o.name == 'Copy of object'}
-		#Spawned objects' vectors should be sum of originals' plus actor's.
-		assert_equal(prototypes[1].vector + @actor.vector, object_copy.vector)
-	end
-	
+		
 end

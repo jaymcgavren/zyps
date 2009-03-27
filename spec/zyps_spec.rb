@@ -327,8 +327,40 @@ describe Color do
     @it.blue.should == 1.0
   end
   
+  it "accepts red, green, and blue values for contructor" do
+    @it = Color.new(0.5, 0.5, 0.5)
+    @it.red.should == 0.5
+    @it.green.should == 0.5
+    @it.blue.should == 0.5
+  end
   
-  it "accepts red, green, and blue values for contructor"
-  it "constrains values between 0 and 1"
+  it "constrains values between 0 and 1" do
+    @it = Color.new
+    @it.red += 2
+    @it.green += 2
+    @it.blue += 2
+    @it.red.should == 1.0
+    @it.green.should == 1.0
+    @it.blue.should == 1.0
+    @it.red -= 3
+    @it.green -= 3
+    @it.blue -= 3
+    @it.red.should == 0.0
+    @it.green.should == 0.0
+    @it.blue.should == 0.0
+  end
+  
+end
+
+
+describe Vector do
+  
+  it "speed and pitch default to zero" do
+    @it = Vector.new
+    @it.speed.should == 0.0
+    @it.pitch.should == 0.0
+    @it.x.should == 0.0
+    @it.y.should == 0.0
+  end
   
 end

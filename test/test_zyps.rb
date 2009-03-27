@@ -25,68 +25,9 @@ require 'test/unit'
 
 include Zyps
 
-
-class TestColor < Test::Unit::TestCase
-	
-	def test_default_initialization
-		color = Color.new
-		assert_equal(1, color.red)
-		assert_equal(1, color.green)
-		assert_equal(1, color.blue)
-	end
-	
-	def test_explicit_initialization
-		color = Color.new(0.25, 0.5, 0.75)
-		assert_equal(0.25, color.red)
-		assert_equal(0.5, color.green)
-		assert_equal(0.75, color.blue)
-	end
-	
-	def test_constraints
-		#Test at initialization.
-		color = Color.new(-1, -1, -1)
-		assert_equal(0, color.red)
-		assert_equal(0, color.green)
-		assert_equal(0, color.blue)
-		color = Color.new(2, 2, 2)
-		assert_equal(1, color.red)
-		assert_equal(1, color.green)
-		assert_equal(1, color.blue)
-		#Test accessors.
-		color = Color.new
-		color.red = -1
-		assert_equal(0, color.red)
-		color.red = 2
-		assert_equal(1, color.red)
-		color.green = -1
-		assert_equal(0, color.green)
-		color.green = 2
-		assert_equal(1, color.green)
-		color.blue = -1
-		assert_equal(0, color.blue)
-		color.blue = 2
-		assert_equal(1, color.blue)
-	end
-	
-	
-end
-
-
-
 class TestVector < Test::Unit::TestCase
 
 
-	def test_initialize
-	
-		vector = Vector.new
-		assert_equal(0, vector.speed)
-		assert_equal(0, vector.pitch)
-		assert_equal(0, vector.x)
-		assert_equal(0, vector.y)
-		
-	end
-
-	
 	def test_angles
 	
 		vector = Vector.new(4, 150)
