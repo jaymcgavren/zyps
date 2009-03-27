@@ -67,7 +67,7 @@ My lovely wife, Diana, for patience and usability testing.
 
 == Author
 
-Copyright 2007-2008 Zyps Contributors
+Copyright 2007-2009 Zyps Contributors
 
 
 == License
