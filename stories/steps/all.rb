@@ -128,11 +128,17 @@ steps_for(:all) do
   end
   
   Then /(.+?) should have a location of "([\d\.]+)", "([\d\.]+)"/i do |subject, x, y|
-    @om.resolve_objects(subject).each {|s| s.location.should == Location.new(x.to_f, y.to_f)}
+    @om.resolve_objects(subject).each do |s|
+      s.location.x.should be_close(x.to_f, 0.01)
+      s.location.y.should be_close(y.to_f, 0.01)
+    end
   end
   
   Then /(.+?) should have a vector with a speed of "([\d\.]+)" and an? (?:angle|pitch) of "([\d\.]+)"/i do |subject, speed, pitch|
-    @om.resolve_objects(subject).each {|s| s.vector.should == Vector.new(speed.to_f, pitch.to_f)}
+    @om.resolve_objects(subject).each do |s|
+      s.vector.speed.should be_close(speed.to_f, 0.01)
+      s.vector.pitch.should be_close(pitch.to_f, 0.01)
+    end
   end
   
   Then /display (.+?)/i do |subject|
