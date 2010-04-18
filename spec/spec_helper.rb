@@ -5,8 +5,6 @@ require 'zyps'
 require 'zyps/actions'
 require 'zyps/conditions'
 require 'zyps/environmental_factors'
-require 'zyps/views'
-require 'zyps/views/canvas'
 
 gems_loaded = false
 begin

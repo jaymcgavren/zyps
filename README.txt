@@ -11,7 +11,6 @@ Zyps are small creatures with minds of their own.  You can create dozens of Zyps
 == Requirements
 
 * Ruby: http://www.ruby-lang.org
-* wxRuby (for the GUI): http://wxruby.rubyforge.org
 * Rake (to build from source): http://rake.rubyforge.org
 
 
@@ -21,16 +20,17 @@ Make sure you have administrative privileges, then type the following at a comma
 
   gem install zyps
 
-Ensure wxRuby is installed and working:
-
-  gem install wxruby
 
 
 == Usage
 
+Ensure wxRuby is installed and working:
+
+  gem install wxruby
+
 At a command line, type:
 
-  zyps
+  zyps_demo
 
 
 == Development

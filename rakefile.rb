@@ -101,11 +101,6 @@ task :demo do
   ruby "-I lib bin/zyps_demo"
 end
 
-desc "Run the GUI"
-task :gui do
-  ruby "-I lib bin/zyps zyps.cfg"
-end
-
 
 desc "Package a gem"
 specification = Gem::Specification.new do |spec|
@@ -116,7 +111,6 @@ specification = Gem::Specification.new do |spec|
   spec.homepage = WEB_SITE
   spec.platform = Gem::Platform::RUBY
   spec.summary = SUMMARY
-  spec.add_dependency("wxruby", ">= 1.9.2")
   spec.rubyforge_project = PRODUCT_NAME.downcase
   spec.require_path = "lib"
   spec.autorequire = PRODUCT_NAME.downcase
