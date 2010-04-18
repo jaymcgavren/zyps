@@ -774,7 +774,7 @@ class ControlPanel < Wx::Panel
 				:sizer => Wx::BoxSizer.new(Wx::VERTICAL),
 				:proportion => 1,
 			}.merge(options)
-			panel = Wx::Panel.new(parent, options)
+			panel = Wx::Panel.new(parent)
 			panel.sizer = options[:sizer]
 			panel.parent.sizer.add(panel, options[:proportion], Wx::GROW|Wx::ALL, 3)
 			panel
