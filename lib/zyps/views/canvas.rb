@@ -17,7 +17,6 @@
 
 
 require 'zyps'
-require 'zyps/shapes'
 
 
 module Zyps
