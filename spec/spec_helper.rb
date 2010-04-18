@@ -12,13 +12,13 @@ require 'zyps/views/canvas'
 
 gems_loaded = false
 begin
-	require 'spec'
+  require 'spec'
 rescue LoadError
-	if gems_loaded == false
-		require 'rubygems'
-		gems_loaded = true
-		retry
-	else
-		raise
-	end
+  if gems_loaded == false
+    require 'rubygems'
+    gems_loaded = true
+    retry
+  else
+    raise
+  end
 end

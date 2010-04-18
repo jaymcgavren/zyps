@@ -19,18 +19,18 @@ Zyps are small creatures with minds of their own.  You can create dozens of Zyps
 
 Make sure you have administrative privileges, then type the following at a command line:
 
-	gem install zyps
+  gem install zyps
 
 Ensure wxRuby is installed and working:
 
-	gem install wxruby
+  gem install wxruby
 
 
 == Usage
 
 At a command line, type:
 
-	zyps
+  zyps
 
 
 == Development
@@ -39,19 +39,19 @@ Source code and documentation are available via the project site (http://jay.mcg
 
 Once downloaded, change into the project directory.  For a list of targets, run:
 
-	rake -T
+  rake -T
 
 To build a gem:
 
-	rake
+  rake
 
 To see the demo:
-	
-	rake demo
+  
+  rake demo
 
 To create a "doc" subdirectory with API documentation:
 
-	rake rdoc
+  rake rdoc
 
 Also see "bin/zyps_demo" and the "spec" subfolder in the project directory for sample code.
 

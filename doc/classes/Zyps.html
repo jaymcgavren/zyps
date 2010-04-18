@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>Module: Zyps</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <meta http-equiv="Content-Script-Type" content="text/javascript" />
+  <link rel="stylesheet" href=".././rdoc-style.css" type="text/css" media="screen" />
+  <script type="text/javascript">
+  // <![CDATA[
+
+  function popupCode( url ) {
+    window.open(url, "Code", "resizable=yes,scrollbars=yes,toolbar=no,status=no,height=150,width=400")
+  }
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+    
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  
+  // Make codeblocks hidden by default
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  
+  // ]]>
+  </script>
+
+</head>
+<body>
+
+
+
+    <div id="classHeader">
+        <table class="header-table">
+        <tr class="top-aligned-row">
+          <td><strong>Module</strong></td>
+          <td class="class-name-in-header">Zyps</td>
+        </tr>
+        <tr class="top-aligned-row">
+            <td><strong>In:</strong></td>
+            <td>
+                <a href="../files/lib/zyps/actions_rb.html">
+                lib/zyps/actions.rb
+                </a>
+        <br />
+                <a href="../files/lib/zyps/conditions_rb.html">
+                lib/zyps/conditions.rb
+                </a>
+        <br />
+                <a href="../files/lib/zyps/environmental_factors_rb.html">
+                lib/zyps/environmental_factors.rb
+                </a>
+        <br />
+                <a href="../files/lib/zyps/remote_rb.html">
+                lib/zyps/remote.rb
+                </a>
+        <br />
+                <a href="../files/lib/zyps/serializer_rb.html">
+                lib/zyps/serializer.rb
+                </a>
+        <br />
+                <a href="../files/lib/zyps/shapes_rb.html">
+                lib/zyps/shapes.rb
+                </a>
+        <br />
+                <a href="../files/lib/zyps/views/canvas/sdl_rb.html">
+                lib/zyps/views/canvas/sdl.rb
+                </a>
+        <br />
+                <a href="../files/lib/zyps/views/canvas/wx_rb.html">
+                lib/zyps/views/canvas/wx.rb
+                </a>
+        <br />
+                <a href="../files/lib/zyps/views/canvas_rb.html">
+                lib/zyps/views/canvas.rb
+                </a>
+        <br />
+                <a href="../files/lib/zyps/views/text_rb.html">
+                lib/zyps/views/text.rb
+                </a>
+        <br />
+                <a href="../files/lib/zyps/views/trails_rb.html">
+                lib/zyps/views/trails.rb
+                </a>
+        <br />
+                <a href="../files/lib/zyps/views_rb.html">
+                lib/zyps/views.rb
+                </a>
+        <br />
+                <a href="../files/lib/zyps_rb.html">
+                lib/zyps.rb
+                </a>
+        <br />
+            </td>
+        </tr>
+
+        </table>
+    </div>
+  <!-- banner header -->
+
+  <div id="bodyContent">
+
+
+
+  <div id="contextContent">
+
+
+
+   </div>
+
+
+  </div>
+
+
+    <!-- if includes -->
+
+    <div id="section">
+
+    <div id="class-list">
+      <h3 class="section-bar">Classes and Modules</h3>
+
+      Module <a href="Zyps/Request.html" class="link">Zyps::Request</a><br />
+Module <a href="Zyps/Response.html" class="link">Zyps::Response</a><br />
+Module <a href="Zyps/Utility.html" class="link">Zyps::Utility</a><br />
+Class <a href="Zyps/AccelerateAction.html" class="link">Zyps::AccelerateAction</a><br />
+Class <a href="Zyps/Accelerator.html" class="link">Zyps::Accelerator</a><br />
+Class <a href="Zyps/Action.html" class="link">Zyps::Action</a><br />
+Class <a href="Zyps/ActiveLessThanCondition.html" class="link">Zyps::ActiveLessThanCondition</a><br />
+Class <a href="Zyps/AgeCondition.html" class="link">Zyps::AgeCondition</a><br />
+Class <a href="Zyps/ApproachAction.html" class="link">Zyps::ApproachAction</a><br />
+Class <a href="Zyps/AreaOfInterest.html" class="link">Zyps::AreaOfInterest</a><br />
+Class <a href="Zyps/BannedError.html" class="link">Zyps::BannedError</a><br />
+Class <a href="Zyps/Behavior.html" class="link">Zyps::Behavior</a><br />
+Class <a href="Zyps/BlendAction.html" class="link">Zyps::BlendAction</a><br />
+Class <a href="Zyps/BreedAction.html" class="link">Zyps::BreedAction</a><br />
+Class <a href="Zyps/Canvas.html" class="link">Zyps::Canvas</a><br />
+Class <a href="Zyps/Circle.html" class="link">Zyps::Circle</a><br />
+Class <a href="Zyps/ClassCondition.html" class="link">Zyps::ClassCondition</a><br />
+Class <a href="Zyps/Clock.html" class="link">Zyps::Clock</a><br />
+Class <a href="Zyps/CollisionCondition.html" class="link">Zyps::CollisionCondition</a><br />
+Class <a href="Zyps/Color.html" class="link">Zyps::Color</a><br />
+Class <a href="Zyps/Condition.html" class="link">Zyps::Condition</a><br />
+Class <a href="Zyps/Creature.html" class="link">Zyps::Creature</a><br />
+Class <a href="Zyps/DestroyAction.html" class="link">Zyps::DestroyAction</a><br />
+Class <a href="Zyps/DuplicateObjectError.html" class="link">Zyps::DuplicateObjectError</a><br />
+Class <a href="Zyps/EatAction.html" class="link">Zyps::EatAction</a><br />
+Class <a href="Zyps/Enclosure.html" class="link">Zyps::Enclosure</a><br />
+Class <a href="Zyps/Environment.html" class="link">Zyps::Environment</a><br />
+Class <a href="Zyps/EnvironmentClient.html" class="link">Zyps::EnvironmentClient</a><br />
+Class <a href="Zyps/EnvironmentServer.html" class="link">Zyps::EnvironmentServer</a><br />
+Class <a href="Zyps/EnvironmentTransmitter.html" class="link">Zyps::EnvironmentTransmitter</a><br />
+Class <a href="Zyps/EnvironmentalFactor.html" class="link">Zyps::EnvironmentalFactor</a><br />
+Class <a href="Zyps/ExplodeAction.html" class="link">Zyps::ExplodeAction</a><br />
+Class <a href="Zyps/FaceAction.html" class="link">Zyps::FaceAction</a><br />
+Class <a href="Zyps/FleeAction.html" class="link">Zyps::FleeAction</a><br />
+Class <a href="Zyps/Friction.html" class="link">Zyps::Friction</a><br />
+Class <a href="Zyps/GameObject.html" class="link">Zyps::GameObject</a><br />
+Class <a href="Zyps/Gravity.html" class="link">Zyps::Gravity</a><br />
+Class <a href="Zyps/InactiveLongerThanCondition.html" class="link">Zyps::InactiveLongerThanCondition</a><br />
+Class <a href="Zyps/Location.html" class="link">Zyps::Location</a><br />
+Class <a href="Zyps/ObjectNotFoundError.html" class="link">Zyps::ObjectNotFoundError</a><br />
+Class <a href="Zyps/PopulationLimit.html" class="link">Zyps::PopulationLimit</a><br />
+Class <a href="Zyps/ProximityCondition.html" class="link">Zyps::ProximityCondition</a><br />
+Class <a href="Zyps/PullAction.html" class="link">Zyps::PullAction</a><br />
+Class <a href="Zyps/PushAction.html" class="link">Zyps::PushAction</a><br />
+Class <a href="Zyps/Rectangle.html" class="link">Zyps::Rectangle</a><br />
+Class <a href="Zyps/RemoteException.html" class="link">Zyps::RemoteException</a><br />
+Class <a href="Zyps/SDLCanvas.html" class="link">Zyps::SDLCanvas</a><br />
+Class <a href="Zyps/Serializer.html" class="link">Zyps::Serializer</a><br />
+Class <a href="Zyps/Shape.html" class="link">Zyps::Shape</a><br />
+Class <a href="Zyps/ShootAction.html" class="link">Zyps::ShootAction</a><br />
+Class <a href="Zyps/SingleCondition.html" class="link">Zyps::SingleCondition</a><br />
+Class <a href="Zyps/SpawnAction.html" class="link">Zyps::SpawnAction</a><br />
+Class <a href="Zyps/SpeedLimit.html" class="link">Zyps::SpeedLimit</a><br />
+Class <a href="Zyps/StrengthCondition.html" class="link">Zyps::StrengthCondition</a><br />
+Class <a href="Zyps/TagAction.html" class="link">Zyps::TagAction</a><br />
+Class <a href="Zyps/TagCondition.html" class="link">Zyps::TagCondition</a><br />
+Class <a href="Zyps/TextView.html" class="link">Zyps::TextView</a><br />
+Class <a href="Zyps/TimeCondition.html" class="link">Zyps::TimeCondition</a><br />
+Class <a href="Zyps/TimedAction.html" class="link">Zyps::TimedAction</a><br />
+Class <a href="Zyps/TrailsView.html" class="link">Zyps::TrailsView</a><br />
+Class <a href="Zyps/TurnAction.html" class="link">Zyps::TurnAction</a><br />
+Class <a href="Zyps/Vector.html" class="link">Zyps::Vector</a><br />
+Class <a href="Zyps/View.html" class="link">Zyps::View</a><br />
+Class <a href="Zyps/WrapAround.html" class="link">Zyps::WrapAround</a><br />
+Class <a href="Zyps/WxCanvas.html" class="link">Zyps::WxCanvas</a><br />
+Class <a href="Zyps/Zyp.html" class="link">Zyps::Zyp</a><br />
+
+    </div>
+
+    <div id="constants-list">
+      <h3 class="section-bar">Constants</h3>
+
+      <div class="name-list">
+        <table summary="Constants">
+        <tr class="top-aligned-row context-row">
+          <td class="context-item-name">YAML_DOMAIN</td>
+          <td>=</td>
+          <td class="context-item-value">&quot;jay.mcgavren.com,2008-03-15&quot;</td>
+        </tr>
+        </table>
+      </div>
+    </div>
+
+
+
+      
+
+
+    <!-- if method_list -->
+
+
+  </div>
+
+
+<div id="validator-badges">
+  <p><small><a href="http://validator.w3.org/check/referer">[Validate]</a></small></p>
+</div>
+
+</body>
+</html>

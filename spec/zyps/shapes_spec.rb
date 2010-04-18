@@ -24,34 +24,34 @@ include Zyps
 
 describe Rectangle do
 
-	before(:each) do
-		@shape = Rectangle.new
-	end
+  before(:each) do
+    @shape = Rectangle.new
+  end
 
-	it "has a default size"	
-	it "has a default Color"	
-	it "draws itself to Views"	
-	it "collides with Locations inside it"	
-	it "collides with Locations that have passed through it since the prior frame"
-	
+  it "has a default size"  
+  it "has a default Color"  
+  it "draws itself to Views"  
+  it "collides with Locations inside it"  
+  it "collides with Locations that have passed through it since the prior frame"
+  
 end
 
 
 describe Zyp do
 
-	before(:each) do
-		@shape = Zyp.new
-	end
+  before(:each) do
+    @shape = Zyp.new
+  end
 
-	it "has a default size"
-	it "draws itself to Views when it has 1 segment"
-	it "draws itself to Views when it has 2 segments"	
-	it "draws itself to Views when it has 3 segments"
-	it "draws itself to Views when it has 100 segments"
-	
-	it "drops prior segment end locations when over its maximum segment count"
-	it "collides with Locations inside it"
-	it "collides with Locations that have passed through it since the prior frame"
-	it "should report the normal from its surface for a given point of impact"
+  it "has a default size"
+  it "draws itself to Views when it has 1 segment"
+  it "draws itself to Views when it has 2 segments"  
+  it "draws itself to Views when it has 3 segments"
+  it "draws itself to Views when it has 100 segments"
+  
+  it "drops prior segment end locations when over its maximum segment count"
+  it "collides with Locations inside it"
+  it "collides with Locations that have passed through it since the prior frame"
+  it "should report the normal from its surface for a given point of impact"
 
 end

@@ -26,37 +26,37 @@ module Zyps
 #A view of game objects.
 class TextView < View
 
-	#An object to puts() text to.
-	attr_accessor :output
+  #An object to puts() text to.
+  attr_accessor :output
 
-	#Takes a hash with the following keys and defaults:
-	#	:output => STDOUT
-	def initialize (options = {})
-	
-		super
-		
-		options = {
-			:output => STDOUT,
-		}.merge(options)
-		@output = options[:output]
-		
-	end
+  #Takes a hash with the following keys and defaults:
+  #  :output => STDOUT
+  def initialize (options = {})
+  
+    super
+    
+    options = {
+      :output => STDOUT,
+    }.merge(options)
+    @output = options[:output]
+    
+  end
 
-	#Takes an Environment, and prints objects to the assigned output.
-	def update(environment)
-	
-		output.puts environment
-		
-	end
-	
-	
-	private
-	
-	
-		#Do nothing; text views don't need to be cleared.
-		def clear_view; end
+  #Takes an Environment, and prints objects to the assigned output.
+  def update(environment)
+  
+    output.puts environment
+    
+  end
+  
+  
+  private
+  
+  
+    #Do nothing; text views don't need to be cleared.
+    def clear_view; end
 
-	
+  
 end
 
 

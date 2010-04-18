@@ -28,52 +28,52 @@ module Zyps
 class Canvas
 
 
-	#Dimensions of the drawing area.
-	#Control should normally be left to the owner View object.
-	attr_reader :width, :height
+  #Dimensions of the drawing area.
+  #Control should normally be left to the owner View object.
+  attr_reader :width, :height
 
 
-	def initialize(width = 1, height = 1)
-	
-		#Will be resized later.
-		@width, @height = width, height
+  def initialize(width = 1, height = 1)
+  
+    #Will be resized later.
+    @width, @height = width, height
 
-		#Arrays of shapes that will be painted when render() is called.
-		@rectangle_queue = []
-		@line_queue = []
-		
-	end
+    #Arrays of shapes that will be painted when render() is called.
+    @rectangle_queue = []
+    @line_queue = []
+    
+  end
 
 
-	#Takes a hash with these keys and defaults:
-	#	:color => nil
-	#	:border_width => 1
-	#	:filled => true
-	#	:x => nil
-	#	:y => nil
-	#	:width => nil
-	#	:height => nil
-	def draw_rectangle(options = {})
-		options = {
-			:filled => true,
-			:border_width => 1
-		}.merge(options)
-		@rectangle_queue << options
-	end
-	
-	
-	#Takes a hash with these keys and defaults:
-	#	:color => nil
-	#	:width => nil
-	#	:x1 => nil
-	#	:y1 => nil
-	#	:x2 => nil
-	#	:y2 => nil
-	def draw_line(options = {})
-		@line_queue << options
-	end
-		
-	
+  #Takes a hash with these keys and defaults:
+  #  :color => nil
+  #  :border_width => 1
+  #  :filled => true
+  #  :x => nil
+  #  :y => nil
+  #  :width => nil
+  #  :height => nil
+  def draw_rectangle(options = {})
+    options = {
+      :filled => true,
+      :border_width => 1
+    }.merge(options)
+    @rectangle_queue << options
+  end
+  
+  
+  #Takes a hash with these keys and defaults:
+  #  :color => nil
+  #  :width => nil
+  #  :x1 => nil
+  #  :y1 => nil
+  #  :x2 => nil
+  #  :y2 => nil
+  def draw_line(options = {})
+    @line_queue << options
+  end
+    
+  
 end
 
 

@@ -1,0 +1,760 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>Class: Zyps::Environment</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <meta http-equiv="Content-Script-Type" content="text/javascript" />
+  <link rel="stylesheet" href="../.././rdoc-style.css" type="text/css" media="screen" />
+  <script type="text/javascript">
+  // <![CDATA[
+
+  function popupCode( url ) {
+    window.open(url, "Code", "resizable=yes,scrollbars=yes,toolbar=no,status=no,height=150,width=400")
+  }
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+    
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  
+  // Make codeblocks hidden by default
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  
+  // ]]>
+  </script>
+
+</head>
+<body>
+
+
+
+    <div id="classHeader">
+        <table class="header-table">
+        <tr class="top-aligned-row">
+          <td><strong>Class</strong></td>
+          <td class="class-name-in-header">Zyps::Environment</td>
+        </tr>
+        <tr class="top-aligned-row">
+            <td><strong>In:</strong></td>
+            <td>
+                <a href="../../files/lib/zyps/serializer_rb.html">
+                lib/zyps/serializer.rb
+                </a>
+        <br />
+                <a href="../../files/lib/zyps_rb.html">
+                lib/zyps.rb
+                </a>
+        <br />
+            </td>
+        </tr>
+
+        <tr class="top-aligned-row">
+            <td><strong>Parent:</strong></td>
+            <td>
+                Object
+            </td>
+        </tr>
+        </table>
+    </div>
+  <!-- banner header -->
+
+  <div id="bodyContent">
+
+
+
+  <div id="contextContent">
+
+    <div id="description">
+      <p>
+A virtual environment.
+</p>
+
+    </div>
+
+
+   </div>
+
+    <div id="method-list">
+      <h3 class="section-bar">Methods</h3>
+
+      <div class="name-list">
+      <a href="#M000242">&lt;&lt;</a>&nbsp;&nbsp;
+      <a href="#M000244">==</a>&nbsp;&nbsp;
+      <a href="#M000235">add_environmental_factor</a>&nbsp;&nbsp;
+      <a href="#M000228">add_object</a>&nbsp;&nbsp;
+      <a href="#M000238">clear_environmental_factors</a>&nbsp;&nbsp;
+      <a href="#M000231">clear_objects</a>&nbsp;&nbsp;
+      <a href="#M000240">copy</a>&nbsp;&nbsp;
+      <a href="#M000239">environmental_factor_count</a>&nbsp;&nbsp;
+      <a href="#M000237">environmental_factors</a>&nbsp;&nbsp;
+      <a href="#M000233">get_object</a>&nbsp;&nbsp;
+      <a href="#M000241">interact</a>&nbsp;&nbsp;
+      <a href="#M000227">new</a>&nbsp;&nbsp;
+      <a href="#M000232">object_count</a>&nbsp;&nbsp;
+      <a href="#M000230">objects</a>&nbsp;&nbsp;
+      <a href="#M000236">remove_environmental_factor</a>&nbsp;&nbsp;
+      <a href="#M000229">remove_object</a>&nbsp;&nbsp;
+      <a href="#M000243">to_s</a>&nbsp;&nbsp;
+      <a href="#M000226">to_yaml_properties</a>&nbsp;&nbsp;
+      <a href="#M000234">update_object</a>&nbsp;&nbsp;
+      </div>
+    </div>
+
+  </div>
+
+
+    <!-- if includes -->
+    <div id="includes">
+      <h3 class="section-bar">Included Modules</h3>
+
+      <div id="includes-list">
+        <span class="include-name">Observable</span>
+      </div>
+    </div>
+
+    <div id="section">
+
+
+
+
+
+    <div id="attribute-list">
+      <h3 class="section-bar">Attributes</h3>
+
+      <div class="name-list">
+        <table>
+        <tr class="top-aligned-row context-row">
+          <td class="context-item-name">clock</td>
+          <td class="context-item-value">&nbsp;[RW]&nbsp;</td>
+          <td class="context-item-desc">
+A <a href="Clock.html">Clock</a> used to track time between updates.
+
+</td>
+        </tr>
+        </table>
+      </div>
+    </div>
+      
+
+
+    <!-- if method_list -->
+    <div id="methods">
+      <h3 class="section-bar">Public Class methods</h3>
+
+      <div id="method-M000227" class="method-detail">
+        <a name="M000227"></a>
+
+        <div class="method-heading">
+          <a href="#M000227" class="method-signature">
+          <span class="method-name">new</span><span class="method-args">(options = {})</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Takes a hash with these keys and defaults:
+</p>
+<pre>
+      :objects =&gt; [],
+      :environmental_factors =&gt; []
+      :clock =&gt; Clock.new
+</pre>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000227-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000227-source">
+<pre>
+<span class="ruby-comment cmt"># File lib/zyps.rb, line 37</span>
+        <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">initialize</span> (<span class="ruby-identifier">options</span> = {})
+                <span class="ruby-identifier">options</span> = {
+                        <span class="ruby-identifier">:objects</span> =<span class="ruby-operator">&gt;</span> [], 
+                        <span class="ruby-identifier">:environmental_factors</span> =<span class="ruby-operator">&gt;</span> [],
+                        <span class="ruby-identifier">:clock</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-constant">Clock</span>.<span class="ruby-identifier">new</span>
+                }.<span class="ruby-identifier">merge</span>(<span class="ruby-identifier">options</span>)
+                <span class="ruby-ivar">@objects</span> = {}
+                <span class="ruby-ivar">@environmental_factors</span> = []
+                <span class="ruby-identifier">options</span>[<span class="ruby-identifier">:objects</span>].<span class="ruby-identifier">each</span> {<span class="ruby-operator">|</span><span class="ruby-identifier">object</span><span class="ruby-operator">|</span> <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">add_object</span>(<span class="ruby-identifier">object</span>)}
+                <span class="ruby-identifier">options</span>[<span class="ruby-identifier">:environmental_factors</span>].<span class="ruby-identifier">each</span> {<span class="ruby-operator">|</span><span class="ruby-identifier">environmental_factor</span><span class="ruby-operator">|</span> <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">add_environmental_factor</span>(<span class="ruby-identifier">environmental_factor</span>)}
+                <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">clock</span> = <span class="ruby-identifier">options</span>[<span class="ruby-identifier">:clock</span>]
+        <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="section-bar">Public Instance methods</h3>
+
+      <div id="method-M000242" class="method-detail">
+        <a name="M000242"></a>
+
+        <div class="method-heading">
+          <a href="#M000242" class="method-signature">
+          <span class="method-name">&lt;&lt;</span><span class="method-args">(item)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Overloads the &lt;&lt; operator to put the <a
+href="Environment.html#M000227">new</a> item into the correct list. This
+allows one to simply call env &lt;&lt; &lt;valid_object&gt; instead of
+having to choose a specific list, such as <a
+href="Environment.html#M000230">objects</a> or environmental factors.
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000242-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000242-source">
+<pre>
+<span class="ruby-comment cmt"># File lib/zyps.rb, line 169</span>
+        <span class="ruby-keyword kw">def</span> <span class="ruby-operator">&lt;&lt;</span>(<span class="ruby-identifier">item</span>)
+                <span class="ruby-keyword kw">if</span>(<span class="ruby-identifier">item</span>.<span class="ruby-identifier">kind_of?</span> <span class="ruby-constant">Zyps</span><span class="ruby-operator">::</span><span class="ruby-constant">GameObject</span>)
+                        <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">add_object</span>(<span class="ruby-identifier">item</span>)
+                <span class="ruby-keyword kw">elsif</span>(<span class="ruby-identifier">item</span>.<span class="ruby-identifier">kind_of?</span> <span class="ruby-constant">Zyps</span><span class="ruby-operator">::</span><span class="ruby-constant">EnvironmentalFactor</span>)
+                        <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">add_environmental_factor</span>(<span class="ruby-identifier">item</span>)
+                <span class="ruby-keyword kw">else</span>
+                        <span class="ruby-identifier">raise</span> <span class="ruby-node">&quot;Invalid item: #{item.class}&quot;</span> 
+                <span class="ruby-keyword kw">end</span>
+                <span class="ruby-keyword kw">self</span>
+        <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000244" class="method-detail">
+        <a name="M000244"></a>
+
+        <div class="method-heading">
+          <a href="#M000244" class="method-signature">
+          <span class="method-name">==</span><span class="method-args">(other)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+True if clock, all <a href="Environment.html#M000230">objects</a>, and all
+environmental factors are the same.
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000244-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000244-source">
+<pre>
+<span class="ruby-comment cmt"># File lib/zyps.rb, line 193</span>
+        <span class="ruby-keyword kw">def</span> <span class="ruby-operator">==</span>(<span class="ruby-identifier">other</span>)
+                <span class="ruby-keyword kw">return</span> <span class="ruby-keyword kw">false</span> <span class="ruby-keyword kw">if</span> <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">objects</span>.<span class="ruby-identifier">to_a</span> <span class="ruby-operator">!=</span> <span class="ruby-identifier">other</span>.<span class="ruby-identifier">objects</span>.<span class="ruby-identifier">to_a</span>
+                <span class="ruby-keyword kw">return</span> <span class="ruby-keyword kw">false</span> <span class="ruby-keyword kw">if</span> <span class="ruby-ivar">@environmental_factors</span> <span class="ruby-operator">!=</span> <span class="ruby-identifier">other</span>.<span class="ruby-identifier">environmental_factors</span>.<span class="ruby-identifier">to_a</span>
+                <span class="ruby-keyword kw">return</span> <span class="ruby-keyword kw">false</span> <span class="ruby-keyword kw">if</span> <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">clock</span> <span class="ruby-operator">!=</span> <span class="ruby-identifier">other</span>.<span class="ruby-identifier">clock</span>
+                <span class="ruby-keyword kw">true</span>
+        <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000235" class="method-detail">
+        <a name="M000235"></a>
+
+        <div class="method-heading">
+          <a href="#M000235" class="method-signature">
+          <span class="method-name">add_environmental_factor</span><span class="method-args">(environmental_factor)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Add an <a href="EnvironmentalFactor.html">EnvironmentalFactor</a> to this
+environment.
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000235-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000235-source">
+<pre>
+<span class="ruby-comment cmt"># File lib/zyps.rb, line 77</span>
+        <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">add_environmental_factor</span>(<span class="ruby-identifier">environmental_factor</span>)
+                <span class="ruby-identifier">environmental_factor</span>.<span class="ruby-identifier">environment</span> = <span class="ruby-keyword kw">self</span>
+                <span class="ruby-ivar">@environmental_factors</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-identifier">environmental_factor</span>
+        <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000228" class="method-detail">
+        <a name="M000228"></a>
+
+        <div class="method-heading">
+          <a href="#M000228" class="method-signature">
+          <span class="method-name">add_object</span><span class="method-args">(object)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Add a <a href="GameObject.html">GameObject</a> to this environment.
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000228-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000228-source">
+<pre>
+<span class="ruby-comment cmt"># File lib/zyps.rb, line 52</span>
+        <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">add_object</span>(<span class="ruby-identifier">object</span>)
+                <span class="ruby-identifier">object</span>.<span class="ruby-identifier">environment</span> = <span class="ruby-keyword kw">self</span>
+                <span class="ruby-ivar">@objects</span>[<span class="ruby-identifier">object</span>.<span class="ruby-identifier">identifier</span>] = <span class="ruby-identifier">object</span>
+        <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000238" class="method-detail">
+        <a name="M000238"></a>
+
+        <div class="method-heading">
+          <a href="#M000238" class="method-signature">
+          <span class="method-name">clear_environmental_factors</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Remove all EnvironmentalFactors from this environment.
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000238-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000238-source">
+<pre>
+<span class="ruby-comment cmt"># File lib/zyps.rb, line 89</span>
+        <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">clear_environmental_factors</span>
+                <span class="ruby-ivar">@environmental_factors</span>.<span class="ruby-identifier">clone</span>.<span class="ruby-identifier">each</span> {<span class="ruby-operator">|</span><span class="ruby-identifier">environmental_factor</span><span class="ruby-operator">|</span> <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">remove_environmental_factor</span>(<span class="ruby-identifier">environmental_factor</span>)}
+        <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000231" class="method-detail">
+        <a name="M000231"></a>
+
+        <div class="method-heading">
+          <a href="#M000231" class="method-signature">
+          <span class="method-name">clear_objects</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Remove all GameObjects from this environment.
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000231-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000231-source">
+<pre>
+<span class="ruby-comment cmt"># File lib/zyps.rb, line 65</span>
+        <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">clear_objects</span>
+                <span class="ruby-ivar">@objects</span>.<span class="ruby-identifier">clone</span>.<span class="ruby-identifier">each_key</span> {<span class="ruby-operator">|</span><span class="ruby-identifier">identifier</span><span class="ruby-operator">|</span> <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">remove_object</span>(<span class="ruby-identifier">identifier</span>)}
+        <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000240" class="method-detail">
+        <a name="M000240"></a>
+
+        <div class="method-heading">
+          <a href="#M000240" class="method-signature">
+          <span class="method-name">copy</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Make a deep <a href="Environment.html#M000240">copy</a>.
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000240-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000240-source">
+<pre>
+<span class="ruby-comment cmt"># File lib/zyps.rb, line 97</span>
+        <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">copy</span>
+                <span class="ruby-identifier">copy</span> = <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">clone</span> <span class="ruby-comment cmt">#Currently, we overwrite everything anyway, but we may add some clonable attributes later.</span>
+                <span class="ruby-comment cmt">#Make a deep copy of all objects.</span>
+                <span class="ruby-identifier">copy</span>.<span class="ruby-identifier">instance_eval</span> {<span class="ruby-ivar">@objects</span> = {}}
+                <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">objects</span>.<span class="ruby-identifier">each</span> {<span class="ruby-operator">|</span><span class="ruby-identifier">object</span><span class="ruby-operator">|</span> <span class="ruby-identifier">copy</span>.<span class="ruby-identifier">add_object</span>(<span class="ruby-identifier">object</span>.<span class="ruby-identifier">copy</span>)}
+                <span class="ruby-comment cmt">#Make a deep copy of all environmental_factors.</span>
+                <span class="ruby-identifier">copy</span>.<span class="ruby-identifier">clear_environmental_factors</span>
+                <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">environmental_factors</span>.<span class="ruby-identifier">each</span> {<span class="ruby-operator">|</span><span class="ruby-identifier">environmental_factor</span><span class="ruby-operator">|</span> <span class="ruby-identifier">copy</span>.<span class="ruby-identifier">add_environmental_factor</span>(<span class="ruby-identifier">environmental_factor</span>)}
+                <span class="ruby-identifier">copy</span>
+        <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000239" class="method-detail">
+        <a name="M000239"></a>
+
+        <div class="method-heading">
+          <a href="#M000239" class="method-signature">
+          <span class="method-name">environmental_factor_count</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Number of EnvironmentalFactors in this environment.
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000239-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000239-source">
+<pre>
+<span class="ruby-comment cmt"># File lib/zyps.rb, line 93</span>
+        <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">environmental_factor_count</span>; <span class="ruby-ivar">@environmental_factors</span>.<span class="ruby-identifier">length</span>; <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000237" class="method-detail">
+        <a name="M000237"></a>
+
+        <div class="method-heading">
+          <a href="#M000237" class="method-signature">
+          <span class="method-name">environmental_factors</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+An Enumerable::Enumerator over each <a
+href="EnvironmentalFactor.html">EnvironmentalFactor</a> in the environment.
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000237-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000237-source">
+<pre>
+<span class="ruby-comment cmt"># File lib/zyps.rb, line 87</span>
+        <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">environmental_factors</span>; <span class="ruby-constant">Enumerable</span><span class="ruby-operator">::</span><span class="ruby-constant">Enumerator</span>.<span class="ruby-identifier">new</span>(<span class="ruby-ivar">@environmental_factors</span>, <span class="ruby-identifier">:each</span>); <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000233" class="method-detail">
+        <a name="M000233"></a>
+
+        <div class="method-heading">
+          <a href="#M000233" class="method-signature">
+          <span class="method-name">get_object</span><span class="method-args">(identifier)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Retrieve a <a href="GameObject.html">GameObject</a> by ID.
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000233-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000233-source">
+<pre>
+<span class="ruby-comment cmt"># File lib/zyps.rb, line 71</span>
+        <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">get_object</span>(<span class="ruby-identifier">identifier</span>); <span class="ruby-ivar">@objects</span>[<span class="ruby-identifier">identifier</span>]; <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000241" class="method-detail">
+        <a name="M000241"></a>
+
+        <div class="method-heading">
+          <a href="#M000241" class="method-signature">
+          <span class="method-name">interact</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Allow everything in the environment to <a
+href="Environment.html#M000241">interact</a> with each other. Objects are
+first moved according to their preexisting vectors and the amount of time
+since the last call. Then, each <a href="GameObject.html">GameObject</a>
+with an act() method is allowed to act on the environment. Finally, each <a
+href="EnvironmentalFactor.html">EnvironmentalFactor</a> is allowed to act
+on the <a href="Environment.html">Environment</a>.
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000241-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000241-source">
+<pre>
+<span class="ruby-comment cmt"># File lib/zyps.rb, line 113</span>
+        <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">interact</span>
+        
+                <span class="ruby-comment cmt">#Get time since last interaction.</span>
+                <span class="ruby-identifier">elapsed_time</span> = <span class="ruby-ivar">@clock</span>.<span class="ruby-identifier">elapsed_time</span>
+                
+                <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">objects</span>.<span class="ruby-identifier">each</span> <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">object</span><span class="ruby-operator">|</span>
+                
+                        <span class="ruby-comment cmt">#Move each object according to its vector.</span>
+                        <span class="ruby-keyword kw">begin</span>
+                                <span class="ruby-identifier">object</span>.<span class="ruby-identifier">move</span>(<span class="ruby-identifier">elapsed_time</span>)
+                        <span class="ruby-comment cmt">#Remove misbehaving objects.</span>
+                        <span class="ruby-keyword kw">rescue</span> <span class="ruby-constant">Exception</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">exception</span>
+                                <span class="ruby-identifier">puts</span> <span class="ruby-identifier">exception</span>, <span class="ruby-identifier">exception</span>.<span class="ruby-identifier">backtrace</span>
+                                <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">remove_object</span>(<span class="ruby-identifier">object</span>)
+                                <span class="ruby-keyword kw">next</span>
+                        <span class="ruby-keyword kw">end</span>
+                        
+                        <span class="ruby-comment cmt">#Have all creatures interact with the environment.</span>
+                        <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">object</span>.<span class="ruby-identifier">respond_to?</span>(<span class="ruby-identifier">:act</span>)
+                                <span class="ruby-keyword kw">begin</span>
+                                        <span class="ruby-comment cmt">#Have creature act on all GameObjects other than itself.</span>
+                                        <span class="ruby-identifier">object</span>.<span class="ruby-identifier">act</span>(<span class="ruby-identifier">objects</span>.<span class="ruby-identifier">reject</span>{<span class="ruby-operator">|</span><span class="ruby-identifier">target</span><span class="ruby-operator">|</span> <span class="ruby-identifier">target</span>.<span class="ruby-identifier">equal?</span>(<span class="ruby-identifier">object</span>)})
+                                <span class="ruby-comment cmt">#Remove misbehaving objects.</span>
+                                <span class="ruby-keyword kw">rescue</span> <span class="ruby-constant">Exception</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">exception</span>
+                                        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">exception</span>, <span class="ruby-identifier">exception</span>.<span class="ruby-identifier">backtrace</span>
+                                        <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">remove_object</span>(<span class="ruby-identifier">object</span>)
+                                        <span class="ruby-keyword kw">next</span>
+                                <span class="ruby-keyword kw">end</span>
+                        <span class="ruby-keyword kw">end</span>
+                        
+                <span class="ruby-keyword kw">end</span>
+                
+                <span class="ruby-comment cmt">#Have all environmental factors interact with environment.</span>
+                <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">environmental_factors</span>.<span class="ruby-identifier">each</span> <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">factor</span><span class="ruby-operator">|</span>
+                        <span class="ruby-keyword kw">begin</span>
+                                <span class="ruby-identifier">factor</span>.<span class="ruby-identifier">act</span>(<span class="ruby-keyword kw">self</span>)
+                        <span class="ruby-comment cmt">#Remove misbehaving environmental factors.</span>
+                        <span class="ruby-keyword kw">rescue</span> <span class="ruby-constant">Exception</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">exception</span>
+                                <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">remove_environmental_factor</span>(<span class="ruby-identifier">factor</span>)
+                                <span class="ruby-identifier">puts</span> <span class="ruby-identifier">exception</span>, <span class="ruby-identifier">exception</span>.<span class="ruby-identifier">backtrace</span>
+                                <span class="ruby-keyword kw">next</span>
+                        <span class="ruby-keyword kw">end</span>
+                <span class="ruby-keyword kw">end</span>
+                        
+                <span class="ruby-comment cmt">#Mark environment as changed.</span>
+                <span class="ruby-identifier">changed</span>
+
+                <span class="ruby-comment cmt">#Alert observers.</span>
+                <span class="ruby-identifier">notify_observers</span>(<span class="ruby-keyword kw">self</span>)
+                
+        <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000232" class="method-detail">
+        <a name="M000232"></a>
+
+        <div class="method-heading">
+          <a href="#M000232" class="method-signature">
+          <span class="method-name">object_count</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Number of GameObjects in this environment.
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000232-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000232-source">
+<pre>
+<span class="ruby-comment cmt"># File lib/zyps.rb, line 69</span>
+        <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">object_count</span>; <span class="ruby-ivar">@objects</span>.<span class="ruby-identifier">length</span>; <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000230" class="method-detail">
+        <a name="M000230"></a>
+
+        <div class="method-heading">
+          <a href="#M000230" class="method-signature">
+          <span class="method-name">objects</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+An Enumerable::Enumerator over each <a
+href="GameObject.html">GameObject</a> in the environment.
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000230-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000230-source">
+<pre>
+<span class="ruby-comment cmt"># File lib/zyps.rb, line 63</span>
+        <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">objects</span>; <span class="ruby-constant">Enumerable</span><span class="ruby-operator">::</span><span class="ruby-constant">Enumerator</span>.<span class="ruby-identifier">new</span>(<span class="ruby-ivar">@objects</span>, <span class="ruby-identifier">:each_value</span>); <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000236" class="method-detail">
+        <a name="M000236"></a>
+
+        <div class="method-heading">
+          <a href="#M000236" class="method-signature">
+          <span class="method-name">remove_environmental_factor</span><span class="method-args">(environmental_factor)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Remove an <a href="EnvironmentalFactor.html">EnvironmentalFactor</a> from
+this environment.
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000236-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000236-source">
+<pre>
+<span class="ruby-comment cmt"># File lib/zyps.rb, line 82</span>
+        <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">remove_environmental_factor</span>(<span class="ruby-identifier">environmental_factor</span>)
+                <span class="ruby-identifier">environmental_factor</span>.<span class="ruby-identifier">environment</span> = <span class="ruby-keyword kw">nil</span>
+                <span class="ruby-ivar">@environmental_factors</span>.<span class="ruby-identifier">delete</span>(<span class="ruby-identifier">environmental_factor</span>)
+        <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000229" class="method-detail">
+        <a name="M000229"></a>
+
+        <div class="method-heading">
+          <a href="#M000229" class="method-signature">
+          <span class="method-name">remove_object</span><span class="method-args">(identifier)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Remove a <a href="GameObject.html">GameObject</a> from this environment.
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000229-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000229-source">
+<pre>
+<span class="ruby-comment cmt"># File lib/zyps.rb, line 57</span>
+        <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">remove_object</span>(<span class="ruby-identifier">identifier</span>)
+                <span class="ruby-identifier">raise</span> <span class="ruby-node">&quot;Object #{identifier} not found.&quot;</span> <span class="ruby-keyword kw">unless</span> <span class="ruby-ivar">@objects</span>[<span class="ruby-identifier">identifier</span>]
+                <span class="ruby-ivar">@objects</span>[<span class="ruby-identifier">identifier</span>].<span class="ruby-identifier">environment</span> = <span class="ruby-keyword kw">nil</span>
+                <span class="ruby-ivar">@objects</span>.<span class="ruby-identifier">delete</span>(<span class="ruby-identifier">identifier</span>)
+        <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000243" class="method-detail">
+        <a name="M000243"></a>
+
+        <div class="method-heading">
+          <a href="#M000243" class="method-signature">
+          <span class="method-name">to_s</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000243-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000243-source">
+<pre>
+<span class="ruby-comment cmt"># File lib/zyps.rb, line 181</span>
+        <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">to_s</span>
+                [
+                        <span class="ruby-value str">&quot;Environment&quot;</span>,
+                        [
+                                <span class="ruby-value str">&quot;\tObjects&quot;</span>, <span class="ruby-identifier">objects</span>.<span class="ruby-identifier">map</span>{<span class="ruby-operator">|</span><span class="ruby-identifier">o</span><span class="ruby-operator">|</span> <span class="ruby-identifier">o</span>.<span class="ruby-identifier">to_s</span>.<span class="ruby-identifier">gsub</span>(<span class="ruby-regexp re">/^/</span>, <span class="ruby-value str">&quot;\t\t&quot;</span>)},
+                                <span class="ruby-value str">&quot;\tEnvironmental Factors&quot;</span>, <span class="ruby-identifier">environmental_factors</span>.<span class="ruby-identifier">map</span>{<span class="ruby-operator">|</span><span class="ruby-identifier">o</span><span class="ruby-operator">|</span> <span class="ruby-identifier">o</span>.<span class="ruby-identifier">to_s</span>.<span class="ruby-identifier">gsub</span>(<span class="ruby-regexp re">/^/</span>, <span class="ruby-value str">&quot;\t\t&quot;</span>)}
+                        ].<span class="ruby-identifier">join</span>(<span class="ruby-value str">&quot;\n&quot;</span>)
+                ].<span class="ruby-identifier">join</span>(<span class="ruby-value str">&quot;\n&quot;</span>)
+        <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000226" class="method-detail">
+        <a name="M000226"></a>
+
+        <div class="method-heading">
+          <a href="#M000226" class="method-signature">
+          <span class="method-name">to_yaml_properties</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+<a href="Environment.html">Environment</a> should exclude any observers.
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000226-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000226-source">
+<pre>
+<span class="ruby-comment cmt"># File lib/zyps/serializer.rb, line 52</span>
+        <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">to_yaml_properties</span>
+                <span class="ruby-identifier">instance_variables</span>.<span class="ruby-identifier">reject</span>{<span class="ruby-operator">|</span><span class="ruby-identifier">v</span><span class="ruby-operator">|</span> <span class="ruby-identifier">v</span> <span class="ruby-operator">==</span> <span class="ruby-value str">&quot;@observer_peers&quot;</span>}
+        <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000234" class="method-detail">
+        <a name="M000234"></a>
+
+        <div class="method-heading">
+          <a href="#M000234" class="method-signature">
+          <span class="method-name">update_object</span><span class="method-args">(object)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Retrieve a <a href="GameObject.html">GameObject</a> by ID and modify it.
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000234-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000234-source">
+<pre>
+<span class="ruby-comment cmt"># File lib/zyps.rb, line 73</span>
+        <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">update_object</span>(<span class="ruby-identifier">object</span>); <span class="ruby-ivar">@objects</span>[<span class="ruby-identifier">object</span>.<span class="ruby-identifier">identifier</span>] = <span class="ruby-identifier">object</span>; <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+
+
+  </div>
+
+
+<div id="validator-badges">
+  <p><small><a href="http://validator.w3.org/check/referer">[Validate]</a></small></p>
+</div>
+
+</body>
+</html>
