@@ -280,11 +280,11 @@ class GameObject
   #list or assign it to the correct attribute.
   #Assignment is done based on item's class or a parent class of item.
   def <<(item)
-    if item.kind_of? Zyps::Location:
+    if item.kind_of? Zyps::Location
       self.location = item
-    elsif item.kind_of? Zyps::Color:
+    elsif item.kind_of? Zyps::Color
       self.color = item
-    elsif item.kind_of? Zyps::Vector:
+    elsif item.kind_of? Zyps::Vector
       self.vector = item
     else
       raise "Invalid item: #{item.class}"
