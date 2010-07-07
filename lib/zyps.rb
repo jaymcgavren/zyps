@@ -19,6 +19,11 @@
 require 'enumerator'
 require 'observer'
 
+# Ruby 1.9 compatibility - bind Enumerable::Enumerator to stdlib Enumerator
+module Enumerable
+  Enumerator = Enumerator
+end
+
 module Zyps
 
 
