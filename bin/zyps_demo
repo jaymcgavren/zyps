@@ -504,47 +504,47 @@ class Demo < Wx::App
   #After a certain number, run the next demo.
   def update(environment)
     case @update_count
-      when 0:
+      when 0
         say "-" * 30
         test_render
-      when 100:
+      when 100
         test_render_2
         say "-" * 30
-      when 200:
+      when 200
         @environment.clear_objects
         test_environmental_factors
-      when 300:
+      when 300
         test_environmental_factors_2
         say "-" * 30
-      when 400:
+      when 400
         @environment.clear_objects
         @environment.clear_environmental_factors
         test_behaviors
-      when 500:
+      when 500
         test_behaviors_2
         say "-" * 30
-      when 600:
+      when 600
         @environment.clear_objects
         test_flee
         say "-" * 30
-      when 700:
+      when 700
         @environment.clear_objects
         test_turn
         say "-" * 30
-      when 1100:
+      when 1100
         @environment.clear_objects
         test_eat
         say "-" * 30
-      when 1200:
+      when 1200
         @environment.clear_objects
         test_explode
         say "-" * 30
-      when 1300:
+      when 1300
         @environment.clear_objects
         @environment.clear_environmental_factors
         test_shoot
         say "-" * 30
-      when 1400:
+      when 1400
         finish
     end
     @update_count += 1
