@@ -65,7 +65,7 @@ class Environment
     @objects.delete(identifier)
   end
   #An Enumerable::Enumerator over each GameObject in the environment.
-  def objects; Enumerable::Enumerator.new(@objects, :each_value); end
+  def objects; Enumerable::Enumerator.new(@objects.clone, :each_value); end
   #Remove all GameObjects from this environment.
   def clear_objects
     @objects.clone.each_key {|identifier| self.remove_object(identifier)}
