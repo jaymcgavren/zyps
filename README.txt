@@ -62,25 +62,7 @@ Glen Franta, Scott McGinty, and so many other math, science, and computer scienc
 
 Alex Fenton and Mario Steele for wxRuby advice.
 
-My lovely wife, Diana, for patience and usability testing.
-
-
-== Author
-
-Copyright 2007-2009 Zyps Contributors
-
 
 == License
 
-Zyps is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+Copyright (c) 2009-2011 Zyps Contributors. Released under the MIT license. See the LICENSE file for details.
