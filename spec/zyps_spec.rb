@@ -1,5 +1,10 @@
 require File.expand_path(File.join(File.dirname(__FILE__), 'spec_helper'))
 
+require 'zyps'
+require 'zyps/actions'
+require 'zyps/conditions'
+require 'zyps/environmental_factors'
+
 include Zyps
 
 
