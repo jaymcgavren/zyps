@@ -1,68 +1,60 @@
-== Synopsis
+# Synopsis
 
 Zyps - An AI library for building games.
 
 
-== Description
+# Description
 
 Zyps are small creatures with minds of their own.  You can create dozens of Zyps, then decide how each will act.  (Will it run away from the others?  Follow them?  Eat them for lunch?)  You can combine rules and actions to create very complex behaviors.
 
 
-== Requirements
-
-* Ruby: http://www.ruby-lang.org
-* Rake (to build from source): http://rake.rubyforge.org
-
-
-== Installation
+# Installation
 
 Make sure you have administrative privileges, then type the following at a command line:
 
-  gem install zyps
+    gem install zyps
 
 
 
-== Usage
+# Usage
 
 Ensure wxRuby is installed and working:
 
-  gem install wxruby
+    gem install wxruby
 
 At a command line, type:
 
-  zyps_demo
+    zyps_demo
 
 
-== Development
+# Development
 
 Source code and documentation are available via the project site (http://jay.mcgavren.com/zyps).
 
 Once downloaded, change into the project directory.  For a list of targets, run:
 
-  rake -T
+    rake -T
 
 To build a gem:
 
-  rake
+    rake
 
 To see the demo:
-  
-  rake demo
+    
+    rake demo
 
 To create a "doc" subdirectory with API documentation:
 
-  rake rdoc
+    rake rdoc
 
 Also see "bin/zyps_demo" and the "spec" subfolder in the project directory for sample code.
 
 
-== Thanks
+# Thanks
 
 Glen Franta, Scott McGinty, and so many other math, science, and computer science teachers whose names I've forgotten.  Nothing I do today would be possible without your efforts so long ago.
 
-Alex Fenton and Mario Steele for wxRuby advice.
 
-
-== License
+# License
 
 Copyright (c) 2009-2011 Zyps Contributors. Released under the MIT license. See the LICENSE file for details.
