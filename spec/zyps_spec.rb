@@ -308,35 +308,49 @@ end
 
 describe Color do
   
-  it "has a default color of white" do
-    @it = Color.new
-    @it.red.should == 1.0
-    @it.green.should == 1.0
-    @it.blue.should == 1.0
+  describe "#{new}" do
+    
+    subject do
+      Color.new(0.5, 0.5, 0.5)
+    end
+    
+    it "accepts red, green, and blue values for contructor" do 
+      subject.red.should == 0.5
+      subject.green.should == 0.5
+      subject.blue.should == 0.5
+    end
+    
   end
   
-  it "accepts red, green, and blue values for contructor" do
-    @it = Color.new(0.5, 0.5, 0.5)
-    @it.red.should == 0.5
-    @it.green.should == 0.5
-    @it.blue.should == 0.5
+  describe "red, green, and blue" do
+    
+    subject do
+      Color.new
+    end
+    
+    it "has a default color of white" do
+      subject.red.should == 1.0
+      subject.green.should == 1.0
+      subject.blue.should == 1.0
+    end
+
+    it "constrains values between 0 and 1" do
+      subject.red += 2
+      subject.green += 2
+      subject.blue += 2
+      subject.red.should == 1.0
+      subject.green.should == 1.0
+      subject.blue.should == 1.0
+      subject.red -= 3
+      subject.green -= 3
+      subject.blue -= 3
+      subject.red.should == 0.0
+      subject.green.should == 0.0
+      subject.blue.should == 0.0
+    end
+    
   end
   
-  it "constrains values between 0 and 1" do
-    @it = Color.new
-    @it.red += 2
-    @it.green += 2
-    @it.blue += 2
-    @it.red.should == 1.0
-    @it.green.should == 1.0
-    @it.blue.should == 1.0
-    @it.red -= 3
-    @it.green -= 3
-    @it.blue -= 3
-    @it.red.should == 0.0
-    @it.green.should == 0.0
-    @it.blue.should == 0.0
-  end
   
 end
 
