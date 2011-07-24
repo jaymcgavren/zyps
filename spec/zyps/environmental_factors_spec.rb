@@ -8,26 +8,29 @@ include Zyps
 
 describe Accelerator do
 
+  subject do
+    Accelerator.new
+  end
+
   before(:each) do
     @environment = Environment.new
     @creature = Creature.new
-    @accelerator = Accelerator.new
-    @environment << @creature << @accelerator
-    @accelerator.clock.stub!(:elapsed_time).and_return(0.1)
+    @environment << @creature << subject
+    subject.clock.stub!(:elapsed_time).and_return(0.1)
   end
 
   it "should alter target's Vector" do
     @creature.vector = Vector.new(0, 0)
-    @accelerator.vector = Vector.new(1, 270)
-    @accelerator.act(@environment)
+    subject.vector = Vector.new(1, 270)
+    subject.act(@environment)
     @creature.vector.speed.should == 0.1
     @creature.vector.pitch.should == 270
   end
   
   it "should slow target if it's moving in opposite direction" do
     @creature.vector = Vector.new(1, 90)
-    @accelerator.vector = Vector.new(1, 270)
-    @accelerator.act(@environment)
+    subject.vector = Vector.new(1, 270)
+    subject.act(@environment)
     @creature.vector.speed.should == 0.9
     @creature.vector.pitch.should == 90
   end
