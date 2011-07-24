@@ -343,12 +343,57 @@ end
 
 describe Vector do
   
-  it "speed and pitch default to zero" do
-    @it = Vector.new
-    @it.speed.should == 0.0
-    @it.pitch.should == 0.0
-    @it.x.should == 0.0
-    @it.y.should == 0.0
+  subject do
+    Vector.new
+  end
+  
+  describe "speed and pitch" do
+    it "defaults to zero" do
+      subject.speed.should == 0.0
+      subject.pitch.should == 0.0
+      subject.x.should == 0.0
+      subject.y.should == 0.0
+    end
+  end
+  
+  describe "x and y" do
+    
+    it "derives x and y when speed and angle are set" do
+      subject.speed = 4
+      subject.pitch = 150
+      subject.x.should be_within(MARGIN).of(-3.464)
+      subject.y.should be_within(MARGIN).of(2)
+      
+      subject.speed = 5
+      subject.pitch = 53.13
+      subject.x.should be_within(MARGIN).of(3)
+      subject.y.should be_within(MARGIN).of(4)
+      
+      subject.speed = 5
+      subject.pitch = 233.13
+      subject.x.should be_within(MARGIN).of(-3)
+      subject.y.should be_within(MARGIN).of(-4)
+      
+      subject.speed = 5
+      subject.pitch = 306.87
+      subject.x.should be_within(MARGIN).of(3)
+      subject.y.should be_within(MARGIN).of(-4)
+    end
+    
+    it "wraps angles over 360 around to 0" do
+      subject.speed = 5
+      subject.pitch = 413.13 #360 + 53.13
+      subject.x.should be_within(MARGIN).of(3)
+      subject.y.should be_within(MARGIN).of(4)
+    end
+    
+    it "converts negative angles to positive equivalents" do
+      subject.speed = 5
+      subject.pitch = -53.13 #360 - 53.13 = 306.87
+      subject.x.should be_within(MARGIN).of(3)
+      subject.y.should be_within(MARGIN).of(-4)
+    end
+    
   end
   
 end
