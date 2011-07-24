@@ -46,6 +46,10 @@ describe ShootAction do
 
   before :each do
     @action = ShootAction.new
+    @environment = Environment.new
+    @actor = Creature.new
+    @target = GameObject.new
+    @environment << @actor << @target
   end
 
   it_should_behave_like "spawn action"
@@ -75,6 +79,10 @@ describe ExplodeAction do
   
   before :each do
     @action = ExplodeAction.new
+    @environment = Environment.new
+    @actor = Creature.new
+    @target = GameObject.new
+    @environment << @actor << @target
   end
   
   it_should_behave_like "spawn action"

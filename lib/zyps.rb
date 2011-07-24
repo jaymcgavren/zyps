@@ -861,7 +861,11 @@ module Utility
     x_difference = target.x - origin.x
     y_difference = target.y - origin.y
     #Get vector's angle.
-    radians = Math.atan2(y_difference, x_difference)
+    if y_difference == 0.0 && x_difference == 0.0
+      radians = 0.0
+    else
+      radians = Math.atan2(y_difference, x_difference)
+    end
     #Result will range from negative Pi to Pi, so correct it.
     radians += PI2 if radians < 0
     #Convert to degrees.
