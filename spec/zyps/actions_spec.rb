@@ -100,11 +100,11 @@ describe ExplodeAction do
     @actor.vector = Vector.new(1.0, 45.0)
     @action.do(@actor, [@target])
     creature_vector = @target.environment.objects.find{|o| o.name == 'Copy of creature'}.vector
-    creature_vector.pitch.should be_close(45, 0.01)
-    creature_vector.speed.should be_close(4, 0.01)
+    creature_vector.pitch.should be_within(MARGIN).of(45)
+    creature_vector.speed.should be_within(MARGIN).of(4)
     object_vector = @target.environment.objects.find{|o| o.name == 'Copy of object'}.vector
-    object_vector.pitch.should be_close(45, 0.01)
-    object_vector.speed.should be_close(6, 0.01)
+    object_vector.pitch.should be_within(MARGIN).of(45)
+    object_vector.speed.should be_within(MARGIN).of(6)
   end
   
 end
