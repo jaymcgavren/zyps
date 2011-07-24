@@ -11,37 +11,6 @@ include Zyps
 class TestVector < Test::Unit::TestCase
 
 
-  def test_angles
-  
-    vector = Vector.new(4, 150)
-    assert_in_delta(-3.464, vector.x, 0.001)
-    assert_in_delta(2, vector.y, 0.001)
-
-    vector = Vector.new(5, 53.13)
-    assert_in_delta(3, vector.x, 0.001)
-    assert_in_delta(4, vector.y, 0.001)
-
-    vector = Vector.new(5, 233.13)
-    assert_in_delta(-3, vector.x, 0.001)
-    assert_in_delta(-4, vector.y, 0.001)
-
-    vector = Vector.new(5, 306.87)
-    assert_in_delta(3, vector.x, 0.001)
-    assert_in_delta(-4, vector.y, 0.001)
-    
-    #Angles over 360 should 'wrap around' to 0.
-    vector = Vector.new(5, 413.13) #360 + 53.13
-    assert_in_delta(3, vector.x, 0.001)
-    assert_in_delta(4, vector.y, 0.001)
-    
-    #Negative angle should be converted to positive equivalent.
-    vector = Vector.new(5, -53.13) #360 - 53.13 = 306.87
-    assert_in_delta(3, vector.x, 0.001)
-    assert_in_delta(-4, vector.y, 0.001)
-    
-  end
-  
-  
   def test_components
   
     vector = Vector.new(1.4142, 45)
