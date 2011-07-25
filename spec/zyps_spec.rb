@@ -486,3 +486,96 @@ describe Vector do
   end
   
 end
+
+
+describe Utility do
+  
+  describe "#to_radians" do
+    it "converts degrees to radians" do
+      Utility.to_radians(0).should be_within(MARGIN).of(0)
+      Utility.to_radians(180).should be_within(MARGIN).of(Math::PI)
+      Utility.to_radians(359).should be_within(0.1).of(Math::PI * 2)
+    end
+  end
+  
+  describe "#to_degrees" do
+    it "converts radians to degrees" do
+      Utility.to_degrees(0).should be_within(MARGIN).of(0)
+      Utility.to_degrees(Math::PI).should be_within(MARGIN).of(180)
+      Utility.to_degrees(Math::PI * 2 - 0.0001).should be_within(1).of(359)
+    end
+  end
+  
+  describe "#find_angle" do
+    it "finds the angle between two Locations" do
+      origin = Location.new(0, 0)
+      Utility.find_angle(origin, Location.new(1, 0)).should be_within(MARGIN).of(0)
+      Utility.find_angle(origin, Location.new(0, 1)).should be_within(MARGIN).of(90)
+      Utility.find_angle(origin, Location.new(1, 1)).should be_within(MARGIN).of(45)
+      Utility.find_angle(origin, Location.new(-1, 1)).should be_within(MARGIN).of(135)
+      Utility.find_angle(origin, Location.new(-1, -1)).should be_within(MARGIN).of(225)
+      Utility.find_angle(origin, Location.new(1, -1)).should be_within(MARGIN).of(315)
+    end
+  end
+  
+  describe "#find_distance" do
+    it "finds the distance between two Locations" do
+      origin = Location.new(0, 0)
+      Utility.find_distance(origin, Location.new(1, 0)).should be_within(MARGIN).of(1)
+      Utility.find_distance(origin, Location.new(0, 1)).should be_within(MARGIN).of(1)
+      Utility.find_distance(origin, Location.new(1, 1)).should be_within(MARGIN).of(1.4142)
+      Utility.find_distance(origin, Location.new(-1, 1)).should be_within(MARGIN).of(1.4142)
+      Utility.find_distance(origin, Location.new(-1, -1)).should be_within(MARGIN).of(1.4142)
+      Utility.find_distance(origin, Location.new(1, -1)).should be_within(MARGIN).of(1.4142)
+    end
+  end
+  
+  describe "#find_reflection_angle" do
+    it "finds the angle of reflection, given a normal and the angle of incidence" do
+      Utility.find_reflection_angle(0, 150).should be_within(MARGIN).of(210)
+      Utility.find_reflection_angle(0, 30).should be_within(MARGIN).of(330)
+      Utility.find_reflection_angle(90, 30).should be_within(MARGIN).of(150)
+      Utility.find_reflection_angle(90, 330).should be_within(MARGIN).of(210)
+      Utility.find_reflection_angle(180, 330).should be_within(MARGIN).of(30)
+      Utility.find_reflection_angle(180, 210).should be_within(MARGIN).of(150)
+      Utility.find_reflection_angle(270, 210).should be_within(MARGIN).of(330)
+      Utility.find_reflection_angle(270, 150).should be_within(MARGIN).of(30)
+    end
+  end
+  
+  describe "#collided" do
+    describe "separated objects" do
+      it "does not report a collision" do
+        Utility.collided?(
+          GameObject.new(:location => Location.new(0, 0), :size => 0.196), #Radius = 0.25
+          GameObject.new(:location => Location.new(1, 0), :size => 0.196)
+        ).should be_false
+      end
+    end
+    describe "touching objects" do
+      it "does not report a collision" do
+        Utility.collided?(
+          GameObject.new(:location => Location.new(0, 0), :size => 0.785), #Radius = 0.5
+          GameObject.new(:location => Location.new(1, 0), :size => 0.785)
+        ).should be_false
+      end
+    end
+    describe "collided objects" do
+      it "reports a collision" do
+        Utility.collided?(
+          GameObject.new(:location => Location.new(0, 0), :size => 1.766), #Radius = 0.75
+          GameObject.new(:location => Location.new(1, 0), :size => 1.766)
+        ).should be_true
+      end
+    end
+    describe "objects in same place" do
+      it "reports a collision" do
+        Utility.collided?(
+          GameObject.new(:location => Location.new(0, 0)),
+          GameObject.new(:location => Location.new(0, 0))
+        ).should be_true
+      end
+    end
+  end
+  
+end
