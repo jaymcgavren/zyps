@@ -373,22 +373,48 @@ end
 
 describe Vector do
   
-  subject do
-    Vector.new
-  end
-  
   describe "speed and pitch" do
+    
+    subject do
+      Vector.new
+    end
+
     it "defaults to zero" do
       subject.speed.should == 0.0
       subject.pitch.should == 0.0
       subject.x.should == 0.0
       subject.y.should == 0.0
     end
+    
   end
   
   describe "x and y" do
     
+    subject do
+      Vector.new
+    end
+
     it "derives x and y when speed and angle are set" do
+      subject.speed = 1.4142
+      subject.pitch = 45
+      subject.x.should be_within(MARGIN).of(1)
+      subject.y.should be_within(MARGIN).of(1)
+      
+      subject.speed = 1.4142
+      subject.pitch = 135
+      subject.x.should be_within(MARGIN).of(-1)
+      subject.y.should be_within(MARGIN).of(1)
+      
+      subject.speed = 1.4142
+      subject.pitch = 225
+      subject.x.should be_within(MARGIN).of(-1)
+      subject.y.should be_within(MARGIN).of(-1)
+      
+      subject.speed = 1.4142
+      subject.pitch = 315
+      subject.x.should be_within(MARGIN).of(1)
+      subject.y.should be_within(MARGIN).of(-1)
+      
       subject.speed = 4
       subject.pitch = 150
       subject.x.should be_within(MARGIN).of(-3.464)
@@ -408,6 +434,7 @@ describe Vector do
       subject.pitch = 306.87
       subject.x.should be_within(MARGIN).of(3)
       subject.y.should be_within(MARGIN).of(-4)
+      
     end
     
     it "wraps angles over 360 around to 0" do
@@ -422,6 +449,38 @@ describe Vector do
       subject.pitch = -53.13 #360 - 53.13 = 306.87
       subject.x.should be_within(MARGIN).of(3)
       subject.y.should be_within(MARGIN).of(-4)
+    end
+    
+  end
+  
+  describe "#+" do
+    
+    it "adds vectors' speeds together if they have the same pitch" do
+      vector = Vector.new(1, 45) + Vector.new(1, 45)
+      vector.speed.should be_within(MARGIN).of(2)
+    end
+    
+    it "keeps the same pitch if added vectors' pitches are identical" do
+      vector = Vector.new(1, 45) + Vector.new(1, 45)
+      vector.pitch.should be_within(MARGIN).of(45)
+    end
+    
+    it "cancels out vectors of opposite angles" do
+      vector = Vector.new(2, 0) + Vector.new(1, 180)
+      vector.speed.should be_within(MARGIN).of(1)
+      vector.pitch.should be_within(MARGIN).of(0)
+      vector = Vector.new(2, 45) + Vector.new(1, 225)
+      vector.speed.should be_within(MARGIN).of(1)
+      vector.pitch.should be_within(MARGIN).of(45)
+      vector = Vector.new(2, 135) + Vector.new(1, 315)
+      vector.speed.should be_within(MARGIN).of(1)
+      vector.pitch.should be_within(MARGIN).of(135)
+      vector = Vector.new(2, 225) + Vector.new(1, 45)
+      vector.speed.should be_within(MARGIN).of(1)
+      vector.pitch.should be_within(MARGIN).of(225)
+      vector = Vector.new(2, 315) + Vector.new(1, 135)
+      vector.speed.should be_within(MARGIN).of(1)
+      vector.pitch.should be_within(MARGIN).of(315)
     end
     
   end

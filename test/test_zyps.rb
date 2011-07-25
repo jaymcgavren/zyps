@@ -8,62 +8,6 @@ require 'test/unit'
 
 include Zyps
 
-class TestVector < Test::Unit::TestCase
-
-
-  def test_components
-  
-    vector = Vector.new(1.4142, 45)
-    assert_in_delta(1, vector.x, 0.001)
-    assert_in_delta(1, vector.y, 0.001)
-    
-    vector = Vector.new(1.4142, 135)
-    assert_in_delta(-1, vector.x, 0.001)
-    assert_in_delta(1, vector.y, 0.001)
-    
-    vector = Vector.new(1.4142, 225)
-    assert_in_delta(-1, vector.x, 0.001)
-    assert_in_delta(-1, vector.y, 0.001)
-    
-    vector = Vector.new(1.4142, 315)
-    assert_in_delta(1, vector.x, 0.001)
-    assert_in_delta(-1, vector.y, 0.001)
-        
-  end
-  
-  
-  def test_addition
-      
-    vector = Vector.new(1, 45) + Vector.new(1, 45) #Same angle.
-    #Speed should be sum of added vectors' speeds.
-    assert_in_delta(2, vector.speed, 0.001)
-    #Angle should remain the same.
-    assert_in_delta(45, vector.pitch, 0.001)
-    
-    #Vectors of opposite angles should cancel out.
-    vector = Vector.new(2, 0) + Vector.new(1, 180)
-    assert_in_delta(1, vector.speed, 0.001)
-    assert_in_delta(0, vector.pitch, 0.001)
-    vector = Vector.new(2, 45) + Vector.new(1, 225)
-    assert_in_delta(1, vector.speed, 0.001)
-    assert_in_delta(45, vector.pitch, 0.001)
-    vector = Vector.new(2, 135) + Vector.new(1, 315)
-    assert_in_delta(1, vector.speed, 0.001)
-    assert_in_delta(135, vector.pitch, 0.001)
-    vector = Vector.new(2, 225) + Vector.new(1, 45)
-    assert_in_delta(1, vector.speed, 0.001)
-    assert_in_delta(225, vector.pitch, 0.001)
-    vector = Vector.new(2, 315) + Vector.new(1, 135)
-    assert_in_delta(1, vector.speed, 0.001)
-    assert_in_delta(315, vector.pitch, 0.001)
-    
-  end
-  
-  
-end
-
-
-
 class TestUtility < Test::Unit::TestCase
 
   
