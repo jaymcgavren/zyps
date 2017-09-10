@@ -29,7 +29,7 @@ At a command line, type:
 
 # Development
 
-Source code and documentation are available via the project site (http://jay.mcgavren.com/zyps).
+Documentation available via [RubyDoc](http://www.rubydoc.info/gems/zyps/0.7.2).
 
 Once downloaded, change into the project directory.  For a list of targets, run:
 
