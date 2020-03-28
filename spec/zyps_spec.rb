@@ -8,7 +8,7 @@ require 'zyps/environmental_factors'
 include Zyps
 
 
-describe Environment do
+RSpec.describe Environment do
   
   subject do
     Environment.new
@@ -92,7 +92,7 @@ describe Environment do
 end
 
 
-describe Behavior do
+RSpec.describe Behavior do
   
   subject do
     Behavior.new
@@ -162,7 +162,7 @@ describe Behavior do
 end
 
 
-describe GameObject do
+RSpec.describe GameObject do
 
   describe "#size" do
     subject do
@@ -271,7 +271,7 @@ describe GameObject do
 end
 
 
-describe Creature do
+RSpec.describe Creature do
   
   describe "#new" do
   
@@ -310,7 +310,7 @@ describe Creature do
 end
 
 
-describe AreaOfInterest do
+RSpec.describe AreaOfInterest do
 
   it "should report all GameObjects whose Locations are within its bounds"
   it "should filter out all GameObjects whose Locations are not within its bounds"
@@ -322,7 +322,7 @@ describe AreaOfInterest do
 end
 
 
-describe Color do
+RSpec.describe Color do
   
   describe "#{new}" do
     
@@ -371,7 +371,7 @@ describe Color do
 end
 
 
-describe Vector do
+RSpec.describe Vector do
   
   describe "speed and pitch" do
     
@@ -488,7 +488,7 @@ describe Vector do
 end
 
 
-describe Utility do
+RSpec.describe Utility do
   
   describe "#to_radians" do
     it "converts degrees to radians" do

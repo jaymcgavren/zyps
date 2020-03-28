@@ -7,7 +7,7 @@ require 'zyps/actions'
 include Zyps
 
 
-shared_examples_for "spawn action" do
+RSpec.shared_examples_for "spawn action" do
 
   before :each do
     @environment = Environment.new
@@ -42,8 +42,8 @@ shared_examples_for "spawn action" do
 end
 
 
-describe ShootAction do
-  
+RSpec.describe ShootAction do
+
   subject do
     ShootAction.new
   end
@@ -78,7 +78,7 @@ describe ShootAction do
 end
 
 
-describe ExplodeAction do
+RSpec.describe ExplodeAction do
   
   subject do
     ExplodeAction.new

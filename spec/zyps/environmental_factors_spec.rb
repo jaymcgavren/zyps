@@ -6,7 +6,7 @@ require 'zyps/environmental_factors'
 include Zyps
 
 
-describe Accelerator do
+RSpec.describe Accelerator do
 
   subject do
     Accelerator.new
@@ -26,7 +26,7 @@ describe Accelerator do
     @creature.vector.speed.should == 0.1
     @creature.vector.pitch.should == 270
   end
-  
+
   it "should slow target if it's moving in opposite direction" do
     @creature.vector = Vector.new(1, 90)
     subject.vector = Vector.new(1, 270)
@@ -38,7 +38,7 @@ describe Accelerator do
 end
 
 
-describe Friction do
+RSpec.describe Friction do
 
   before(:each) do
     @environment = Environment.new
