@@ -1,6 +1,53 @@
 require 'zyps'
 
 
+#An action that one Creature takes on another.
+class Zyps::Action
+
+  #Whether the action was previously started.
+  attr_reader :started
+  #The Behavior this Action belongs to.
+  attr_accessor :behavior
+
+  def initialize
+    @started = false
+  end
+
+  #Make a deep copy.
+  def copy; self.clone; end
+
+  #Start the action.
+  #Overriding subclasses must either call "super" or set the @started attribute to true.
+  def start(actor, target)
+    @started = true
+  end
+
+  def do(actor, targets)
+    raise NotImplementedError.new("Action subclasses must implement a do(actor, target) instance method.")
+  end
+
+  #Stop the action.
+  #Overriding subclasses must either call "super" or set the @started attribute to false.
+  def stop(actor, targets)
+    @started = false
+  end
+
+  #Synonym for started
+  def started?; started; end
+
+  #True if class and started status are the same.
+  #Subclasses should extend or override this method.
+  def ==(other); self.class == other.class and self.started == other.started; end
+
+  #Choose a random target from a group.
+  def random_target(targets)
+    targets[rand(targets.length)]
+  end
+
+end
+
+
+
 module Zyps
 
 
