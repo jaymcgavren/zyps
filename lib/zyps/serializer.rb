@@ -49,7 +49,7 @@ end
 
 
 #Restore environment attribute of any member GameObjects, EnvironmentalFactors.
-YAML.add_ruby_type("object:Zyps::Environment") do |type, value|
+YAML.add_builtin_type("object:Zyps::Environment") do |type, value|
   environment = YAML.object_maker(Zyps::Environment, value)
   environment.objects.each {|o| o.environment = environment}
   environment.environmental_factors.each {|f| f.environment = environment}
@@ -57,7 +57,7 @@ YAML.add_ruby_type("object:Zyps::Environment") do |type, value|
 end
 #Restore behavior attribute of any member Actions and Conditions.
 #Set current targets to empty array.
-YAML.add_ruby_type("object:Zyps::Behavior") do |type, value|
+YAML.add_builtin_type("object:Zyps::Behavior") do |type, value|
   behavior = YAML.object_maker(Zyps::Behavior, value)
   behavior.actions.each {|a| a.behavior = behavior}
   behavior.conditions.each {|a| a.behavior = behavior}
@@ -65,13 +65,13 @@ YAML.add_ruby_type("object:Zyps::Behavior") do |type, value|
   behavior
 end
 #Restore creature attribute of any member Behaviors.
-YAML.add_ruby_type("object:Zyps::Creature") do |type, value|
+YAML.add_builtin_type("object:Zyps::Creature") do |type, value|
   creature = YAML.object_maker(Zyps::Creature, value)
   creature.behaviors.each {|o| o.creature = creature}
   creature
 end
 #Reset elapsed time for any clocks.
-YAML.add_ruby_type("object:Zyps::Clock") do |type, value|
+YAML.add_builtin_type("object:Zyps::Clock") do |type, value|
   clock = YAML.object_maker(Zyps::Clock, value)
   clock.reset_elapsed_time
   clock
