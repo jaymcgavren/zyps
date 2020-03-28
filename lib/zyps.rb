@@ -1,4 +1,3 @@
-
 require 'enumerator'
 require 'observer'
 
@@ -7,7 +6,16 @@ module Enumerable
   Enumerator = Enumerator unless defined? Enumerable::Enumerator
 end
 
+require "zyps/version"
+
+Gem.find_files("zyps/**/*.rb").each { |path| require path }
+
+
 module Zyps
+
+
+#An error originating in the Zyps library.
+class Error < StandardError; end
 
 
 #A virtual environment.
