@@ -6,9 +6,7 @@ module Enumerable
   Enumerator = Enumerator unless defined? Enumerable::Enumerator
 end
 
-require "zyps/version"
-
-Gem.find_files("zyps/**/*.rb").each { |path| require path }
+Gem.find_files("/zyps/**/*.rb").each { |path| require path }
 
 
 module Zyps

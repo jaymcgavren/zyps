@@ -1,10 +1,6 @@
-require File.expand_path(File.join(File.dirname(__FILE__), '..', 'spec_helper'))
-
-require 'zyps'
-require 'zyps/environmental_factors'
+require "spec_helper"
 
 include Zyps
-
 
 RSpec.describe Accelerator do
 

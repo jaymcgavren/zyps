@@ -5,6 +5,10 @@ require "pry"
 #Allowed margin of error for be_close.
 MARGIN = 0.01
 
+# This has to be here, or "should" won't be available and lots of specs will fail.
+# I don't know why; some kind of RSpec bug. Need to rip all "should" calls anyway.
+RSpec.describe
+
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = ".rspec_status"
