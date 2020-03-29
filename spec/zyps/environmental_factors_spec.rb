@@ -16,7 +16,7 @@ RSpec.describe Accelerator do
     @environment = Environment.new
     @creature = Creature.new
     @environment << @creature << subject
-    subject.clock.stub!(:elapsed_time).and_return(0.1)
+    allow(subject.clock).to receive(:elapsed_time).and_return(0.1)
   end
 
   it "should alter target's Vector" do
@@ -45,7 +45,7 @@ RSpec.describe Friction do
     @creature = Creature.new
     @friction = Friction.new
     @environment << @creature << @friction
-    @friction.clock.stub!(:elapsed_time).and_return(0.1)
+    allow(@friction.clock).to receive(:elapsed_time).and_return(0.1)
   end
 
   it "should slow target" do
