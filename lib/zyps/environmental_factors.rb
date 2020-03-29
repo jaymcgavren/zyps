@@ -1,6 +1,21 @@
 require 'zyps'
 
 
+
+#Something in the environment that acts on creatures.
+#EnvironmentalFactors must implement an act(target) instance method.
+class Zyps::EnvironmentalFactor
+  #Environment this EnvironmentalFactor belongs to.
+  attr_accessor :environment
+  #Make a deep copy.
+  def copy; self.clone; end
+  #True if classes are equal.
+  #Subclasses should extend this method.
+  def ==(other); self.class == other.class; end
+end
+
+
+
 module Zyps
 
 

@@ -8,7 +8,7 @@ require 'zyps/environmental_factors'
 include Zyps
 
 
-describe Environment do
+RSpec.describe Environment do
   
   subject do
     Environment.new
@@ -46,7 +46,7 @@ describe Environment do
     object = GameObject.new(:vector => Vector.new(1, 0))
     subject << object
     clock = Clock.new
-    clock.should_receive(:elapsed_time).and_return(1)
+    clock.should receive(:elapsed_time).and_return(1)
     subject.clock = clock
     subject.interact
     object.location.should == Location.new(1, 0)
@@ -56,10 +56,10 @@ describe Environment do
     creature_1 = Creature.new
     creature_2 = Creature.new
     subject << creature_1 << creature_2
-    creature_1.should_receive(:act).with([creature_2])
-    creature_1.should_not_receive(:act).with([creature_1])
-    creature_2.should_receive(:act).with([creature_1])
-    creature_2.should_not_receive(:act).with([creature_2])
+    creature_1.should receive(:act).with([creature_2])
+    creature_1.should receive(:act).with([creature_1]).never
+    creature_2.should receive(:act).with([creature_1])
+    creature_2.should receive(:act).with([creature_2]).never
     subject.interact
   end
   
@@ -67,8 +67,8 @@ describe Environment do
     gravity_1 = Gravity.new
     gravity_2 = Gravity.new
     subject << gravity_1 << gravity_2
-    gravity_1.should_receive(:act).with(subject)
-    gravity_2.should_receive(:act).with(subject)
+    gravity_1.should receive(:act).with(subject)
+    gravity_2.should receive(:act).with(subject)
     subject.interact
   end
   
@@ -92,7 +92,7 @@ describe Environment do
 end
 
 
-describe Behavior do
+RSpec.describe Behavior do
   
   subject do
     Behavior.new
@@ -109,37 +109,37 @@ describe Behavior do
     end
 
     it "should start and perform all Actions when all Conditions are true" do
-      @action.should_receive(:start).with(@actor, [@target])
-      @action.should_receive(:do).with(@actor, [@target])
+      @action.should receive(:start).with(@actor, [@target])
+      @action.should receive(:do).with(@actor, [@target])
       @target.tags << "foo"
       subject.perform(@actor, [@target])
     end
   
     it "should not call Actions unless all Conditions are true" do
-      @action.should_not_receive(:start)
-      @action.should_not_receive(:do)
+      @action.should receive(:start).never
+      @action.should receive(:do).never
       subject.perform(@actor, [@target])
     end
   
     it "should not start Actions that are already started" do
       @target.tags << "foo"
       subject.perform(@actor, [@target])
-      @action.should_not_receive(:start)
-      @action.should_receive(:do)
+      @action.should receive(:start).never
+      @action.should receive(:do)
       subject.perform(@actor, [@target])
     end
   
     it "should not stop Actions that aren't started" do
-      @action.should_not_receive(:start)
-      @action.should_not_receive(:do)
-      @action.should_not_receive(:stop)
+      @action.should receive(:start).never
+      @action.should receive(:do).never
+      @action.should receive(:stop).never
       subject.perform(@actor, [@target])
     end
   
     it "should call all Actions when there are no Conditions" do
       subject.remove_condition(@condition)
-      @action.should_receive(:start).with(@actor, [@target])
-      @action.should_receive(:do).with(@actor, [@target])
+      @action.should receive(:start).with(@actor, [@target])
+      @action.should receive(:do).with(@actor, [@target])
       subject.perform(@actor, [@target])
     end
     
@@ -162,7 +162,7 @@ describe Behavior do
 end
 
 
-describe GameObject do
+RSpec.describe GameObject do
 
   describe "#size" do
     subject do
@@ -271,7 +271,7 @@ describe GameObject do
 end
 
 
-describe Creature do
+RSpec.describe Creature do
   
   describe "#new" do
   
@@ -310,7 +310,7 @@ describe Creature do
 end
 
 
-describe AreaOfInterest do
+RSpec.describe AreaOfInterest do
 
   it "should report all GameObjects whose Locations are within its bounds"
   it "should filter out all GameObjects whose Locations are not within its bounds"
@@ -322,7 +322,7 @@ describe AreaOfInterest do
 end
 
 
-describe Color do
+RSpec.describe Color do
   
   describe "#{new}" do
     
@@ -371,7 +371,7 @@ describe Color do
 end
 
 
-describe Vector do
+RSpec.describe Vector do
   
   describe "speed and pitch" do
     
@@ -488,7 +488,7 @@ describe Vector do
 end
 
 
-describe Utility do
+RSpec.describe Utility do
   
   describe "#to_radians" do
     it "converts degrees to radians" do
@@ -549,7 +549,7 @@ describe Utility do
         Utility.collided?(
           GameObject.new(:location => Location.new(0, 0), :size => 0.196), #Radius = 0.25
           GameObject.new(:location => Location.new(1, 0), :size => 0.196)
-        ).should be_false
+        ).should be_falsey
       end
     end
     describe "touching objects" do
@@ -557,7 +557,7 @@ describe Utility do
         Utility.collided?(
           GameObject.new(:location => Location.new(0, 0), :size => 0.785), #Radius = 0.5
           GameObject.new(:location => Location.new(1, 0), :size => 0.785)
-        ).should be_false
+        ).should be_falsey
       end
     end
     describe "collided objects" do
@@ -565,7 +565,7 @@ describe Utility do
         Utility.collided?(
           GameObject.new(:location => Location.new(0, 0), :size => 1.766), #Radius = 0.75
           GameObject.new(:location => Location.new(1, 0), :size => 1.766)
-        ).should be_true
+        ).should be_truthy
       end
     end
     describe "objects in same place" do
@@ -573,7 +573,7 @@ describe Utility do
         Utility.collided?(
           GameObject.new(:location => Location.new(0, 0)),
           GameObject.new(:location => Location.new(0, 0))
-        ).should be_true
+        ).should be_truthy
       end
     end
   end

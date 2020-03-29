@@ -103,9 +103,9 @@ steps_for(:all) do
   Then /(\w+)\(\) should (not )?be called on (.+?)/i do |method, negative, subject|
     @om.resolve_objects(subject).each do |s|
       if negative != "not "
-        s.should_receive(method.to_sym)
+        s.should receive(method.to_sym)
       else
-        s.should_not_receive(method.to_sym)
+        s.should receive(method.to_sym).never
       end
     end
   end
