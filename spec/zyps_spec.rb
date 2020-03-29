@@ -549,7 +549,7 @@ RSpec.describe Utility do
         Utility.collided?(
           GameObject.new(:location => Location.new(0, 0), :size => 0.196), #Radius = 0.25
           GameObject.new(:location => Location.new(1, 0), :size => 0.196)
-        ).should be_false
+        ).should be_falsey
       end
     end
     describe "touching objects" do
@@ -557,7 +557,7 @@ RSpec.describe Utility do
         Utility.collided?(
           GameObject.new(:location => Location.new(0, 0), :size => 0.785), #Radius = 0.5
           GameObject.new(:location => Location.new(1, 0), :size => 0.785)
-        ).should be_false
+        ).should be_falsey
       end
     end
     describe "collided objects" do
@@ -565,7 +565,7 @@ RSpec.describe Utility do
         Utility.collided?(
           GameObject.new(:location => Location.new(0, 0), :size => 1.766), #Radius = 0.75
           GameObject.new(:location => Location.new(1, 0), :size => 1.766)
-        ).should be_true
+        ).should be_truthy
       end
     end
     describe "objects in same place" do
@@ -573,7 +573,7 @@ RSpec.describe Utility do
         Utility.collided?(
           GameObject.new(:location => Location.new(0, 0)),
           GameObject.new(:location => Location.new(0, 0))
-        ).should be_true
+        ).should be_truthy
       end
     end
   end
