@@ -46,7 +46,7 @@ RSpec.describe Environment do
     object = GameObject.new(:vector => Vector.new(1, 0))
     subject << object
     clock = Clock.new
-    clock.should_receive(:elapsed_time).and_return(1)
+    clock.should receive(:elapsed_time).and_return(1)
     subject.clock = clock
     subject.interact
     object.location.should == Location.new(1, 0)
@@ -56,10 +56,10 @@ RSpec.describe Environment do
     creature_1 = Creature.new
     creature_2 = Creature.new
     subject << creature_1 << creature_2
-    creature_1.should_receive(:act).with([creature_2])
-    creature_1.should_not_receive(:act).with([creature_1])
-    creature_2.should_receive(:act).with([creature_1])
-    creature_2.should_not_receive(:act).with([creature_2])
+    creature_1.should receive(:act).with([creature_2])
+    creature_1.should receive(:act).with([creature_1]).never
+    creature_2.should receive(:act).with([creature_1])
+    creature_2.should receive(:act).with([creature_2]).never
     subject.interact
   end
   
@@ -67,8 +67,8 @@ RSpec.describe Environment do
     gravity_1 = Gravity.new
     gravity_2 = Gravity.new
     subject << gravity_1 << gravity_2
-    gravity_1.should_receive(:act).with(subject)
-    gravity_2.should_receive(:act).with(subject)
+    gravity_1.should receive(:act).with(subject)
+    gravity_2.should receive(:act).with(subject)
     subject.interact
   end
   
@@ -109,37 +109,37 @@ RSpec.describe Behavior do
     end
 
     it "should start and perform all Actions when all Conditions are true" do
-      @action.should_receive(:start).with(@actor, [@target])
-      @action.should_receive(:do).with(@actor, [@target])
+      @action.should receive(:start).with(@actor, [@target])
+      @action.should receive(:do).with(@actor, [@target])
       @target.tags << "foo"
       subject.perform(@actor, [@target])
     end
   
     it "should not call Actions unless all Conditions are true" do
-      @action.should_not_receive(:start)
-      @action.should_not_receive(:do)
+      @action.should receive(:start).never
+      @action.should receive(:do).never
       subject.perform(@actor, [@target])
     end
   
     it "should not start Actions that are already started" do
       @target.tags << "foo"
       subject.perform(@actor, [@target])
-      @action.should_not_receive(:start)
-      @action.should_receive(:do)
+      @action.should receive(:start).never
+      @action.should receive(:do)
       subject.perform(@actor, [@target])
     end
   
     it "should not stop Actions that aren't started" do
-      @action.should_not_receive(:start)
-      @action.should_not_receive(:do)
-      @action.should_not_receive(:stop)
+      @action.should receive(:start).never
+      @action.should receive(:do).never
+      @action.should receive(:stop).never
       subject.perform(@actor, [@target])
     end
   
     it "should call all Actions when there are no Conditions" do
       subject.remove_condition(@condition)
-      @action.should_receive(:start).with(@actor, [@target])
-      @action.should_receive(:do).with(@actor, [@target])
+      @action.should receive(:start).with(@actor, [@target])
+      @action.should receive(:do).with(@actor, [@target])
       subject.perform(@actor, [@target])
     end
     
