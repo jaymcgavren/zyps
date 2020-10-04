@@ -54,7 +54,7 @@ class Environment
     @objects.delete(identifier)
   end
   #An Enumerable::Enumerator over each GameObject in the environment.
-  def objects; Enumerable::Enumerator.new(@objects.clone, :each_value); end
+  def objects; @objects.clone.to_enum(:each_value); end
   #Remove all GameObjects from this environment.
   def clear_objects
     @objects.clone.each_key {|identifier| self.remove_object(identifier)}
@@ -78,7 +78,7 @@ class Environment
     @environmental_factors.delete(environmental_factor)
   end
   #An Enumerable::Enumerator over each EnvironmentalFactor in the environment.
-  def environmental_factors; Enumerable::Enumerator.new(@environmental_factors, :each); end
+  def environmental_factors; @environmental_factors.to_enum; end
   #Remove all EnvironmentalFactors from this environment.
   def clear_environmental_factors
     @environmental_factors.clone.each {|environmental_factor| self.remove_environmental_factor(environmental_factor)}
@@ -337,7 +337,7 @@ class Creature < GameObject
     @behaviors.delete(behavior)
   end
   #An Enumerable::Enumerator over each Behavior this creature has.
-  def behaviors; Enumerable::Enumerator.new(@behaviors, :each); end
+  def behaviors; @behaviors.to_enum; end
   #Remove all Behaviors from this creature.
   def clear_behaviors
     @behaviors.clone.each {|behavior| self.remove_behavior(behavior)}
@@ -454,7 +454,7 @@ class Behavior
     @actions.delete(action)
   end
   #An Enumerable::Enumerator over each Action.
-  def actions; Enumerable::Enumerator.new(@actions, :each); end
+  def actions; @actions.to_enum; end
   #Remove all Actions from this behavior.
   def clear_actions
     @actions.clone.each {|action| self.remove_action(action)}
@@ -474,7 +474,7 @@ class Behavior
     @conditions.delete(condition)
   end
   #An Enumerable::Enumerator over each Condition.
-  def conditions; Enumerable::Enumerator.new(@conditions, :each); end
+  def conditions; @conditions.to_enum; end
   #Remove all Conditions from this behavior.
   def clear_conditions
     @conditions.clone.each {|condition| self.remove_condition(condition)}
