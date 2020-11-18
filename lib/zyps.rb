@@ -133,6 +133,9 @@ class Environment
           next
         end
       end
+
+      #Update object age.
+      object.age += elapsed_time
       
     end
     
@@ -199,6 +202,8 @@ end
 #An object in the virtual environment.
 class GameObject
 
+  #Time since the object was created, in seconds.
+  attr_accessor :age
   #A universal identifier for the object.
   #Needed for DRb transmission, etc.
   attr_reader :identifier
@@ -259,10 +264,6 @@ class GameObject
     @location.x += @vector.x * elapsed_time
     @location.y += @vector.y * elapsed_time
   end
-  
-  #Time since the object was created, in seconds.
-  def age; Time.new.to_f - @birth_time; end
-  def age=(age); @birth_time = Time.new.to_f - age; end
   
   #Set identifier.
   #Not part of API; copy() needs this to make copy's ID unique.

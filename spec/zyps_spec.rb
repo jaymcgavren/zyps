@@ -66,6 +66,16 @@ RSpec.describe Environment do
     gravity_2.should receive(:act).with(subject)
     subject.interact
   end
+
+  it "should age all objects on update" do
+    object = GameObject.new
+    subject << object
+    clock = Clock.new
+    clock.should receive(:elapsed_time).and_return(1.0)
+    subject.clock = clock
+    subject.interact
+    object.age.should be_within(MARGIN).of(1.0)
+  end
   
   it "should remove objects that throw exceptions on update"
   
