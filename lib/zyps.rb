@@ -142,7 +142,7 @@ class Environment
     #Have all environmental factors interact with environment.
     self.environmental_factors.each do |factor|
       begin
-        factor.act(self)
+        factor.act(self, elapsed_time: elapsed_time)
       #Remove misbehaving environmental factors.
       rescue Exception => exception
         self.remove_environmental_factor(factor)

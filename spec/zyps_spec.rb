@@ -62,8 +62,11 @@ RSpec.describe Environment do
     gravity_1 = Gravity.new
     gravity_2 = Gravity.new
     subject << gravity_1 << gravity_2
-    gravity_1.should receive(:act).with(subject)
-    gravity_2.should receive(:act).with(subject)
+    clock = Clock.new
+    clock.should receive(:elapsed_time).and_return(1)
+    subject.clock = clock
+    gravity_1.should receive(:act).with(subject, elapsed_time: 1)
+    gravity_2.should receive(:act).with(subject, elapsed_time: 1)
     subject.interact
   end
 
