@@ -62,9 +62,22 @@ RSpec.describe Environment do
     gravity_1 = Gravity.new
     gravity_2 = Gravity.new
     subject << gravity_1 << gravity_2
-    gravity_1.should receive(:act).with(subject)
-    gravity_2.should receive(:act).with(subject)
+    clock = Clock.new
+    clock.should receive(:elapsed_time).and_return(1)
+    subject.clock = clock
+    gravity_1.should receive(:act).with(subject, elapsed_time: 1)
+    gravity_2.should receive(:act).with(subject, elapsed_time: 1)
     subject.interact
+  end
+
+  it "should age all objects on update" do
+    object = GameObject.new
+    subject << object
+    clock = Clock.new
+    clock.should receive(:elapsed_time).and_return(1.0)
+    subject.clock = clock
+    subject.interact
+    object.age.should be_within(MARGIN).of(1.0)
   end
   
   it "should remove objects that throw exceptions on update"
@@ -446,6 +459,67 @@ RSpec.describe Vector do
       subject.y.should be_within(MARGIN).of(-4)
     end
     
+  end
+
+  describe "x= and y=" do
+    subject do
+      Vector.new
+    end
+
+    it "converts x=1, y=1 to speed and pitch" do
+      subject.x = 1
+      subject.y = 1
+      subject.speed.should be_within(MARGIN).of(1.4142)
+      subject.pitch.should be_within(MARGIN).of(45)
+    end
+
+    it "converts x=-1, y=1 to speed" do
+      subject.x = -1
+      subject.y = 1
+      subject.speed.should be_within(MARGIN).of(1.4142)
+    end
+
+    it "converts x=-1, y=1 to pitch" do
+      subject.y = 1
+      subject.x = -1
+      subject.pitch.should be_within(MARGIN).of(135)
+    end
+
+    it "converts x=-1, y=-1 to speed and pitch" do
+      subject.x = -1
+      subject.y = -1
+      subject.speed.should be_within(MARGIN).of(1.4142)
+      subject.pitch.should be_within(MARGIN).of(225)
+    end
+
+    it "converts x=1, y=-1 to speed and pitch" do
+      subject.x = 1
+      subject.y = -1
+      subject.speed.should be_within(MARGIN).of(1.4142)
+      subject.pitch.should be_within(MARGIN).of(315)
+    end
+
+    it "converts x=-3.464, y=2 to speed and pitch" do
+      subject.x = -3.464
+      subject.y = 2
+      subject.speed.should be_within(MARGIN).of(4)
+      subject.pitch.should be_within(MARGIN).of(150)
+    end
+    #   subject.speed = 5
+    #   subject.pitch = 53.13
+    #   subject.x.should be_within(MARGIN).of(3)
+    #   subject.y.should be_within(MARGIN).of(4)
+      
+    #   subject.speed = 5
+    #   subject.pitch = 233.13
+    #   subject.x.should be_within(MARGIN).of(-3)
+    #   subject.y.should be_within(MARGIN).of(-4)
+      
+    #   subject.speed = 5
+    #   subject.pitch = 306.87
+    #   subject.x.should be_within(MARGIN).of(3)
+    #   subject.y.should be_within(MARGIN).of(-4)
+    # end
   end
   
   describe "#+" do

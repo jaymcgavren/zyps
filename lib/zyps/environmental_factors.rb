@@ -47,7 +47,7 @@ class Enclosure < EnvironmentalFactor
   end
   
   #If object is beyond a boundary, set its position equal to the boundary and reflect it.
-  def act(environment)
+  def act(environment, elapsed_time:)
     environment.objects.each do |object|
       if (object.location.x < @left) then
         object.location.x = @left
@@ -106,7 +106,7 @@ class WrapAround < EnvironmentalFactor
   end
   
   #If object is beyond a boundary, set its position to that of opposite boundary.
-  def act(environment)
+  def act(environment, elapsed_time:)
     environment.objects.each do |object|
       if (object.location.x < @left) then
         object.location.x = @right
@@ -144,7 +144,7 @@ class SpeedLimit < EnvironmentalFactor
   end
   
   #If object is over the speed, reduce its speed.
-  def act(environment)
+  def act(environment, elapsed_time:)
     environment.objects.each do |object|
       object.vector.speed = Utility.constrain_value(object.vector.speed, @maximum)
     end
@@ -162,27 +162,15 @@ end
 #A force that pushes on all objects.
 class Accelerator < EnvironmentalFactor
   
-  #A Clock that tracks time between actions.
-  attr_accessor :clock
   #Vector to apply to objects.
   attr_accessor :vector
   
   def initialize(vector = nil)
     self.vector = vector
-    @clock = Clock.new
   end
 
-  #Make a deep copy.
-  def copy
-    copy = super
-    #Copies should have their own Clock.
-    copy.clock = @clock.copy
-    copy
-  end
-  
   #Add the given vector to each object, but limited by elapsed time.
-  def act(environment)
-    elapsed_time = @clock.elapsed_time
+  def act(environment, elapsed_time:)
     environment.objects.each do |object|
       #Push on object.
       object.vector += Vector.new(@vector.speed * elapsed_time, @vector.pitch)
@@ -239,8 +227,7 @@ class Friction < EnvironmentalFactor
   end
   
   #Reduce each object's speed at the given rate.
-  def act(environment)
-    elapsed_time = @clock.elapsed_time
+  def act(environment, elapsed_time:)
     environment.objects.each do |object|
       #Slow object.
       acceleration = @force * elapsed_time
@@ -275,7 +262,7 @@ class PopulationLimit < EnvironmentalFactor
   end
   
   #Remove objects if there are too many objects in environment.
-  def act(environment)
+  def act(environment, elapsed_time:)
     excess = environment.object_count - @count
     if excess > 0
       objects_for_removal = []

@@ -133,13 +133,16 @@ class Environment
           next
         end
       end
+
+      #Update object age.
+      object.age += elapsed_time
       
     end
     
     #Have all environmental factors interact with environment.
     self.environmental_factors.each do |factor|
       begin
-        factor.act(self)
+        factor.act(self, elapsed_time: elapsed_time)
       #Remove misbehaving environmental factors.
       rescue Exception => exception
         self.remove_environmental_factor(factor)
@@ -199,6 +202,8 @@ end
 #An object in the virtual environment.
 class GameObject
 
+  #Time since the object was created, in seconds.
+  attr_accessor :age
   #A universal identifier for the object.
   #Needed for DRb transmission, etc.
   attr_reader :identifier
@@ -259,10 +264,6 @@ class GameObject
     @location.x += @vector.x * elapsed_time
     @location.y += @vector.y * elapsed_time
   end
-  
-  #Time since the object was created, in seconds.
-  def age; Time.new.to_f - @birth_time; end
-  def age=(age); @birth_time = Time.new.to_f - age; end
   
   #Set identifier.
   #Not part of API; copy() needs this to make copy's ID unique.
@@ -673,10 +674,11 @@ end
 #Has speed and angle components.
 class Vector
 
-  #The length of the Vector.
-  attr_accessor :speed
-  
-  def initialize (speed = 0, pitch = 0)
+  attr_reader :x, :y
+
+  def initialize(speed = 0, pitch = 0)
+    @x = 0
+    @y = 0
     self.speed = speed
     self.pitch = pitch
   end
@@ -684,24 +686,53 @@ class Vector
   #Make a deep copy.
   def copy; self.clone; end
   
-  #The angle along the X/Y axes.
-  def pitch; Utility.to_degrees(@pitch); end
-  def pitch=(degrees)
-    #Constrain degrees to 0 to 360.
-    value = degrees % 360
-    #Store as radians internally.
-    @pitch = Utility.to_radians(value)
-  end
-   
-  #The X component.
-  def x; @speed.to_f * Math.cos(@pitch); end
   def x=(value)
-    @speed, @pitch = Math.sqrt(value ** 2 + y ** 2), Math.atan(y / value)
+    @x = value
+    # Clear cached values.
+    @speed = nil
+    @pitch = nil
+    value
   end
-  #The Y component.
-  def y; @speed.to_f * Math.sin(@pitch); end
+
   def y=(value)
-    @speed, @pitch = Math.sqrt(x ** 2 + value ** 2), Math.atan(value / x)
+    @y = value
+    # Clear cached values.
+    @speed = nil
+    @pitch = nil
+    value
+  end
+
+  #The angle along the X/Y axes.
+  def pitch
+    @pitch ||= Math.atan2(y, x)
+    #Share as degrees publicly.
+    Utility.to_degrees(@pitch)
+  end
+
+  #The angle along the X/Y axes.
+  def pitch=(degrees)
+    @pitch = Utility.to_radians(degrees)
+    @x, @y = calculate_x_y(speed, @pitch)
+    @speed = nil # Clear cache.
+    @pitch
+  end
+
+  #The magnitude of the vector.
+  def speed
+    @speed ||= Math.sqrt(x ** 2 + y ** 2)
+  end
+
+  #The magnitude of the vector.
+  def speed=(new_speed_value)
+    @x, @y = calculate_x_y(new_speed_value, pitch)
+    @pitch = nil # Clear cache
+    @speed = new_speed_value
+  end
+
+  private def calculate_x_y(given_speed, given_pitch)
+    x = Math.cos(given_pitch) * given_speed
+    y = Math.sin(given_pitch) * given_speed
+    [x, y]
   end
   
   #Add this Vector to vector2, returning a new Vector.
@@ -848,7 +879,8 @@ module Utility
   
   #Convert radians to degrees.
   def Utility.to_degrees(radians)
-    radians / PI2 * 360
+    degrees = radians / PI2 * 360
+    degrees >= 0 ? degrees : (360 + degrees)
   end
   
   #Convert degrees to radians.
