@@ -112,26 +112,12 @@ class Environment
     self.objects.each do |object|
     
       #Move each object according to its vector.
-      begin
-        object.move(elapsed_time)
-      #Remove misbehaving objects.
-      rescue Exception => exception
-        puts exception, exception.backtrace
-        self.remove_object(object)
-        next
-      end
+      object.move(elapsed_time)
       
       #Have all creatures interact with the environment.
       if object.respond_to?(:act)
-        begin
-          #Have creature act on all GameObjects other than itself.
-          object.act(objects.reject{|target| target.equal?(object)})
-        #Remove misbehaving objects.
-        rescue Exception => exception
-          puts exception, exception.backtrace
-          self.remove_object(object)
-          next
-        end
+        #Have creature act on all GameObjects other than itself.
+        object.act(objects.reject{|target| target.equal?(object)})
       end
 
       #Update object age.
@@ -141,14 +127,7 @@ class Environment
     
     #Have all environmental factors interact with environment.
     self.environmental_factors.each do |factor|
-      begin
-        factor.act(self, elapsed_time: elapsed_time)
-      #Remove misbehaving environmental factors.
-      rescue Exception => exception
-        self.remove_environmental_factor(factor)
-        puts exception, exception.backtrace
-        next
-      end
+      factor.act(self, elapsed_time: elapsed_time)
     end
       
     #Mark environment as changed.
